@@ -485,11 +485,20 @@
   }
 
   function applySharedFromHash() {
-    const m = location.hash.match(/hlshare=([^&]+)/);
-    if (!m) return;
+    // Accept either ?hlshare=… (preferred — survives messaging apps) or #hlshare=… (legacy).
+    let enc = null;
+    try {
+      const p = new URLSearchParams(location.search);
+      if (p.has("hlshare")) enc = p.get("hlshare");
+    } catch {}
+    if (!enc) {
+      const m = location.hash.match(/hlshare=([^&]+)/);
+      if (m) enc = m[1];
+    }
+    if (!enc) return;
     let payload;
     try {
-      payload = JSON.parse(b64UrlToUtf8(m[1]));
+      payload = JSON.parse(b64UrlToUtf8(enc));
     } catch (e) { return; }
     if (!payload || payload.v !== 1 || !Array.isArray(payload.highlights)) return;
 
@@ -531,9 +540,14 @@
       pendingShared = [];
       shareBanner.remove(); shareBanner = null;
       renderPanel();
-      // Strip the hlshare param from URL for cleanliness
-      const clean = location.hash.replace(/[?&]?hlshare=[^&]+/, "");
-      history.replaceState(null, "", location.pathname + location.search + (clean === "#" ? "" : clean));
+      // Strip hlshare from either the query string or the hash
+      try {
+        const u = new URL(location.href);
+        u.searchParams.delete("hlshare");
+        let newHash = u.hash.replace(/[?&]?hlshare=[^&]*/, "").replace(/^#&/, "#");
+        if (newHash === "#") newHash = "";
+        history.replaceState(null, "", u.pathname + u.search + newHash);
+      } catch {}
     });
     shareBanner.querySelector(".hl-sb-dismiss").addEventListener("click", () => {
       // remove the temporarily applied marks

@@ -38,7 +38,9 @@ function buildShareUrl(pageUrl, list) {
   };
   const enc = utf8ToB64Url(JSON.stringify(payload));
   const u = new URL(pageUrl);
-  return u.origin + u.pathname + u.search + "#hlshare=" + enc;
+  // Use query param (survives most messaging apps; fragments are often stripped)
+  u.searchParams.set("hlshare", enc);
+  return u.toString();
 }
 
 // Robust clipboard copy that works in MV3 popups
