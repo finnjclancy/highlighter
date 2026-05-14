@@ -257,8 +257,9 @@
       <div class="hl-panel-body"></div>
     `;
     document.body.appendChild(panel);
-    // Start collapsed by default
+    // Start hidden + collapsed by default. Show via popup → "Toggle overlay".
     panel.classList.add("hl-collapsed");
+    panel.classList.add("hl-hidden");
 
     const head = panel.querySelector(".hl-panel-head");
     const toggle = panel.querySelector(".hl-panel-toggle");
@@ -424,7 +425,13 @@
       }
       sendResponse({ ok: true });
     } else if (msg.type === "togglePanel") {
-      if (panel) panel.classList.toggle("hl-collapsed");
+      if (panel) {
+        if (panel.classList.contains("hl-hidden")) {
+          panel.classList.remove("hl-hidden");
+        } else {
+          panel.classList.add("hl-hidden");
+        }
+      }
       sendResponse({ ok: true });
     }
     return true;

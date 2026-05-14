@@ -86,6 +86,7 @@
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   overflow: hidden;
 }
+#hl-panel.hl-hidden { display: none !important; }
 #hl-panel.hl-collapsed {
   width: 32px; height: 32px; max-height: 32px;
   border-radius: 8px;
