@@ -3,7 +3,7 @@
   "name": "Highlighter",
   "version": "1.0.0",
   "description": "Select text, highlight it with custom colors, and jump back to highlights from a floating panel.",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",

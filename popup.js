@@ -17,29 +17,67 @@ function toast(msg) {
   t.style.display = "block";
 }
 
+function utf8ToB64Url(s) {
+  const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function buildShareUrl(pageUrl, list) {
+  const payload = {
+    v: 1,
+    highlights: list.map(h => ({
+      id: h.id, bg: h.bg, fg: h.fg,
+      text: h.text,
+      note: h.note || "",
+      tags: h.tags || [],
+      r: {
+        sx: h.range.startXPath, so: h.range.startOffset,
+        ex: h.range.endXPath,   eo: h.range.endOffset
+      }
+    }))
+  };
+  const enc = utf8ToB64Url(JSON.stringify(payload));
+  const u = new URL(pageUrl);
+  return u.origin + u.pathname + u.search + "#hlshare=" + enc;
+}
+
+// Robust clipboard copy that works in MV3 popups
+function copyToClipboard(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+  } catch {}
+  return new Promise(resolve => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch {}
+    ta.remove();
+    resolve();
+  });
+}
+
 document.getElementById("share-page").addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) return;
-  let resp;
+  if (!tab?.url) { toast("Open a real web page first."); return; }
+  let key;
   try {
-    resp = await chrome.tabs.sendMessage(tab.id, { type: "buildShareLink" });
-  } catch (e) {
-    toast("Open a real web page first.");
-    return;
+    const u = new URL(tab.url);
+    if (!/^https?:$/.test(u.protocol)) { toast("Open a real web page first."); return; }
+    key = "hl_page_" + u.origin + u.pathname;
+  } catch {
+    toast("Open a real web page first."); return;
   }
-  if (resp?.ok) {
-    toast(`✓ Link copied (${resp.count} highlights)`);
-  } else if (resp?.url) {
-    // Clipboard write failed — fall back to copying via popup
-    try {
-      await navigator.clipboard.writeText(resp.url);
-      toast(`✓ Link copied (${resp.count} highlights)`);
-    } catch {
-      toast(resp.error || "Couldn't copy.");
-    }
-  } else {
-    toast(resp?.error || "Nothing to share.");
-  }
+  const data = await chrome.storage.local.get(key);
+  const list = data[key] || [];
+  if (!list.length) { toast("No highlights on this page yet."); return; }
+  const shareUrl = buildShareUrl(tab.url, list);
+  await copyToClipboard(shareUrl);
+  toast(`✓ Link copied (${list.length} ${list.length === 1 ? "highlight" : "highlights"})`);
 });
 
 document.getElementById("toggle-draw").addEventListener("click", async () => {
