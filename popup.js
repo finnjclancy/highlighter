@@ -63,24 +63,57 @@ function copyToClipboard(text) {
   });
 }
 
-document.getElementById("share-page").addEventListener("click", async () => {
+async function getPageHighlights() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.url) { toast("Open a real web page first."); return; }
-  let key;
+  if (!tab?.url) return { error: "Open a real web page first." };
   try {
     const u = new URL(tab.url);
-    if (!/^https?:$/.test(u.protocol)) { toast("Open a real web page first."); return; }
-    key = "hl_page_" + u.origin + u.pathname;
+    if (!/^https?:$/.test(u.protocol)) return { error: "Open a real web page first." };
+    const key = "hl_page_" + u.origin + u.pathname;
+    const data = await chrome.storage.local.get(key);
+    const list = data[key] || [];
+    return { tab, list };
   } catch {
-    toast("Open a real web page first."); return;
+    return { error: "Open a real web page first." };
   }
-  const data = await chrome.storage.local.get(key);
-  const list = data[key] || [];
-  if (!list.length) { toast("No highlights on this page yet."); return; }
-  const shareUrl = buildShareUrl(tab.url, list);
+}
+
+document.getElementById("share-page").addEventListener("click", async () => {
+  const r = await getPageHighlights();
+  if (r.error) { toast(r.error); return; }
+  if (!r.list.length) { toast("No highlights on this page yet."); return; }
+  const shareUrl = buildShareUrl(r.tab.url, r.list);
   await copyToClipboard(shareUrl);
-  toast(`✓ Link copied (${list.length} ${list.length === 1 ? "highlight" : "highlights"})`);
+  toast(`✓ Link copied (${r.list.length} ${r.list.length === 1 ? "highlight" : "highlights"}) — recipient needs the extension`);
 });
+
+document.getElementById("share-text").addEventListener("click", async () => {
+  const r = await getPageHighlights();
+  if (r.error) { toast(r.error); return; }
+  if (!r.list.length) { toast("No highlights on this page yet."); return; }
+  const md = buildPageMarkdown(r.tab, r.list);
+  await copyToClipboard(md);
+  toast(`✓ Copied as text (${r.list.length} ${r.list.length === 1 ? "quote" : "quotes"})`);
+});
+
+function buildPageMarkdown(tab, list) {
+  const title = tab.title || tab.url;
+  let md = `# Highlights from [${title}](${tab.url})\n\n`;
+  list.forEach(h => {
+    const quoted = (h.text || "").split("\n").map(line => `> ${line}`).join("\n");
+    md += quoted + "\n";
+    if (h.tags && h.tags.length) {
+      md += `>\n> _Tags: ${h.tags.map(t => "`#" + t + "`").join(" ")}_\n`;
+    }
+    if (h.note) {
+      const note = h.note.split("\n").map(line => `> 💬 ${line}`).join("\n");
+      md += `>\n${note}\n`;
+    }
+    md += `\n`;
+  });
+  md += `\n_Source: ${tab.url}_\n`;
+  return md;
+}
 
 document.getElementById("toggle-draw").addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
