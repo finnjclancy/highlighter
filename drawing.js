@@ -6,13 +6,13 @@
   const STORE_KEY = "hl_draw_" + location.origin + location.pathname;
 
   const COLORS = ["#ef4444", "#f59e0b", "#eab308", "#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#0f172a"];
-  const WIDTHS = [2, 4, 7];
+  const WIDTHS = [2, 5, 10];
 
   let canvas = null;
   let toolbar = null;
   let active = false;
 
-  let tool = "pen";           // pen | line | rect | eraser
+  let tool = "pen";           // pen | line | rect
   let color = COLORS[0];
   let width = WIDTHS[1];
 
@@ -116,10 +116,6 @@
   function onDown(e) {
     if (!active) return;
     e.preventDefault();
-    if (tool === "eraser") {
-      eraseAt(e.target);
-      return;
-    }
     startPt = evtPoint(e);
     const id = "d_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
     if (tool === "pen") {
@@ -173,15 +169,6 @@
     startPt = null;
   }
 
-  function eraseAt(target) {
-    if (!target || target === canvas) return;
-    const id = target.dataset?.id;
-    if (!id) return;
-    strokes = strokes.filter(s => s.id !== id);
-    target.remove();
-    saveStrokes();
-  }
-
   // ---------- toolbar ----------
   function svgIcon(name) {
     const icons = {
@@ -203,8 +190,7 @@
     const tools = [
       { id: "pen", title: "Pen (free draw)" },
       { id: "line", title: "Line" },
-      { id: "rect", title: "Rectangle" },
-      { id: "eraser", title: "Eraser" }
+      { id: "rect", title: "Rectangle" }
     ];
     tools.forEach(t => {
       const b = document.createElement("button");
@@ -230,17 +216,16 @@
 
     addDivider();
 
+    const widthLabels = { 2: "S", 5: "M", 10: "L" };
     WIDTHS.forEach(w => {
       const b = document.createElement("button");
       b.className = "hl-dt-width" + (width === w ? " active" : "");
       b.dataset.width = w;
-      b.title = "Width " + w;
-      const dot = document.createElement("span");
-      dot.className = "dot";
-      const d = Math.min(14, Math.max(3, w + 2));
-      dot.style.width = d + "px";
-      dot.style.height = d + "px";
-      b.appendChild(dot);
+      b.title = (widthLabels[w] || "") + " — " + w + "px";
+      const bar = document.createElement("span");
+      bar.className = "bar";
+      bar.style.height = w + "px";
+      b.appendChild(bar);
       b.addEventListener("click", () => setWidth(w));
       toolbar.appendChild(b);
     });

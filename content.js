@@ -257,9 +257,8 @@
       <div class="hl-panel-body"></div>
     `;
     document.body.appendChild(panel);
-    // Start hidden + collapsed by default. Show via popup → "Toggle overlay".
+    // Start collapsed by default (burger visible in bottom-left).
     panel.classList.add("hl-collapsed");
-    panel.classList.add("hl-hidden");
 
     const head = panel.querySelector(".hl-panel-head");
     const toggle = panel.querySelector(".hl-panel-toggle");
