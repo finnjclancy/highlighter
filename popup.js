@@ -11,6 +11,13 @@ document.getElementById("toggle-panel").addEventListener("click", async () => {
   }
   window.close();
 });
+document.getElementById("toggle-draw").addEventListener("click", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id) {
+    try { await chrome.tabs.sendMessage(tab.id, { type: "toggleDrawing" }); } catch {}
+  }
+  window.close();
+});
 
 async function loadStats() {
   const all = await chrome.storage.local.get(null);

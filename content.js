@@ -252,10 +252,13 @@
         <button class="hl-panel-toggle" title="Toggle">≡</button>
         <span class="hl-panel-title">Highlights</span>
         <span class="hl-panel-count">0</span>
+        <button class="hl-panel-draw" title="Toggle drawing mode">✎ Draw</button>
       </div>
       <div class="hl-panel-body"></div>
     `;
     document.body.appendChild(panel);
+    // Start collapsed by default
+    panel.classList.add("hl-collapsed");
 
     const head = panel.querySelector(".hl-panel-head");
     const toggle = panel.querySelector(".hl-panel-toggle");
@@ -264,7 +267,16 @@
       panel.classList.toggle("hl-collapsed");
     });
 
-    // drag
+    const drawBtn = panel.querySelector(".hl-panel-draw");
+    drawBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (window.__hlDrawing) window.__hlDrawing.toggle();
+    });
+    window.addEventListener("hl-draw-state", e => {
+      drawBtn.classList.toggle("active", !!e.detail?.active);
+    });
+
+    // drag — switch from bottom-anchored to top/left-anchored on first drag
     let dragging = false, dx = 0, dy = 0;
     head.addEventListener("mousedown", e => {
       if (e.target === toggle) return;
@@ -279,6 +291,7 @@
       panel.style.left = (e.clientX - dx) + "px";
       panel.style.top = (e.clientY - dy) + "px";
       panel.style.right = "auto";
+      panel.style.bottom = "auto";
     });
     document.addEventListener("mouseup", () => dragging = false);
   }
@@ -311,7 +324,7 @@
       item.addEventListener("click", e => {
         scrollToHighlight(h.id);
         const rect = item.getBoundingClientRect();
-        showPopover(h, rect.left - 290, rect.top);
+        showPopover(h, rect.right + 10, rect.top);
       });
       body.appendChild(item);
     });

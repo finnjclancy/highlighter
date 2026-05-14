@@ -70,7 +70,7 @@
 /* Overlay panel */
 #hl-panel {
   position: fixed;
-  top: 12px; left: 12px;
+  bottom: 12px; left: 12px;
   width: 248px;
   max-height: 64vh;
   z-index: 2147483645;
@@ -81,7 +81,7 @@
   box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.2);
   font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
   font-feature-settings: "cv11", "ss01";
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column-reverse;
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   overflow: hidden;
@@ -101,8 +101,11 @@
   display: flex; align-items: center; gap: 6px;
   padding: 5px 10px 5px 32px;
   min-height: 32px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.04);
   cursor: move; user-select: none;
+}
+#hl-panel.hl-collapsed .hl-panel-head {
+  border-top: none;
 }
 #hl-panel .hl-panel-title {
   font-weight: 600; font-size: 12px;
@@ -119,7 +122,7 @@
 }
 #hl-panel .hl-panel-toggle {
   position: absolute;
-  top: 5px; left: 5px;
+  bottom: 5px; left: 5px;
   background: transparent; border: none;
   color: rgba(255,255,255,0.55);
   cursor: pointer; font-size: 14px;
