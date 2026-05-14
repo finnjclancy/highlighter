@@ -1,9 +1,6 @@
 document.getElementById("open-library").addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("library.html") });
 });
-document.getElementById("open-options").addEventListener("click", () => {
-  chrome.tabs.create({ url: chrome.runtime.getURL("library.html#design") });
-});
 document.getElementById("toggle-panel").addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
@@ -11,39 +8,13 @@ document.getElementById("toggle-panel").addEventListener("click", async () => {
   }
   window.close();
 });
+
 function toast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.style.display = "block";
 }
 
-function utf8ToB64Url(s) {
-  const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(s)));
-  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-
-function buildShareUrl(pageUrl, list) {
-  const payload = {
-    v: 1,
-    highlights: list.map(h => ({
-      id: h.id, bg: h.bg, fg: h.fg,
-      text: h.text,
-      note: h.note || "",
-      tags: h.tags || [],
-      r: {
-        sx: h.range.startXPath, so: h.range.startOffset,
-        ex: h.range.endXPath,   eo: h.range.endOffset
-      }
-    }))
-  };
-  const enc = utf8ToB64Url(JSON.stringify(payload));
-  const u = new URL(pageUrl);
-  // Use query param (survives most messaging apps; fragments are often stripped)
-  u.searchParams.set("hlshare", enc);
-  return u.toString();
-}
-
-// Robust clipboard copy that works in MV3 popups
 function copyToClipboard(text) {
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -78,42 +49,25 @@ async function getPageHighlights() {
   }
 }
 
-document.getElementById("share-page").addEventListener("click", async () => {
-  const r = await getPageHighlights();
-  if (r.error) { toast(r.error); return; }
-  if (!r.list.length) { toast("No highlights on this page yet."); return; }
-  const shareUrl = buildShareUrl(r.tab.url, r.list);
-  await copyToClipboard(shareUrl);
-  toast(`✓ Link copied (${r.list.length} ${r.list.length === 1 ? "highlight" : "highlights"}) — recipient needs the extension`);
-});
+function buildPlainText(tab, list) {
+  const title = (tab.title || tab.url).trim();
+  const parts = [title, tab.url, ""];
+  list.forEach(h => {
+    parts.push((h.text || "").trim());
+    if (h.tags && h.tags.length) parts.push("Tags: " + h.tags.join(", "));
+    if (h.note) parts.push("Note: " + h.note.trim());
+    parts.push("");
+  });
+  return parts.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+}
 
 document.getElementById("share-text").addEventListener("click", async () => {
   const r = await getPageHighlights();
   if (r.error) { toast(r.error); return; }
   if (!r.list.length) { toast("No highlights on this page yet."); return; }
-  const md = buildPageMarkdown(r.tab, r.list);
-  await copyToClipboard(md);
-  toast(`✓ Copied as text (${r.list.length} ${r.list.length === 1 ? "quote" : "quotes"})`);
+  await copyToClipboard(buildPlainText(r.tab, r.list));
+  toast(`✓ Copied (${r.list.length} ${r.list.length === 1 ? "quote" : "quotes"})`);
 });
-
-function buildPageMarkdown(tab, list) {
-  const title = tab.title || tab.url;
-  let md = `# Highlights from [${title}](${tab.url})\n\n`;
-  list.forEach(h => {
-    const quoted = (h.text || "").split("\n").map(line => `> ${line}`).join("\n");
-    md += quoted + "\n";
-    if (h.tags && h.tags.length) {
-      md += `>\n> _Tags: ${h.tags.map(t => "`#" + t + "`").join(" ")}_\n`;
-    }
-    if (h.note) {
-      const note = h.note.split("\n").map(line => `> 💬 ${line}`).join("\n");
-      md += `>\n${note}\n`;
-    }
-    md += `\n`;
-  });
-  md += `\n_Source: ${tab.url}_\n`;
-  return md;
-}
 
 document.getElementById("toggle-draw").addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

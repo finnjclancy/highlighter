@@ -8,8 +8,6 @@
   let toolbar = null;
   let panel = null;
   let popover = null;
-  let shareBanner = null;
-  let pendingShared = [];  // highlights from a #hlshare= link, not yet saved
 
   // ---------- storage ----------
   async function loadPalette() {
@@ -425,9 +423,6 @@
         renderPanel();
       }
       sendResponse({ ok: true });
-    } else if (msg.type === "buildShareLink") {
-      copyShareLinkToClipboard().then(sendResponse);
-      return true;
     } else if (msg.type === "togglePanel") {
       if (panel) {
         if (panel.classList.contains("hl-hidden")) {
@@ -454,129 +449,6 @@
     if (m) setTimeout(() => scrollToHighlight(m[1]), 400);
   }
 
-  // ---------- sharing ----------
-  function utf8ToB64Url(s) {
-    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(s)));
-    return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-  }
-  function b64UrlToUtf8(s) {
-    let b64 = s.replace(/-/g, "+").replace(/_/g, "/");
-    while (b64.length % 4) b64 += "=";
-    return new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
-  }
-
-  function buildShareLink() {
-    const payload = {
-      v: 1,
-      highlights: highlights.map(h => ({
-        id: h.id, bg: h.bg, fg: h.fg,
-        text: h.text,
-        note: h.note || "",
-        tags: h.tags || [],
-        r: {
-          sx: h.range.startXPath, so: h.range.startOffset,
-          ex: h.range.endXPath,   eo: h.range.endOffset
-        }
-      }))
-    };
-    const enc = utf8ToB64Url(JSON.stringify(payload));
-    const base = location.origin + location.pathname + location.search;
-    return base + "#hlshare=" + enc;
-  }
-
-  function applySharedFromHash() {
-    // Accept either ?hlshare=… (preferred — survives messaging apps) or #hlshare=… (legacy).
-    let enc = null;
-    try {
-      const p = new URLSearchParams(location.search);
-      if (p.has("hlshare")) enc = p.get("hlshare");
-    } catch {}
-    if (!enc) {
-      const m = location.hash.match(/hlshare=([^&]+)/);
-      if (m) enc = m[1];
-    }
-    if (!enc) return;
-    let payload;
-    try {
-      payload = JSON.parse(b64UrlToUtf8(enc));
-    } catch (e) { return; }
-    if (!payload || payload.v !== 1 || !Array.isArray(payload.highlights)) return;
-
-    pendingShared = [];
-    let applied = 0;
-    payload.highlights.forEach(p => {
-      // Skip ones the user already has
-      if (highlights.some(h => h.id === p.id)) return;
-      const h = {
-        id: p.id, bg: p.bg, fg: p.fg,
-        text: p.text,
-        note: p.note || "",
-        tags: p.tags || [],
-        url: location.origin + location.pathname,
-        title: document.title,
-        createdAt: Date.now(),
-        range: { startXPath: p.r.sx, startOffset: p.r.so, endXPath: p.r.ex, endOffset: p.r.eo, text: p.text },
-        _shared: true
-      };
-      if (applyHighlight(h)) { pendingShared.push(h); applied++; }
-    });
-    if (applied > 0) showShareBanner(applied);
-    renderPanel();
-  }
-
-  function showShareBanner(count) {
-    if (shareBanner) shareBanner.remove();
-    shareBanner = document.createElement("div");
-    shareBanner.id = "hl-share-banner";
-    shareBanner.innerHTML = `
-      <span class="hl-sb-text">✨ <b>${count}</b> shared ${count === 1 ? "highlight" : "highlights"} on this page</span>
-      <button class="hl-sb-btn hl-sb-keep">Save to my library</button>
-      <button class="hl-sb-btn hl-sb-dismiss">Dismiss</button>
-    `;
-    document.body.appendChild(shareBanner);
-    shareBanner.querySelector(".hl-sb-keep").addEventListener("click", async () => {
-      pendingShared.forEach(h => { delete h._shared; highlights.push(h); });
-      await saveHighlights();
-      pendingShared = [];
-      shareBanner.remove(); shareBanner = null;
-      renderPanel();
-      // Strip hlshare from either the query string or the hash
-      try {
-        const u = new URL(location.href);
-        u.searchParams.delete("hlshare");
-        let newHash = u.hash.replace(/[?&]?hlshare=[^&]*/, "").replace(/^#&/, "#");
-        if (newHash === "#") newHash = "";
-        history.replaceState(null, "", u.pathname + u.search + newHash);
-      } catch {}
-    });
-    shareBanner.querySelector(".hl-sb-dismiss").addEventListener("click", () => {
-      // remove the temporarily applied marks
-      pendingShared.forEach(h => {
-        document.querySelectorAll(`.hl-mark[data-hl-id="${h.id}"]`).forEach(m => {
-          const txt = document.createTextNode(m.textContent);
-          m.parentNode.replaceChild(txt, m);
-        });
-      });
-      document.body.normalize();
-      pendingShared = [];
-      shareBanner.remove(); shareBanner = null;
-      renderPanel();
-    });
-  }
-
-  async function copyShareLinkToClipboard() {
-    if (!highlights.length) {
-      return { ok: false, error: "No highlights on this page yet." };
-    }
-    const url = buildShareLink();
-    try {
-      await navigator.clipboard.writeText(url);
-      return { ok: true, url, count: highlights.length };
-    } catch (e) {
-      // Fallback: dispatch event with the URL so popup can fall back
-      return { ok: false, url, count: highlights.length, error: "Clipboard blocked" };
-    }
-  }
 
   // ---------- init ----------
   (async function init() {
@@ -588,7 +460,6 @@
       applyAllHighlights();
       renderPanel();
       checkHash();
-      applySharedFromHash();
     }, 300);
   })();
 })();

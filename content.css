@@ -259,36 +259,3 @@
 #hl-popover .pop-btn.primary:hover { background: #5457e0; border-color: #5457e0; }
 #hl-popover .pop-btn.danger:hover { background: rgba(239,68,68,0.15); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
 
-/* Share-link banner shown to recipients */
-#hl-share-banner {
-  position: fixed;
-  top: 12px; left: 50%; transform: translateX(-50%);
-  z-index: 2147483646;
-  background: rgba(16,16,19,0.96);
-  color: #fafafa;
-  border: 1px solid rgba(99,102,241,0.4);
-  border-radius: 999px;
-  padding: 8px 8px 8px 16px;
-  display: flex; align-items: center; gap: 8px;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.45), 0 0 0 4px rgba(99,102,241,0.08);
-  backdrop-filter: blur(20px) saturate(180%);
-  font: 500 12px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
-  font-feature-settings: "cv11", "ss01";
-  letter-spacing: -0.005em;
-}
-#hl-share-banner .hl-sb-text b { font-weight: 600; }
-#hl-share-banner .hl-sb-btn {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #fafafa;
-  border-radius: 999px;
-  padding: 5px 11px;
-  font: inherit; font-weight: 500;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
-}
-#hl-share-banner .hl-sb-btn:hover { background: rgba(255,255,255,0.12); }
-#hl-share-banner .hl-sb-keep {
-  background: #6366f1; border-color: #6366f1; color: #fff;
-}
-#hl-share-banner .hl-sb-keep:hover { background: #5457e0; border-color: #5457e0; }
