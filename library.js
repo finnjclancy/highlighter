@@ -4,6 +4,7 @@ let filter = { type: "all", value: null };
 let search = "";
 let sortMode = "newest";
 let openId = null;
+let selected = new Set();
 
 const resultsEl = document.getElementById("results");
 const viewTitleEl = document.getElementById("view-title");
@@ -65,8 +66,23 @@ function navItem(type, value, label, count, icon) {
   el.className = "nav-item";
   if (filter.type === type && filter.value === value) el.classList.add("active");
   const ico = icon ? `<span class="folder-ico">${escape(icon)}</span>` : "";
-  el.innerHTML = `${ico}<span class="label">${escape(label)}</span><span class="badge">${count}</span>`;
-  el.addEventListener("click", () => { filter = { type, value }; buildNav(); render(); });
+  const showExport = type === "tag" || type === "site";
+  el.innerHTML = `${ico}<span class="label">${escape(label)}</span>` +
+                 (showExport ? `<span class="nav-export" title="Export this folder">⬇</span>` : "") +
+                 `<span class="badge">${count}</span>`;
+  el.addEventListener("click", () => { filter = { type, value }; selected.clear(); buildNav(); render(); });
+  const exp = el.querySelector(".nav-export");
+  if (exp) {
+    exp.addEventListener("click", e => {
+      e.stopPropagation();
+      const items = flat.filter(h => {
+        if (type === "tag") return (h.tags || []).includes(value);
+        if (type === "site") { try { return new URL(h.url).hostname === value; } catch { return false; } }
+        return false;
+      });
+      downloadMarkdown(items, label);
+    });
+  }
   return el;
 }
 
@@ -138,6 +154,19 @@ function titleForFilter() {
 function renderRow(h) {
   const row = document.createElement("div");
   row.className = "row";
+  if (selected.has(h.id)) row.classList.add("selected");
+
+  const check = document.createElement("div");
+  check.className = "rcheck";
+  check.title = "Select";
+  check.addEventListener("click", e => {
+    e.stopPropagation();
+    if (selected.has(h.id)) selected.delete(h.id);
+    else selected.add(h.id);
+    row.classList.toggle("selected");
+    renderSelectionBar();
+  });
+
   const swatch = document.createElement("div");
   swatch.className = "swatch";
   swatch.style.background = h.bg;
@@ -158,12 +187,21 @@ function renderRow(h) {
   const site = document.createElement("div");
   site.className = "rsite";
   try { site.textContent = new URL(h.url).hostname; } catch {}
+  row.appendChild(check);
   row.appendChild(swatch);
   row.appendChild(text);
   row.appendChild(tags);
   row.appendChild(icons);
   row.appendChild(site);
-  row.addEventListener("click", () => openModal(h));
+  row.addEventListener("click", e => {
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      if (selected.has(h.id)) selected.delete(h.id); else selected.add(h.id);
+      row.classList.toggle("selected");
+      renderSelectionBar();
+      return;
+    }
+    openModal(h);
+  });
   return row;
 }
 
@@ -289,6 +327,102 @@ async function notifyTabs(pageKey, msg) {
 
 function escape(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// ---------- export ----------
+function toMarkdown(items, title) {
+  const today = new Date().toISOString().slice(0, 10);
+  let md = `# ${title}\n\n_Exported ${today} · ${items.length} ${items.length === 1 ? "quote" : "quotes"}_\n\n`;
+
+  // Group by source page for readability
+  const groups = new Map();
+  items.forEach(h => {
+    const key = h.url;
+    if (!groups.has(key)) groups.set(key, { title: h.title || h.url, url: h.url, items: [] });
+    groups.get(key).items.push(h);
+  });
+
+  for (const [, g] of groups) {
+    md += `## [${(g.title || "Untitled").replace(/\]/g, "\\]")}](${g.url})\n\n`;
+    g.items.forEach(h => {
+      const quoted = (h.text || "").split("\n").map(line => `> ${line}`).join("\n");
+      md += quoted + "\n";
+      if (h.tags && h.tags.length) {
+        md += `>\n> _Tags: ${h.tags.map(t => "`#" + t + "`").join(" ")}_\n`;
+      }
+      if (h.note) {
+        const note = h.note.split("\n").map(line => `> 💬 ${line}`).join("\n");
+        md += `>\n${note}\n`;
+      }
+      md += `>\n> [Open in context ↗](${h.url}#hl=${h.id})\n\n`;
+    });
+    md += `---\n\n`;
+  }
+  return md;
+}
+
+function downloadMarkdown(items, title) {
+  if (!items || !items.length) return;
+  const md = toMarkdown(items, title);
+  const safe = String(title).replace(/[^a-z0-9\-_]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "highlights";
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `${safe}-${stamp}.md`;
+  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+document.getElementById("export-view").addEventListener("click", () => {
+  const items = filterFlat();
+  downloadMarkdown(items, titleForFilter());
+});
+
+// ---------- selection bar ----------
+let selBar;
+function renderSelectionBar() {
+  if (!selBar) {
+    selBar = document.createElement("div");
+    selBar.style.cssText = `
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(16,16,19,0.96); color: #fafafa;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 8px 10px 8px 16px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+      backdrop-filter: blur(20px) saturate(180%);
+      font: 500 12px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      letter-spacing: -0.005em;
+      z-index: 90;
+    `;
+    selBar.innerHTML = `
+      <span class="sel-count"></span>
+      <button class="sel-clear" style="background:transparent;border:none;color:rgba(250,250,250,0.5);cursor:pointer;font:inherit;padding:4px 6px;border-radius:6px;">Clear</button>
+      <button class="sel-export" style="background:#6366f1;border:none;color:#fff;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">⬇ Export selected</button>
+    `;
+    document.body.appendChild(selBar);
+    selBar.querySelector(".sel-clear").addEventListener("click", () => {
+      selected.clear();
+      document.querySelectorAll(".row.selected").forEach(r => r.classList.remove("selected"));
+      renderSelectionBar();
+    });
+    selBar.querySelector(".sel-export").addEventListener("click", () => {
+      const items = flat.filter(h => selected.has(h.id));
+      downloadMarkdown(items, `selected-${items.length}`);
+    });
+  }
+  if (selected.size === 0) {
+    selBar.style.display = "none";
+    return;
+  }
+  selBar.style.display = "flex";
+  selBar.querySelector(".sel-count").textContent = selected.size + " selected";
 }
 
 load();

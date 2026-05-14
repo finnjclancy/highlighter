@@ -148,6 +148,46 @@
       cursor: pointer;
     }
     .topbar select:focus { outline: none; border-color: var(--accent); }
+    .topbar .export-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--radius-md);
+      padding: 7px 11px; cursor: pointer;
+      font-family: inherit; font-size: 12px; font-weight: 500;
+      letter-spacing: -0.005em;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .topbar .export-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+    .topbar .export-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .topbar .export-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    /* Multi-select */
+    .row .rcheck {
+      width: 16px; height: 16px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 4px;
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+      opacity: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .row:hover .rcheck { opacity: 1; }
+    .row.selected { background: rgba(99,102,241,0.08); }
+    .row.selected .rcheck { opacity: 1; background: var(--accent); border-color: var(--accent); }
+    .row.selected .rcheck::after { content: "✓"; color: #fff; font-size: 10px; line-height: 1; }
+    .selectmode .row .rcheck { opacity: 1; }
+
+    /* Nav export icon */
+    .nav-item .nav-export {
+      opacity: 0; cursor: pointer; flex-shrink: 0;
+      color: var(--text-3);
+      font-size: 11px; padding: 0 2px;
+      transition: opacity 0.12s, color 0.12s;
+    }
+    .nav-item:hover .nav-export { opacity: 1; }
+    .nav-item .nav-export:hover { color: var(--accent); }
 
     .group { margin-bottom: 18px; }
     .group-head {
@@ -498,6 +538,7 @@
               <option value="oldest">Oldest</option>
               <option value="site">By site</option>
             </select>
+            <button class="export-btn" id="export-view" title="Export the current view as Markdown">⬇ Export</button>
           </div>
           <div id="results"></div>
         </main>
