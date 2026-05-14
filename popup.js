@@ -11,6 +11,37 @@ document.getElementById("toggle-panel").addEventListener("click", async () => {
   }
   window.close();
 });
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+}
+
+document.getElementById("share-page").addEventListener("click", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+  let resp;
+  try {
+    resp = await chrome.tabs.sendMessage(tab.id, { type: "buildShareLink" });
+  } catch (e) {
+    toast("Open a real web page first.");
+    return;
+  }
+  if (resp?.ok) {
+    toast(`✓ Link copied (${resp.count} highlights)`);
+  } else if (resp?.url) {
+    // Clipboard write failed — fall back to copying via popup
+    try {
+      await navigator.clipboard.writeText(resp.url);
+      toast(`✓ Link copied (${resp.count} highlights)`);
+    } catch {
+      toast(resp.error || "Couldn't copy.");
+    }
+  } else {
+    toast(resp?.error || "Nothing to share.");
+  }
+});
+
 document.getElementById("toggle-draw").addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
