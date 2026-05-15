@@ -312,6 +312,31 @@ async function removeHighlight(h) {
   buildNav(); render();
 }
 
+async function removeManyHighlights(items) {
+  // Group by pageKey so we batch each storage write
+  const byPage = new Map();
+  items.forEach(h => {
+    if (!byPage.has(h.pageKey)) byPage.set(h.pageKey, []);
+    byPage.get(h.pageKey).push(h.id);
+  });
+  const toRemoveKeys = [];
+  const toSet = {};
+  for (const [pageKey, ids] of byPage) {
+    const idSet = new Set(ids);
+    const remaining = (allData[pageKey] || []).filter(x => !idSet.has(x.id));
+    allData[pageKey] = remaining;
+    if (remaining.length) toSet[pageKey] = remaining;
+    else toRemoveKeys.push(pageKey);
+    // Notify any open tabs to clean up each highlight in turn
+    ids.forEach(id => notifyTabs(pageKey, { type: "removeHighlight", id }));
+  }
+  if (Object.keys(toSet).length) await chrome.storage.local.set(toSet);
+  if (toRemoveKeys.length) await chrome.storage.local.remove(toRemoveKeys);
+  const removedIds = new Set(items.map(x => x.id));
+  flat = flat.filter(x => !removedIds.has(x.id));
+  buildNav(); render();
+}
+
 async function notifyTabs(pageKey, msg) {
   const tabs = await chrome.tabs.query({});
   for (const t of tabs) {
@@ -383,6 +408,18 @@ document.getElementById("export-view").addEventListener("click", () => {
   downloadMarkdown(items, titleForFilter());
 });
 
+document.getElementById("select-all").addEventListener("click", () => {
+  const items = filterFlat();
+  const allSelected = items.length && items.every(h => selected.has(h.id));
+  if (allSelected) {
+    items.forEach(h => selected.delete(h.id));
+  } else {
+    items.forEach(h => selected.add(h.id));
+  }
+  render();
+  renderSelectionBar();
+});
+
 // ---------- selection bar ----------
 let selBar;
 function renderSelectionBar() {
@@ -404,6 +441,7 @@ function renderSelectionBar() {
     selBar.innerHTML = `
       <span class="sel-count"></span>
       <button class="sel-clear" style="background:transparent;border:none;color:rgba(250,250,250,0.5);cursor:pointer;font:inherit;padding:4px 6px;border-radius:6px;">Clear</button>
+      <button class="sel-delete" style="background:transparent;border:1px solid rgba(239,68,68,0.4);color:#fca5a5;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">🗑 Delete</button>
       <button class="sel-export" style="background:#6366f1;border:none;color:#fff;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">⬇ Export selected</button>
     `;
     document.body.appendChild(selBar);
@@ -415,6 +453,15 @@ function renderSelectionBar() {
     selBar.querySelector(".sel-export").addEventListener("click", () => {
       const items = flat.filter(h => selected.has(h.id));
       downloadMarkdown(items, `selected-${items.length}`);
+    });
+    selBar.querySelector(".sel-delete").addEventListener("click", async () => {
+      const items = flat.filter(h => selected.has(h.id));
+      if (!items.length) return;
+      const ok = confirm(`Delete ${items.length} ${items.length === 1 ? "highlight" : "highlights"}? This cannot be undone.`);
+      if (!ok) return;
+      await removeManyHighlights(items);
+      selected.clear();
+      renderSelectionBar();
     });
   }
   if (selected.size === 0) {
