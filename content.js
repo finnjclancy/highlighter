@@ -66,23 +66,32 @@
 
   // ---------- highlight rendering ----------
   function wrapRange(range, id, bg, fg) {
-    // Collect text nodes inside the range
+    const SKIP = "script,style,#hl-toolbar,#hl-panel,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-share-banner";
     const nodes = [];
-    const walker = document.createTreeWalker(
-      range.commonAncestorContainer,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode(n) {
-          if (!n.nodeValue.length) return NodeFilter.FILTER_REJECT;
-          if (!range.intersectsNode(n)) return NodeFilter.FILTER_REJECT;
-          // skip if inside another highlight already covering same id
-          if (n.parentElement && n.parentElement.closest("script,style,#hl-toolbar,#hl-panel")) return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
-        }
+    const root = range.commonAncestorContainer;
+
+    if (root.nodeType === Node.TEXT_NODE) {
+      // Single-text-node selection — TreeWalker.nextNode() never returns the root,
+      // so we must handle this case explicitly.
+      if (root.nodeValue && (!root.parentElement || !root.parentElement.closest(SKIP))) {
+        nodes.push(root);
       }
-    );
-    let n;
-    while ((n = walker.nextNode())) nodes.push(n);
+    } else {
+      const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode(n) {
+            if (!n.nodeValue.length) return NodeFilter.FILTER_REJECT;
+            if (!range.intersectsNode(n)) return NodeFilter.FILTER_REJECT;
+            if (n.parentElement && n.parentElement.closest(SKIP)) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+      let n;
+      while ((n = walker.nextNode())) nodes.push(n);
+    }
 
     nodes.forEach(node => {
       let from = 0, to = node.nodeValue.length;
