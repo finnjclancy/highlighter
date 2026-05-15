@@ -286,7 +286,18 @@ mGoto.addEventListener("click", () => {
 });
 mDel.addEventListener("click", () => {
   const h = flat.find(x => x.id === openId);
-  if (h) { removeHighlight(h); closeModal(); }
+  if (!h) return;
+  const t = (h.text || "").trim();
+  openConfirm({
+    title: "Delete this highlight?",
+    body: `<div class="cf-lead">This action cannot be undone.</div>
+           <div class="cf-preview"><span class="cf-bar" style="background:${h.bg}"></span><span class="cf-text">${escape(t.length > 90 ? t.slice(0, 90) + "…" : t)}</span></div>`,
+    confirmText: "Delete",
+    onConfirm: async () => {
+      await removeHighlight(h);
+      closeModal();
+    }
+  });
 });
 
 async function saveHighlight(h, opts = {}) {
@@ -353,6 +364,38 @@ async function notifyTabs(pageKey, msg) {
 function escape(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+
+// ---------- confirm modal ----------
+const confirmBg = document.getElementById("confirm-bg");
+const confirmTitle = document.getElementById("confirm-title");
+const confirmBody = document.getElementById("confirm-body");
+const confirmOk = document.getElementById("confirm-ok");
+const confirmCancel = document.getElementById("confirm-cancel");
+let confirmHandler = null;
+function openConfirm({ title, body, confirmText = "Confirm", onConfirm }) {
+  confirmTitle.textContent = title;
+  confirmBody.innerHTML = body || "";
+  confirmOk.textContent = confirmText;
+  confirmHandler = onConfirm;
+  confirmBg.classList.add("show");
+  setTimeout(() => confirmOk.focus(), 30);
+}
+function closeConfirm() {
+  confirmBg.classList.remove("show");
+  confirmHandler = null;
+}
+confirmCancel.addEventListener("click", closeConfirm);
+confirmBg.addEventListener("click", e => { if (e.target === confirmBg) closeConfirm(); });
+confirmOk.addEventListener("click", async () => {
+  const fn = confirmHandler;
+  closeConfirm();
+  if (fn) await fn();
+});
+document.addEventListener("keydown", e => {
+  if (!confirmBg.classList.contains("show")) return;
+  if (e.key === "Escape") closeConfirm();
+  else if (e.key === "Enter") confirmOk.click();
+});
 
 // ---------- export ----------
 function toMarkdown(items, title) {
@@ -454,14 +497,25 @@ function renderSelectionBar() {
       const items = flat.filter(h => selected.has(h.id));
       downloadMarkdown(items, `selected-${items.length}`);
     });
-    selBar.querySelector(".sel-delete").addEventListener("click", async () => {
+    selBar.querySelector(".sel-delete").addEventListener("click", () => {
       const items = flat.filter(h => selected.has(h.id));
       if (!items.length) return;
-      const ok = confirm(`Delete ${items.length} ${items.length === 1 ? "highlight" : "highlights"}? This cannot be undone.`);
-      if (!ok) return;
-      await removeManyHighlights(items);
-      selected.clear();
-      renderSelectionBar();
+      const previewCount = Math.min(3, items.length);
+      const preview = items.slice(0, previewCount).map(h => {
+        const t = (h.text || "").trim();
+        return `<div class="cf-preview"><span class="cf-bar" style="background:${h.bg}"></span><span class="cf-text">${escape(t.length > 90 ? t.slice(0, 90) + "…" : t)}</span></div>`;
+      }).join("");
+      const more = items.length > previewCount ? `<div class="cf-more">+ ${items.length - previewCount} more</div>` : "";
+      openConfirm({
+        title: `Delete ${items.length} ${items.length === 1 ? "highlight" : "highlights"}?`,
+        body: `<div class="cf-lead">This action cannot be undone.</div>${preview}${more}`,
+        confirmText: "Delete",
+        onConfirm: async () => {
+          await removeManyHighlights(items);
+          selected.clear();
+          renderSelectionBar();
+        }
+      });
     });
   }
   if (selected.size === 0) {
