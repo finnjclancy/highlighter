@@ -67,6 +67,61 @@
 }
 #hl-toolbar .hl-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
 
+/* Hover quick-toolbar (appears when hovering an existing highlight) */
+#hl-hover-toolbar {
+  position: absolute;
+  z-index: 2147483646;
+  background: rgba(20,20,23,0.96);
+  color: #fafafa;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.25);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  font: 500 12px/1 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  animation: hl-fade-in 0.12s ease-out;
+}
+@keyframes hl-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+#hl-hover-toolbar .hl-swatch {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  padding: 0;
+  transition: transform 0.12s ease;
+  box-shadow: 0 0 0 0 transparent;
+}
+#hl-hover-toolbar .hl-swatch:hover { transform: scale(1.1); }
+#hl-hover-toolbar .hl-swatch.active {
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.9), 0 0 0 1px rgba(0,0,0,0.5);
+}
+#hl-hover-toolbar .hl-divider {
+  width: 1px; height: 18px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 3px;
+}
+#hl-hover-toolbar .hl-btn-del {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.55);
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 15px; line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+#hl-hover-toolbar .hl-btn-del:hover { background: rgba(239,68,68,0.18); color: #fca5a5; }
+
 /* Overlay panel */
 #hl-panel {
   position: fixed;
@@ -234,8 +289,30 @@
   max-height: 90px; overflow-y: auto;
   line-height: 1.5;
 }
+#hl-popover .pop-colors {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 4px;
+}
+#hl-popover .pop-swatch {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  padding: 0;
+  transition: transform 0.12s ease;
+}
+#hl-popover .pop-swatch:hover { transform: scale(1.08); }
+#hl-popover .pop-swatch.active {
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.9), 0 0 0 1px rgba(0,0,0,0.4);
+}
 #hl-popover .pop-actions {
   display: flex; gap: 5px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.05);
 }
 #hl-popover .pop-btn {
   flex: 1;

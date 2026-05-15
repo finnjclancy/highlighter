@@ -8,6 +8,8 @@
   let toolbar = null;
   let panel = null;
   let popover = null;
+  let hoverToolbar = null;
+  let hoverHideTimer = null;
 
   // ---------- storage ----------
   async function loadPalette() {
@@ -112,8 +114,20 @@
       mark.addEventListener("click", e => {
         e.stopPropagation();
         const h = highlights.find(x => x.id === id);
-        if (h) showPopover(h, e.clientX, e.clientY);
+        if (h) {
+          hideHoverToolbar();
+          showPopover(h, e.clientX, e.clientY);
+        }
       });
+      mark.addEventListener("mouseenter", () => {
+        clearTimeout(hoverHideTimer);
+        if (popover) return;
+        const h = highlights.find(x => x.id === id);
+        if (!h) return;
+        const rect = mark.getBoundingClientRect();
+        showHoverToolbar(h, rect);
+      });
+      mark.addEventListener("mouseleave", () => scheduleHoverHide());
 
       const frag = document.createDocumentFragment();
       if (before) frag.appendChild(document.createTextNode(before));
@@ -346,6 +360,79 @@
     });
   }
 
+  // ---------- recolor / remove ----------
+  function recolorHighlight(h, bg, fg) {
+    h.bg = bg; h.fg = fg;
+    document.querySelectorAll(`.hl-mark[data-hl-id="${h.id}"]`).forEach(m => {
+      m.style.backgroundColor = bg;
+      m.style.color = fg;
+    });
+    saveHighlights();
+    renderPanel();
+  }
+
+  // ---------- hover quick-toolbar ----------
+  function showHoverToolbar(h, rect) {
+    hideHoverToolbar();
+    hoverToolbar = document.createElement("div");
+    hoverToolbar.id = "hl-hover-toolbar";
+
+    palette.forEach(c => {
+      const sw = document.createElement("button");
+      sw.className = "hl-swatch";
+      sw.style.backgroundColor = c.bg;
+      sw.style.color = c.fg;
+      sw.textContent = "A";
+      sw.title = c.name;
+      if (c.bg === h.bg) sw.classList.add("active");
+      sw.addEventListener("mousedown", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        recolorHighlight(h, c.bg, c.fg);
+        hideHoverToolbar();
+      });
+      hoverToolbar.appendChild(sw);
+    });
+
+    const div = document.createElement("div");
+    div.className = "hl-divider";
+    hoverToolbar.appendChild(div);
+
+    const del = document.createElement("button");
+    del.className = "hl-btn hl-btn-del";
+    del.title = "Remove highlight";
+    del.textContent = "×";
+    del.addEventListener("mousedown", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      removeHighlight(h.id);
+      hideHoverToolbar();
+    });
+    hoverToolbar.appendChild(del);
+
+    document.body.appendChild(hoverToolbar);
+
+    const tw = hoverToolbar.offsetWidth;
+    const th = hoverToolbar.offsetHeight;
+    let top = window.scrollY + rect.top - th - 6;
+    if (top < window.scrollY + 4) top = window.scrollY + rect.bottom + 6;
+    let left = window.scrollX + rect.left + rect.width / 2 - tw / 2;
+    left = Math.max(window.scrollX + 4, Math.min(left, window.scrollX + document.documentElement.clientWidth - tw - 4));
+    hoverToolbar.style.top = top + "px";
+    hoverToolbar.style.left = left + "px";
+
+    hoverToolbar.addEventListener("mouseenter", () => clearTimeout(hoverHideTimer));
+    hoverToolbar.addEventListener("mouseleave", () => scheduleHoverHide());
+  }
+  function scheduleHoverHide() {
+    clearTimeout(hoverHideTimer);
+    hoverHideTimer = setTimeout(hideHoverToolbar, 220);
+  }
+  function hideHoverToolbar() {
+    clearTimeout(hoverHideTimer);
+    if (hoverToolbar) { hoverToolbar.remove(); hoverToolbar = null; }
+  }
+
   // ---------- popover ----------
   function hidePopover() {
     if (popover) { popover.remove(); popover = null; }
@@ -380,6 +467,31 @@
       note.className = "pop-note";
       note.textContent = h.note;
       popover.appendChild(note);
+    }
+
+    // Recolor row
+    if (palette && palette.length) {
+      const colors = document.createElement("div");
+      colors.className = "pop-colors";
+      palette.forEach(c => {
+        const sw = document.createElement("button");
+        sw.className = "pop-swatch";
+        sw.style.backgroundColor = c.bg;
+        sw.style.color = c.fg;
+        sw.textContent = "A";
+        sw.title = c.name;
+        if (c.bg === h.bg) sw.classList.add("active");
+        sw.addEventListener("click", e => {
+          e.stopPropagation();
+          recolorHighlight(h, c.bg, c.fg);
+          // Repaint the text strip inside the popover so it reflects the change
+          const txt = popover.querySelector(".pop-text");
+          if (txt) { txt.style.background = c.bg; txt.style.color = c.fg; }
+          popover.querySelectorAll(".pop-swatch").forEach(s => s.classList.toggle("active", s === sw));
+        });
+        colors.appendChild(sw);
+      });
+      popover.appendChild(colors);
     }
 
     const actions = document.createElement("div");
@@ -418,7 +530,7 @@
       hidePopover();
     }
   });
-  document.addEventListener("scroll", () => hidePopover(), { passive: true });
+  document.addEventListener("scroll", () => { hidePopover(); hideHoverToolbar(); }, { passive: true });
 
   // ---------- messaging (from popup) ----------
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
