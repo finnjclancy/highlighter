@@ -2,7 +2,7 @@
   if (window.__highlighterLoaded) return;
   window.__highlighterLoaded = true;
 
-  const PAGE_KEY = "hl_page_" + location.origin + location.pathname;
+  let PAGE_KEY = "hl_page_" + location.origin + location.pathname;
   let palette = [];
   let highlights = [];
   let toolbar = null;
@@ -225,23 +225,30 @@
     renderPanel();
   }
 
-  document.addEventListener("mouseup", e => {
+  function handleMouseUp(e) {
     if (toolbar && toolbar.contains(e.target)) return;
-    setTimeout(() => {
+    // Run twice — once immediately, and again after a microtask, to handle
+    // pages (X/Twitter, etc.) that briefly mess with the selection.
+    const tryShow = () => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !sel.toString().trim()) {
-        hideToolbar();
-        return;
+        return false;
       }
       const rect = sel.getRangeAt(0).getBoundingClientRect();
-      if (rect.width === 0 && rect.height === 0) return;
+      if (rect.width === 0 && rect.height === 0) return false;
       showToolbar(rect);
-    }, 10);
-  });
+      return true;
+    };
+    if (!tryShow()) {
+      setTimeout(() => { if (!tryShow()) hideToolbar(); }, 30);
+    }
+  }
+  document.addEventListener("mouseup", handleMouseUp, true);
+  document.addEventListener("pointerup", handleMouseUp, true);
   document.addEventListener("mousedown", e => {
     if (toolbar && !toolbar.contains(e.target)) hideToolbar();
-  });
-  document.addEventListener("scroll", hideToolbar, { passive: true });
+  }, true);
+  document.addEventListener("scroll", hideToolbar, { passive: true, capture: true });
 
   // ---------- side panel ----------
   function buildPanel() {
@@ -450,6 +457,65 @@
   }
 
 
+  // ---------- SPA handling: watch URL changes (Twitter/X, etc.) ----------
+  let currentPath = location.pathname;
+  async function onUrlChange() {
+    if (location.pathname === currentPath) return;
+    currentPath = location.pathname;
+    PAGE_KEY = "hl_page_" + location.origin + location.pathname;
+    // Clear current marks from the previous page before loading new ones
+    document.querySelectorAll(".hl-mark").forEach(m => {
+      const txt = document.createTextNode(m.textContent);
+      m.parentNode.replaceChild(txt, m);
+    });
+    document.body.normalize();
+    await loadHighlights();
+    setTimeout(() => { applyAllHighlights(); renderPanel(); }, 400);
+  }
+  (function hookHistory() {
+    const wrap = (name) => {
+      const orig = history[name];
+      history[name] = function () {
+        const r = orig.apply(this, arguments);
+        setTimeout(onUrlChange, 0);
+        return r;
+      };
+    };
+    wrap("pushState");
+    wrap("replaceState");
+    window.addEventListener("popstate", () => setTimeout(onUrlChange, 0));
+  })();
+
+  // ---------- re-apply highlights when the page mutates (SPA re-renders) ----------
+  let reapplyTimer = null;
+  let reapplyInFlight = false;
+  function scheduleReapply() {
+    if (reapplyInFlight) return;
+    if (!highlights.length) return;
+    clearTimeout(reapplyTimer);
+    reapplyTimer = setTimeout(() => {
+      // Detect if any highlight is missing from the DOM
+      const missing = highlights.some(h =>
+        !document.querySelector(`.hl-mark[data-hl-id="${h.id}"]`)
+      );
+      if (!missing) return;
+      reapplyInFlight = true;
+      try { applyAllHighlights(); } catch {}
+      reapplyInFlight = false;
+    }, 250);
+  }
+  const domObserver = new MutationObserver((muts) => {
+    // Skip if mutations are only from our own overlay/popover/toolbar
+    let interesting = false;
+    for (const m of muts) {
+      const t = m.target;
+      if (!t) continue;
+      if (t.id === "hl-panel" || t.closest?.("#hl-panel,#hl-toolbar,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas")) continue;
+      interesting = true; break;
+    }
+    if (interesting) scheduleReapply();
+  });
+
   // ---------- init ----------
   (async function init() {
     await loadPalette();
@@ -461,5 +527,9 @@
       renderPanel();
       checkHash();
     }, 300);
+    // Watch body for SPA re-renders
+    if (document.body) {
+      domObserver.observe(document.body, { childList: true, subtree: true });
+    }
   })();
 })();
