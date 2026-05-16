@@ -53,7 +53,7 @@ for path in "${INCLUDE[@]}"; do
 done
 
 # Build the zip
-zip -rq "$OUT_FILE" "${INCLUDE[@]}" -x '*.DS_Store' -x '__MACOSX/*'
+zip -rq "$OUT_FILE" "${INCLUDE[@]}" -x '*.DS_Store' -x '__MACOSX/*' -x 'icons/promo-*'
 
 # Report size + contents
 SIZE=$(du -h "$OUT_FILE" | cut -f1)
