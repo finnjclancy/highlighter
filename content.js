@@ -710,7 +710,25 @@
     return true;
   }
 
-  function applySharedFromUrl() {
+  function b64UrlToBytesShared(s) {
+    let b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  }
+  async function decodeShareEncShared(enc) {
+    if (enc.charAt(0) === "z" && typeof DecompressionStream !== "undefined") {
+      try {
+        const bytes = b64UrlToBytesShared(enc.slice(1));
+        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+        return await new Response(stream).text();
+      } catch {}
+    }
+    try {
+      return new TextDecoder().decode(b64UrlToBytesShared(enc));
+    } catch { return null; }
+  }
+
+  async function applySharedFromUrl() {
     let enc = null;
     try {
       const params = new URLSearchParams(location.search);
@@ -722,19 +740,15 @@
     }
     if (!enc) return;
 
+    const json = await decodeShareEncShared(enc);
+    if (!json) return;
     let payload;
-    try {
-      let b64 = enc.replace(/-/g, "+").replace(/_/g, "/");
-      while (b64.length % 4) b64 += "=";
-      const json = new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
-      payload = JSON.parse(json);
-    } catch { return; }
+    try { payload = JSON.parse(json); } catch { return; }
     if (!payload || !Array.isArray(payload.highlights)) return;
 
     pendingShared = [];
     let applied = 0;
     payload.highlights.forEach(p => {
-      // Skip ones the user already has saved
       if (highlights.some(h => h.id === p.id)) return;
       if (applyHighlightFromPayload(p)) applied++;
     });

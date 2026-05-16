@@ -1,10 +1,29 @@
 // Decode a shared-highlights payload from the URL and render it as a clean
 // gallery with a "View on original page" button.
 
-function b64UrlToUtf8(s) {
+function b64UrlToBytes(s) {
   let b64 = s.replace(/-/g, "+").replace(/_/g, "/");
   while (b64.length % 4) b64 += "=";
-  return new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+function b64UrlToUtf8(s) {
+  return new TextDecoder().decode(b64UrlToBytes(s));
+}
+
+async function gunzipB64Url(s) {
+  if (typeof DecompressionStream === "undefined") throw new Error("no DecompressionStream");
+  const bytes = b64UrlToBytes(s);
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return await new Response(stream).text();
+}
+
+async function decodeShareEnc(enc) {
+  // New format: 'z' prefix means gzipped; rest is base64url.
+  // Legacy: raw base64url-encoded JSON.
+  if (enc.charAt(0) === "z") {
+    try { return await gunzipB64Url(enc.slice(1)); } catch {}
+  }
+  try { return b64UrlToUtf8(enc); } catch { return null; }
 }
 
 function escape(s) {
@@ -22,15 +41,13 @@ function renderEmpty(message, hint) {
     </div>`;
 }
 
-function decodePayload() {
+async function decodePayload() {
   const params = new URLSearchParams(location.search);
   const enc = params.get("d");
   if (!enc) return null;
-  try {
-    return JSON.parse(b64UrlToUtf8(enc));
-  } catch (e) {
-    return null;
-  }
+  const json = await decodeShareEnc(enc);
+  if (!json) return null;
+  try { return JSON.parse(json); } catch { return null; }
 }
 
 function buildLiveLink(payload) {
@@ -49,8 +66,8 @@ function hostOf(url) {
   try { return new URL(url).hostname; } catch { return ""; }
 }
 
-function init() {
-  const payload = decodePayload();
+async function init() {
+  const payload = await decodePayload();
   if (!payload || !Array.isArray(payload.highlights) || !payload.highlights.length) {
     renderEmpty("No highlights here", "This link doesn't seem to carry any shared highlights.");
     return;

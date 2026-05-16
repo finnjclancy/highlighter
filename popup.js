@@ -66,6 +66,26 @@ function utf8ToB64Url(s) {
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
+function bytesToB64Url(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function gzipB64Url(jsonStr) {
+  // Returns the gzipped JSON as a URL-safe base64 string, prefixed with "z"
+  // so receivers know to gunzip. Falls back to raw base64 if the browser
+  // lacks CompressionStream (none of the current targets, but be safe).
+  if (typeof CompressionStream === "undefined") return utf8ToB64Url(jsonStr);
+  try {
+    const stream = new Blob([jsonStr]).stream().pipeThrough(new CompressionStream("gzip"));
+    const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+    return "z" + bytesToB64Url(buf);
+  } catch {
+    return utf8ToB64Url(jsonStr);
+  }
+}
+
 const GALLERY_BASE = "https://finnjclancy.github.io/highlighter/v.html";
 
 function buildPayload(pageUrl, pageTitle, list) {
@@ -93,33 +113,18 @@ function buildPayload(pageUrl, pageTitle, list) {
   };
 }
 
-function buildShareUrl(pageUrl, pageTitle, list) {
+async function buildShareUrl(pageUrl, pageTitle, list) {
   const payload = buildPayload(pageUrl, pageTitle, list);
-  const enc = utf8ToB64Url(JSON.stringify(payload));
+  const enc = await gzipB64Url(JSON.stringify(payload));
   const u = new URL(pageUrl);
   u.searchParams.set("hlshare", enc);
   return u.toString();
 }
 
-function buildGalleryUrl(pageUrl, pageTitle, list) {
+async function buildGalleryUrl(pageUrl, pageTitle, list) {
   const payload = buildPayload(pageUrl, pageTitle, list);
-  const enc = utf8ToB64Url(JSON.stringify(payload));
+  const enc = await gzipB64Url(JSON.stringify(payload));
   return GALLERY_BASE + "?d=" + enc;
-}
-
-async function shortenUrl(longUrl) {
-  // TinyURL — free, no API key. Returns a short URL that redirects.
-  try {
-    const res = await fetch("https://tinyurl.com/api-create.php?url=" + encodeURIComponent(longUrl), {
-      method: "GET"
-    });
-    if (!res.ok) return null;
-    const txt = (await res.text()).trim();
-    if (/^https?:\/\/tinyurl\.com\//.test(txt)) return txt;
-    return null;
-  } catch {
-    return null;
-  }
 }
 
 document.getElementById("share-link").addEventListener("click", async () => {
@@ -132,16 +137,9 @@ document.getElementById("share-link").addEventListener("click", async () => {
     if (ctx?.ok && Array.isArray(ctx.highlights)) enriched = ctx.highlights;
   } catch {}
   const n = enriched.length;
-  toast(`… shortening link …`);
-  const longUrl = buildGalleryUrl(r.tab.url, r.tab.title, enriched);
-  const shortUrl = await shortenUrl(longUrl);
-  const finalUrl = shortUrl || longUrl;
-  await copyToClipboard(finalUrl);
-  if (shortUrl) {
-    toast(`✓ Short link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
-  } else {
-    toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"}) — long URL`);
-  }
+  const url = await buildGalleryUrl(r.tab.url, r.tab.title, enriched);
+  await copyToClipboard(url);
+  toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
 });
 
 document.getElementById("share-text").addEventListener("click", async () => {
