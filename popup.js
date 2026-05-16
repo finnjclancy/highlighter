@@ -61,6 +61,56 @@ function buildPlainText(tab, list) {
   return parts.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
 }
 
+function utf8ToB64Url(s) {
+  const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function buildShareUrl(pageUrl, list) {
+  const payload = {
+    v: 2,
+    highlights: list.map(h => {
+      const out = {
+        id: h.id, bg: h.bg, fg: h.fg,
+        text: h.text,
+        note: h.note || "",
+        tags: h.tags || []
+      };
+      if (h.range) {
+        out.r = {
+          sx: h.range.startXPath, so: h.range.startOffset,
+          ex: h.range.endXPath,   eo: h.range.endOffset
+        };
+      }
+      // Text-quote selector for resilient fallback (~40 chars each side)
+      if (h.prefix) out.p = h.prefix;
+      if (h.suffix) out.s = h.suffix;
+      return out;
+    })
+  };
+  const enc = utf8ToB64Url(JSON.stringify(payload));
+  const u = new URL(pageUrl);
+  u.searchParams.set("hlshare", enc);
+  return u.toString();
+}
+
+document.getElementById("share-link").addEventListener("click", async () => {
+  const r = await getPageHighlights();
+  if (r.error) { toast(r.error); return; }
+  if (!r.list.length) { toast("No highlights on this page yet."); return; }
+  // Ask the content script to enrich each highlight with prefix/suffix context
+  // (best-effort; if it fails, we still build the URL with what we have)
+  let enriched = r.list;
+  try {
+    const ctx = await chrome.tabs.sendMessage(r.tab.id, { type: "getContextForShare" });
+    if (ctx?.ok && Array.isArray(ctx.highlights)) enriched = ctx.highlights;
+  } catch {}
+  const url = buildShareUrl(r.tab.url, enriched);
+  await copyToClipboard(url);
+  const n = enriched.length;
+  toast(`✓ Live link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
+});
+
 document.getElementById("share-text").addEventListener("click", async () => {
   const r = await getPageHighlights();
   if (r.error) { toast(r.error); return; }

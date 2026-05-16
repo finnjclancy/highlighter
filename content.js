@@ -10,6 +10,11 @@
   let popover = null;
   let hoverToolbar = null;
   let hoverHideTimer = null;
+  let shareBanner = null;
+  let pendingShared = [];
+
+  const SKIP_SELECTOR = "script,style,#hl-toolbar,#hl-panel,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-share-banner,#hl-hover-toolbar";
+  const CONTEXT_LEN = 40;
 
   // ---------- storage ----------
   async function loadPalette() {
@@ -551,6 +556,13 @@
         renderPanel();
       }
       sendResponse({ ok: true });
+    } else if (msg.type === "getContextForShare") {
+      // Enrich each saved highlight with prefix/suffix from the current document
+      const enriched = highlights.map(h => {
+        const ctx = getContextAround(h.range);
+        return { ...h, prefix: ctx.prefix, suffix: ctx.suffix };
+      });
+      sendResponse({ ok: true, highlights: enriched });
     } else if (msg.type === "togglePanel") {
       if (panel) {
         if (panel.classList.contains("hl-hidden")) {
@@ -575,6 +587,200 @@
   function checkHash() {
     const m = location.hash.match(/hl=([\w_]+)/);
     if (m) setTimeout(() => scrollToHighlight(m[1]), 400);
+  }
+
+  // ---------- text-quote selectors (for resilient share/restore) ----------
+  function buildTextSegments() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        if (!n.nodeValue.length) return NodeFilter.FILTER_REJECT;
+        if (n.parentElement && n.parentElement.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const segs = [];
+    let cursor = 0;
+    let node;
+    while ((node = walker.nextNode())) {
+      segs.push({ node, start: cursor, end: cursor + node.nodeValue.length });
+      cursor += node.nodeValue.length;
+    }
+    return { segs, fullText: segs.map(s => s.node.nodeValue).join("") };
+  }
+
+  function positionToNode(segs, pos) {
+    // Binary-ish linear walk; segments count is moderate
+    for (const s of segs) {
+      if (pos >= s.start && pos <= s.end) {
+        return { node: s.node, offset: pos - s.start };
+      }
+    }
+    return null;
+  }
+
+  function findRangeByText(text, prefix, suffix) {
+    if (!text) return null;
+    const { segs, fullText } = buildTextSegments();
+    let pos = -1;
+    if (prefix || suffix) {
+      const target = (prefix || "") + text + (suffix || "");
+      pos = fullText.indexOf(target);
+      if (pos >= 0) pos += (prefix ? prefix.length : 0);
+    }
+    if (pos < 0) {
+      // Fall back: just find the text. If the prefix/suffix are present anywhere
+      // in the doc, prefer the occurrence closest to that anchor.
+      const occurrences = [];
+      let i = -1;
+      while ((i = fullText.indexOf(text, i + 1)) >= 0) occurrences.push(i);
+      if (!occurrences.length) return null;
+      if (prefix) {
+        const anchor = fullText.indexOf(prefix);
+        if (anchor >= 0) {
+          occurrences.sort((a, b) => Math.abs(a - anchor) - Math.abs(b - anchor));
+        }
+      }
+      pos = occurrences[0];
+    }
+    const start = positionToNode(segs, pos);
+    const end = positionToNode(segs, pos + text.length);
+    if (!start || !end) return null;
+    try {
+      const r = document.createRange();
+      r.setStart(start.node, start.offset);
+      r.setEnd(end.node, end.offset);
+      return r;
+    } catch { return null; }
+  }
+
+  function getContextAround(serialized) {
+    // For an existing highlight (with XPath range), return prefix/suffix from the live document.
+    try {
+      const r = deserializeRange(serialized);
+      if (!r) return { prefix: "", suffix: "" };
+      const { segs, fullText } = buildTextSegments();
+      // Find this text occurrence using the range's text
+      const text = r.toString();
+      const idx = fullText.indexOf(text);
+      if (idx < 0) return { prefix: "", suffix: "" };
+      const prefix = fullText.slice(Math.max(0, idx - CONTEXT_LEN), idx);
+      const suffix = fullText.slice(idx + text.length, idx + text.length + CONTEXT_LEN);
+      return { prefix, suffix };
+    } catch { return { prefix: "", suffix: "" }; }
+  }
+
+  // ---------- share: build & receive ----------
+  function applyHighlightFromPayload(p) {
+    // Build a working highlight object with both XPath and text-quote info
+    const h = {
+      id: p.id, bg: p.bg, fg: p.fg,
+      text: p.text,
+      note: p.note || "",
+      tags: p.tags || [],
+      url: location.origin + location.pathname,
+      title: document.title,
+      createdAt: Date.now(),
+      range: p.r ? {
+        startXPath: p.r.sx, startOffset: p.r.so,
+        endXPath: p.r.ex,   endOffset: p.r.eo,
+        text: p.text
+      } : null,
+      _shared: true
+    };
+
+    // Try XPath restore first
+    let range = h.range ? deserializeRange(h.range) : null;
+    if (!range || range.toString().trim() !== p.text.trim()) {
+      // Fallback: text-quote search
+      range = findRangeByText(p.text, p.p || "", p.s || "");
+      if (range) {
+        // Update serialized form to reflect the actual found location
+        h.range = {
+          startXPath: getXPath(range.startContainer),
+          startOffset: range.startOffset,
+          endXPath: getXPath(range.endContainer),
+          endOffset: range.endOffset,
+          text: p.text
+        };
+      }
+    }
+    if (!range) return false;
+    wrapRange(range, h.id, h.bg, h.fg);
+    pendingShared.push(h);
+    return true;
+  }
+
+  function applySharedFromUrl() {
+    let enc = null;
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.has("hlshare")) enc = params.get("hlshare");
+    } catch {}
+    if (!enc) {
+      const m = location.hash.match(/hlshare=([^&]+)/);
+      if (m) enc = m[1];
+    }
+    if (!enc) return;
+
+    let payload;
+    try {
+      let b64 = enc.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      const json = new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+      payload = JSON.parse(json);
+    } catch { return; }
+    if (!payload || !Array.isArray(payload.highlights)) return;
+
+    pendingShared = [];
+    let applied = 0;
+    payload.highlights.forEach(p => {
+      // Skip ones the user already has saved
+      if (highlights.some(h => h.id === p.id)) return;
+      if (applyHighlightFromPayload(p)) applied++;
+    });
+    if (applied > 0) showShareBanner(applied, payload.highlights.length);
+    renderPanel();
+  }
+
+  function showShareBanner(applied, total) {
+    if (shareBanner) shareBanner.remove();
+    shareBanner = document.createElement("div");
+    shareBanner.id = "hl-share-banner";
+    const note = applied < total
+      ? ` <span class="hl-sb-note">(${total - applied} couldn't be matched)</span>`
+      : "";
+    shareBanner.innerHTML = `
+      <span class="hl-sb-text">✨ <b>${applied}</b> shared ${applied === 1 ? "highlight" : "highlights"} on this page${note}</span>
+      <button class="hl-sb-btn hl-sb-keep">Save to my library</button>
+      <button class="hl-sb-btn hl-sb-dismiss">Dismiss</button>
+    `;
+    document.body.appendChild(shareBanner);
+    shareBanner.querySelector(".hl-sb-keep").addEventListener("click", async () => {
+      pendingShared.forEach(h => { delete h._shared; highlights.push(h); });
+      await saveHighlights();
+      pendingShared = [];
+      shareBanner.remove(); shareBanner = null;
+      renderPanel();
+      try {
+        const u = new URL(location.href);
+        u.searchParams.delete("hlshare");
+        let newHash = u.hash.replace(/[?&]?hlshare=[^&]*/, "").replace(/^#&/, "#");
+        if (newHash === "#") newHash = "";
+        history.replaceState(null, "", u.pathname + u.search + newHash);
+      } catch {}
+    });
+    shareBanner.querySelector(".hl-sb-dismiss").addEventListener("click", () => {
+      pendingShared.forEach(h => {
+        document.querySelectorAll(`.hl-mark[data-hl-id="${h.id}"]`).forEach(m => {
+          const txt = document.createTextNode(m.textContent);
+          m.parentNode.replaceChild(txt, m);
+        });
+      });
+      document.body.normalize();
+      pendingShared = [];
+      shareBanner.remove(); shareBanner = null;
+      renderPanel();
+    });
   }
 
 
@@ -647,6 +853,7 @@
       applyAllHighlights();
       renderPanel();
       checkHash();
+      applySharedFromUrl();
     }, 300);
     // Watch body for SPA re-renders
     if (document.body) {
