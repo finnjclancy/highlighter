@@ -9,9 +9,14 @@ const DEFAULT_PALETTE = [
   { name: "Dark",    bg: "#263238", fg: "#ffffff" }
 ];
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   const { palette } = await chrome.storage.sync.get("palette");
   if (!palette) await chrome.storage.sync.set({ palette: DEFAULT_PALETTE });
+
+  // Open the welcome page only on first install (not on updates or browser restart)
+  if (details.reason === "install") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("welcome.html") });
+  }
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

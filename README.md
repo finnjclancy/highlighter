@@ -1,35 +1,115 @@
 # Highlighter
 
-A browser extension for highlighting text on any web page with custom colors, plus a library to organize, tag, and annotate your highlights.
+A clean browser extension for highlighting text on any web page with custom colours, organising quotes into folders, and sharing live links.
+
+> Highlight any page. Share what you read.
+
+**Live site:** [finnjclancy.github.io/highlighter](https://finnjclancy.github.io/highlighter/)
+
+---
 
 ## Features
 
-- Select text → floating toolbar with your custom color palette (text + background per swatch)
-- Highlights are saved per-URL and restored when you revisit
-- Floating side panel on every page (works in fullscreen): collapse/expand button stays top-left
-- **Library** (full page, opens from the extension icon): every highlight from every page, with tags, comments, search, and filters by tag/color/site
-- **Design Studio** (options page): drag-to-reorder color cards, live preview, presets, hex/picker inputs
-- Highlight styling can never change the host page's font size, weight, or family (forced inheritance)
-- Deep links: `#hl=<id>` scrolls to a specific highlight on page load
+- **Custom palette** — each swatch has its own text and background colour. Hover a highlight to re-colour or remove it instantly.
+- **Folders, tags, comments** — organise quotes the way you think. Free-form notes per highlight, batch-select and export selections as plain text or Markdown.
+- **Floating overlay** — a tiny burger in the bottom-left lists every highlight on the current page; click any to flash + scroll to it.
+- **Draw on the page** — pen, line, and rectangle tools for marking up diagrams, screenshots, or PDFs in-place.
+- **Library** — single dashboard for every highlight across every site. Filter by folder, site, or search.
+- **Design Studio** — drag-and-drop palette editor with presets, live preview, and per-swatch text/background pickers.
+- **Sharing** — generate a single link that works two ways: viewers without the extension see a clean reader-style gallery; viewers with the extension can jump straight to the source page with your highlights painted on it.
+- **Privacy-first** — no accounts, no servers, no tracking. Highlights live in your own browser storage; nothing leaves your device unless you explicitly share.
 
-## Install (Chrome / Edge / Brave)
+---
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked** and select this folder
+## Install
 
-## Usage
+### From source (for development)
 
-- Click the toolbar icon → **Open Library** to manage everything
-- Select text on any page → click a color to highlight
-- Side panel: click a highlight to scroll-and-flash to it; click × to delete
-- Library cards: add tags (enter to confirm), type notes (auto-saved), delete, jump to the source URL
-- Design Studio: pick a preset, or click + to add a swatch; drag cards to reorder
+1. `git clone https://github.com/finnjclancy/highlighter && cd highlighter`
+2. Open `chrome://extensions` in Chrome / Edge / Brave / Arc.
+3. Toggle **Developer mode** (top right).
+4. Click **Load unpacked** → select the cloned folder.
+5. Pin the extension from the puzzle-piece menu so it's always one click away.
 
-## Files
+### From the Chrome Web Store
 
-- `manifest.json`, `background.js`
-- `content.js` / `content.css` — selection toolbar, highlight rendering, floating panel
-- `popup.html` / `popup.js` — toolbar popup (stats + entry points)
-- `library.html` / `library.js` — full-page highlight library with tags, notes, filters
-- `options.html` / `options.js` — Design Studio (palette editor)
+_(Pending submission — link will go here when published.)_
+
+---
+
+## How it works
+
+### Highlight
+Select text on any page → a mini toolbar appears with your colour palette → click a swatch.
+
+### Re-colour or remove
+Hover any highlight → palette + × buttons appear above it. Or click the highlight for the full popover.
+
+### Library
+Toolbar icon → **Open library / design**. Folders (tags), sites, search, sort, multi-select, export, bulk delete.
+
+### Share
+Toolbar icon → **🔗 Share live link**. Copies a URL like:
+
+```
+https://finnjclancy.github.io/highlighter/v.html?d=zH4sI…
+```
+
+The payload is your highlights, gzipped + base64url-encoded into the URL itself. No server stores the data. Recipients without the extension get a clean gallery of the quotes. Recipients with the extension can click **Open on original page →** to see them painted onto the live article.
+
+### Draw
+Toolbar icon → **✎ Draw on page**. Pen / line / rectangle tools with palette, three stroke widths, undo, and clear.
+
+### Copy text
+Toolbar icon → **📋 Copy text**. Drops every highlight on the current page onto your clipboard as plain text (title, URL, then each quote on its own line with optional tags/comment).
+
+---
+
+## Repo layout
+
+```
+/                  extension source (manifest.json + scripts/styles)
+  background.js    service worker — onInstalled, default palette, message routing
+  content.js       in-page logic — selection toolbar, hover/click controls, overlay
+  drawing.js/css   drawing canvas + toolbar
+  library.html/js  full-page library dashboard + design studio (tabs)
+  popup.html/js    toolbar popup
+  welcome.html/js  one-time onboarding shown on install
+  icons/           extension icons + store promo tile
+
+docs/              GitHub Pages site (gallery viewer + landing + privacy)
+  index.html       landing page
+  v.html / v.js    shared-highlights gallery viewer (decodes ?d=<payload>)
+  privacy.html     privacy policy
+  styles.css       shared site styles
+
+scripts/
+  make_icons.py    regenerate icon PNGs and the store promo tile
+  package.sh       build a Chrome Web Store-ready .zip → dist/highlighter-<v>.zip
+```
+
+---
+
+## Building a release
+
+```bash
+./scripts/package.sh
+```
+
+Produces `dist/highlighter-<version>.zip` containing only the files that ship in the Web Store package. Bump `manifest.json`'s `version` before each new submission.
+
+To regenerate icons or the promo tile, edit `scripts/make_icons.py` then re-run it.
+
+---
+
+## Privacy
+
+All highlights, drawings, and palette settings live in the user's `chrome.storage.local`. The extension has no analytics, no third-party scripts, and never transmits page content. The only data that leaves the device is what the user explicitly puts in a share link or copies to their clipboard.
+
+Full policy: [finnjclancy.github.io/highlighter/privacy.html](https://finnjclancy.github.io/highlighter/privacy.html)
+
+---
+
+## Licence
+
+MIT.

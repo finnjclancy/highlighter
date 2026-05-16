@@ -39,6 +39,8 @@ INCLUDE=(
   options.html
   options.js
   tabs.js
+  welcome.html
+  welcome.js
   icons
 )
 

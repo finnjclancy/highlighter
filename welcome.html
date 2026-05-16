@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Highlighter</title>
+  <style>
+    :root {
+      --bg: #0c0c0e;
+      --bg-2: #131316;
+      --surface: #18181b;
+      --surface-2: #1f1f23;
+      --border: rgba(255,255,255,0.05);
+      --border-strong: rgba(255,255,255,0.1);
+      --text: #fafafa;
+      --text-2: rgba(250,250,250,0.62);
+      --text-3: rgba(250,250,250,0.4);
+      --text-4: rgba(250,250,250,0.28);
+      --accent: #6366f1;
+      --accent-hover: #5457e0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      font-feature-settings: "cv11", "ss01";
+      letter-spacing: -0.01em;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 56px 28px 80px; }
+    header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+    }
+    .logo {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    h1 {
+      font-size: 32px; font-weight: 600;
+      letter-spacing: -0.025em;
+      margin: 0;
+    }
+    .lede {
+      font-size: 17px; color: var(--text-2);
+      max-width: 56ch; line-height: 1.5;
+      margin: 0 0 32px;
+    }
+    .steps {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 36px;
+    }
+    .step {
+      display: flex; gap: 14px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 26px; height: 26px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 13px;
+      color: #fff;
+    }
+    .step-body { flex: 1; }
+    .step h3 {
+      margin: 0 0 4px;
+      font-size: 15px; font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .step p {
+      margin: 0;
+      color: var(--text-3);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .step .kbd {
+      display: inline-block;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); border: 1px solid var(--accent);
+      color: #fff;
+      border-radius: 999px; padding: 11px 22px;
+      font: inherit; font-weight: 500; font-size: 14px;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.15s, transform 0.06s;
+    }
+    .cta:hover { background: var(--accent-hover); }
+    .cta:active { transform: scale(0.98); }
+    .cta-secondary {
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+    }
+    .cta-secondary:hover { background: var(--surface-2); }
+    .pin-hint {
+      margin-top: 28px;
+      padding: 14px 18px;
+      background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .pin-hint strong { color: var(--text); }
+    footer {
+      margin-top: 48px;
+      color: var(--text-4);
+      font-size: 12px;
+      text-align: center;
+    }
+    footer a { color: var(--text-3); text-decoration: none; }
+    footer a:hover { color: var(--text-2); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="logo">✦</span>
+      <h1>Welcome to Highlighter</h1>
+    </header>
+
+    <p class="lede">
+      You're ready to go. Here are the four things to know.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Select text on any web page</h3>
+          <p>A small toolbar appears with your colour palette. Click any swatch to highlight the selection in that colour. Highlights save automatically and reappear when you revisit the page.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Hover or click a highlight to manage it</h3>
+          <p>Hover any highlight for a quick mini-toolbar (re-colour, remove). Click it to open the full popover with the comment field, tag editor, and a button to jump back to the source.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Open the library to organise everything</h3>
+          <p>Click the Highlighter icon in your toolbar, then <strong>Open library / design</strong>. Sort into folders (tags), search across all sites, batch select, and export selections as plain text or Markdown.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Share a page's highlights</h3>
+          <p>Extension icon → <strong>Share live link</strong>. Copies a URL that, when opened, shows your highlights as a clean gallery — and if the recipient also has Highlighter installed, they can open the source page with your highlights painted on it.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <a class="cta" id="open-library">Open library</a>
+      <a class="cta cta-secondary" href="https://en.wikipedia.org/wiki/Electricity" target="_blank">Try it on Wikipedia ↗</a>
+    </div>
+
+    <div class="pin-hint">
+      <strong>Tip:</strong> click the puzzle icon in your browser toolbar, find <em>Highlighter</em>, and pin it so it's always a click away.
+    </div>
+
+    <footer>
+      No accounts, no servers, no tracking. Highlights live in your own browser.
+      <br>
+      <a href="https://finnjclancy.github.io/highlighter/privacy.html" target="_blank">Privacy policy</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/finnjclancy/highlighter" target="_blank">Source on GitHub</a>
+    </footer>
+  </div>
+  <script src="welcome.js"></script>
+</body>
+</html>
