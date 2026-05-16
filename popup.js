@@ -66,9 +66,13 @@ function utf8ToB64Url(s) {
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-function buildShareUrl(pageUrl, list) {
-  const payload = {
-    v: 2,
+const GALLERY_BASE = "https://finnjclancy.github.io/highlighter/v.html";
+
+function buildPayload(pageUrl, pageTitle, list) {
+  return {
+    v: 3,
+    url: pageUrl,
+    title: pageTitle || "",
     highlights: list.map(h => {
       const out = {
         id: h.id, bg: h.bg, fg: h.fg,
@@ -82,33 +86,43 @@ function buildShareUrl(pageUrl, list) {
           ex: h.range.endXPath,   eo: h.range.endOffset
         };
       }
-      // Text-quote selector for resilient fallback (~40 chars each side)
       if (h.prefix) out.p = h.prefix;
       if (h.suffix) out.s = h.suffix;
       return out;
     })
   };
+}
+
+function buildShareUrl(pageUrl, pageTitle, list) {
+  const payload = buildPayload(pageUrl, pageTitle, list);
   const enc = utf8ToB64Url(JSON.stringify(payload));
   const u = new URL(pageUrl);
   u.searchParams.set("hlshare", enc);
   return u.toString();
 }
 
+function buildGalleryUrl(pageUrl, pageTitle, list) {
+  const payload = buildPayload(pageUrl, pageTitle, list);
+  const enc = utf8ToB64Url(JSON.stringify(payload));
+  return GALLERY_BASE + "?d=" + enc;
+}
+
 document.getElementById("share-link").addEventListener("click", async () => {
   const r = await getPageHighlights();
   if (r.error) { toast(r.error); return; }
   if (!r.list.length) { toast("No highlights on this page yet."); return; }
-  // Ask the content script to enrich each highlight with prefix/suffix context
-  // (best-effort; if it fails, we still build the URL with what we have)
   let enriched = r.list;
   try {
     const ctx = await chrome.tabs.sendMessage(r.tab.id, { type: "getContextForShare" });
     if (ctx?.ok && Array.isArray(ctx.highlights)) enriched = ctx.highlights;
   } catch {}
-  const url = buildShareUrl(r.tab.url, enriched);
+  // Use the gallery URL as the primary share link — it works for everyone
+  // (with or without the extension) and contains a "Open on original page"
+  // button that triggers the live overlay for extension users.
+  const url = buildGalleryUrl(r.tab.url, r.tab.title, enriched);
   await copyToClipboard(url);
   const n = enriched.length;
-  toast(`✓ Live link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
+  toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
 });
 
 document.getElementById("share-text").addEventListener("click", async () => {

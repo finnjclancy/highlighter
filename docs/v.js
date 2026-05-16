@@ -1,0 +1,101 @@
+// Decode a shared-highlights payload from the URL and render it as a clean
+// gallery with a "View on original page" button.
+
+function b64UrlToUtf8(s) {
+  let b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  return new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+}
+
+function escape(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function renderEmpty(message, hint) {
+  const root = document.getElementById("content");
+  root.innerHTML = `
+    <div class="empty">
+      <h2>${escape(message)}</h2>
+      ${hint ? `<div>${escape(hint)}</div>` : ""}
+    </div>`;
+}
+
+function decodePayload() {
+  const params = new URLSearchParams(location.search);
+  const enc = params.get("d");
+  if (!enc) return null;
+  try {
+    return JSON.parse(b64UrlToUtf8(enc));
+  } catch (e) {
+    return null;
+  }
+}
+
+function buildLiveLink(payload) {
+  // Append the original payload back to the source URL so people with the
+  // extension installed get the highlights painted on the real page.
+  if (!payload.url) return null;
+  try {
+    const u = new URL(payload.url);
+    const enc = new URLSearchParams(location.search).get("d");
+    if (enc) u.searchParams.set("hlshare", enc);
+    return u.toString();
+  } catch { return payload.url; }
+}
+
+function hostOf(url) {
+  try { return new URL(url).hostname; } catch { return ""; }
+}
+
+function init() {
+  const payload = decodePayload();
+  if (!payload || !Array.isArray(payload.highlights) || !payload.highlights.length) {
+    renderEmpty("No highlights here", "This link doesn't seem to carry any shared highlights.");
+    return;
+  }
+
+  const root = document.getElementById("content");
+  const title = payload.title || hostOf(payload.url) || "Shared highlights";
+  const count = payload.highlights.length;
+  const live = buildLiveLink(payload);
+
+  let html = `
+    <h2 class="page-title">${escape(title)}</h2>
+    <div class="meta">
+      <a href="${escape(payload.url || "#")}" target="_blank" rel="noopener">${escape(hostOf(payload.url) || "Open source")}</a>
+      <span class="sep">·</span>
+      <span>${count} ${count === 1 ? "highlight" : "highlights"}</span>
+    </div>
+    <div class="cta-row">
+      ${live ? `<a class="cta" href="${escape(live)}" rel="noopener">Open on original page →</a>` : ""}
+      <a class="cta cta-secondary" href="index.html">About Highlighter</a>
+    </div>
+    <div class="cards">
+  `;
+
+  payload.highlights.forEach(h => {
+    const tags = (h.tags || []).map(t => `<span class="chip">#${escape(t)}</span>`).join("");
+    const note = h.note ? `<div class="note">${escape(h.note)}</div>` : "";
+    html += `
+      <div class="card">
+        <span class="swatch" style="background:${escape(h.bg || "#fff")}"></span>
+        <span class="quote" style="background:${escape(h.bg || "#fff")};color:${escape(h.fg || "#000")}">${escape(h.text || "")}</span>
+        ${tags ? `<div class="chip-row">${tags}</div>` : ""}
+        ${note}
+      </div>`;
+  });
+  html += `</div>`;
+
+  // Helpful hint about the extension below the cards
+  html += `
+    <div style="margin-top:36px;padding:16px 18px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-lg);font-size:13px;color:var(--text-2);">
+      <strong style="color:var(--text);">Want to see these on the real page?</strong>
+      Install the <a href="index.html">Highlighter extension</a> and click "Open on original page" above — your highlights will appear in-context as you read.
+    </div>`;
+
+  root.innerHTML = html;
+}
+
+init();
