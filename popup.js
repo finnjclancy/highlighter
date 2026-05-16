@@ -107,6 +107,21 @@ function buildGalleryUrl(pageUrl, pageTitle, list) {
   return GALLERY_BASE + "?d=" + enc;
 }
 
+async function shortenUrl(longUrl) {
+  // TinyURL — free, no API key. Returns a short URL that redirects.
+  try {
+    const res = await fetch("https://tinyurl.com/api-create.php?url=" + encodeURIComponent(longUrl), {
+      method: "GET"
+    });
+    if (!res.ok) return null;
+    const txt = (await res.text()).trim();
+    if (/^https?:\/\/tinyurl\.com\//.test(txt)) return txt;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 document.getElementById("share-link").addEventListener("click", async () => {
   const r = await getPageHighlights();
   if (r.error) { toast(r.error); return; }
@@ -116,13 +131,17 @@ document.getElementById("share-link").addEventListener("click", async () => {
     const ctx = await chrome.tabs.sendMessage(r.tab.id, { type: "getContextForShare" });
     if (ctx?.ok && Array.isArray(ctx.highlights)) enriched = ctx.highlights;
   } catch {}
-  // Use the gallery URL as the primary share link — it works for everyone
-  // (with or without the extension) and contains a "Open on original page"
-  // button that triggers the live overlay for extension users.
-  const url = buildGalleryUrl(r.tab.url, r.tab.title, enriched);
-  await copyToClipboard(url);
   const n = enriched.length;
-  toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
+  toast(`… shortening link …`);
+  const longUrl = buildGalleryUrl(r.tab.url, r.tab.title, enriched);
+  const shortUrl = await shortenUrl(longUrl);
+  const finalUrl = shortUrl || longUrl;
+  await copyToClipboard(finalUrl);
+  if (shortUrl) {
+    toast(`✓ Short link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
+  } else {
+    toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"}) — long URL`);
+  }
 });
 
 document.getElementById("share-text").addEventListener("click", async () => {
