@@ -10,11 +10,12 @@
   letter-spacing: -0.005em;
   overflow: hidden !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
-  max-height: 70vh !important;
+  height: calc(100vh - 100px) !important;
+  max-height: calc(100vh - 100px) !important;
+  min-height: 75vh !important;
   display: flex !important;
   flex-direction: column !important;
   width: 100% !important;
-  min-height: 200px !important;
   position: relative !important;
   z-index: 1 !important;
   visibility: visible !important;
@@ -132,7 +133,11 @@
   font-size: 13px;
 }
 
-/* On wide screens give the transcript room; on narrow ones let it collapse */
+/* On narrow screens collapse to a manageable size */
 @media (max-width: 1000px) {
-  #hl-yt-panel { max-height: 50vh; }
+  #hl-yt-panel {
+    height: 60vh !important;
+    max-height: 60vh !important;
+    min-height: 50vh !important;
+  }
 }

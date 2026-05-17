@@ -201,9 +201,8 @@
       setBody(`<div class="hl-yt-empty">${escapeHtml(msg)}</div>`);
       return;
     }
+    LOG("transcript loaded:", (d.lines || []).length, "lines from", d.source);
     renderLines(d.lines || []);
-    // Let the rest of the extension know our panel is ready so any saved
-    // highlights for this video can be re-applied
     window.dispatchEvent(new CustomEvent("hl-yt-rendered"));
   });
 
