@@ -948,6 +948,167 @@
     .posted-cmt .pc-when { color: var(--text-4); font-size: 10px; }
     .posted-cmt .pc-text { color: var(--text-2); }
 
+    /* ─── 'What recipients see' compare cards ─── */
+    .recipients {
+      max-width: 920px;
+      margin: 0 auto 80px;
+    }
+    .recipients .section-h {
+      margin-bottom: 28px;
+    }
+    .recipients-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .recipient-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px 22px;
+      display: flex; flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s;
+      overflow: hidden;
+    }
+    .recipient-card:hover { transform: translateY(-2px); }
+    .recipient-card.r-without { border-color: rgba(99,102,241,0.22); }
+    .recipient-card.r-without:hover { border-color: rgba(99,102,241,0.5); }
+    .recipient-card.r-with    { border-color: rgba(236,72,153,0.22); }
+    .recipient-card.r-with:hover { border-color: rgba(236,72,153,0.5); }
+    .recipient-card .r-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      width: fit-content;
+    }
+    .recipient-card.r-without .r-eyebrow { background: rgba(99,102,241,0.14); color: #c7caff; }
+    .recipient-card.r-with    .r-eyebrow { background: rgba(236,72,153,0.14); color: #ffa1d0; }
+    .recipient-card h3 {
+      font-size: 19px; font-weight: 600;
+      letter-spacing: -0.015em;
+      margin: 0 0 6px;
+      line-height: 1.25;
+    }
+    .recipient-card p {
+      margin: 0 0 14px;
+      color: var(--text-2);
+      font-size: 13.5px; line-height: 1.55;
+    }
+    .recipient-card .mock {
+      flex: 1;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.4);
+      position: relative;
+      margin-bottom: 14px;
+      min-height: 200px;
+    }
+    /* Mock gallery (left) */
+    .mock-gallery .mg-head {
+      height: 50px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      position: relative;
+    }
+    .mock-gallery .mg-head::after {
+      content: "✦ Highlighter";
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font: 600 11px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+      color: rgba(255,255,255,0.95);
+      letter-spacing: -0.005em;
+    }
+    .mock-gallery .mg-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .mock-gallery .mg-title {
+      font-size: 11px; font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.005em;
+      margin-bottom: 2px;
+    }
+    .mock-gallery .mg-meta { font-size: 9px; color: var(--text-3); margin-bottom: 6px; }
+    .mock-gallery .mg-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px 6px 10px;
+      position: relative;
+      font-size: 10px;
+      line-height: 1.4;
+      color: var(--text-2);
+    }
+    .mock-gallery .mg-card::before {
+      content: ""; position: absolute;
+      top: 0; bottom: 0; left: 0; width: 3px;
+    }
+    .mock-gallery .mg-card.y::before { background: #fff59d; }
+    .mock-gallery .mg-card.g::before { background: #b9f6ca; }
+    .mock-gallery .mg-card.p::before { background: #f8bbd0; }
+
+    /* Mock article (right) — original page with highlights painted on */
+    .mock-article .ma-bar {
+      height: 22px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 5px;
+      padding: 0 8px;
+    }
+    .mock-article .ma-bar .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+    .mock-article .ma-bar .url {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border-radius: 4px;
+      height: 12px;
+      margin-left: 4px;
+    }
+    .mock-article .ma-body { padding: 12px 14px; }
+    .mock-article .ma-body h4 {
+      font-size: 12px; font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.005em;
+      margin: 0 0 8px;
+    }
+    .mock-article .ma-body p {
+      font-size: 10px; line-height: 1.55;
+      color: var(--text-2);
+      margin: 0 0 8px;
+    }
+    .mock-article .ma-body p:last-child { margin-bottom: 0; }
+    .mock-article .ma-body .h {
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+    .mock-article .ma-body .h-y { background: #fff59d; color: #1a1a1a; }
+    .mock-article .ma-body .h-g { background: #b9f6ca; color: #0b3d1a; }
+    .mock-article .ma-body .h-p { background: #f8bbd0; color: #4a0028; }
+
+    .recipient-card ul.bullets {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .recipient-card ul.bullets li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 12.5px; color: var(--text-2);
+      line-height: 1.45;
+    }
+    .recipient-card ul.bullets li svg {
+      width: 14px; height: 14px;
+      flex-shrink: 0; margin-top: 2px;
+      color: #86efac;
+    }
+    .recipient-card.r-with ul.bullets li svg { color: #ffa1d0; }
+
+    @media (max-width: 720px) {
+      .recipients-grid { grid-template-columns: 1fr; }
+    }
+
     /* ─── No-signup callout ─── */
     .no-signup {
       position: relative;
@@ -1257,6 +1418,61 @@
         </div>
       </div>
     </div>
+
+    <!-- What recipients actually see -->
+    <section class="recipients">
+      <div class="section-h">
+        <div class="label">What recipients see</div>
+        <h2>One link, two ways to read it</h2>
+        <p>Send the same link to anyone. What they see depends on whether they have the extension installed.</p>
+      </div>
+
+      <div class="recipients-grid">
+        <div class="recipient-card r-without">
+          <span class="r-eyebrow">Without the extension</span>
+          <h3>A clean gallery page</h3>
+          <p>Your highlights, comments, and tags are pulled out of the original article and presented as readable cards on a Highlighter-branded page.</p>
+          <div class="mock mock-gallery">
+            <div class="mg-head"></div>
+            <div class="mg-body">
+              <div class="mg-title">Compound interest</div>
+              <div class="mg-meta">en.wikipedia.org · 3 highlights</div>
+              <div class="mg-card y">interest accumulated from a principal sum and previously accumulated interest…</div>
+              <div class="mg-card g">the frequency at which interest is compounded…</div>
+              <div class="mg-card p">simple interest, where previously accumulated interest is not added…</div>
+            </div>
+          </div>
+          <ul class="bullets">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Works for anyone — no install required</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>One click to jump back to the source page</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Comment anonymously, no sign-up</span></li>
+          </ul>
+        </div>
+
+        <div class="recipient-card r-with">
+          <span class="r-eyebrow">With the extension</span>
+          <h3>The original page, painted</h3>
+          <p>Click "Open on original page" and your highlights are applied directly to the live article — same colours, same comments, in context.</p>
+          <div class="mock mock-article">
+            <div class="ma-bar">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="url"></span>
+            </div>
+            <div class="ma-body">
+              <h4>Compound interest</h4>
+              <p>Compound interest is interest <span class="h h-y">accumulated from a principal sum and previously accumulated interest</span>. It is the result of reinvesting interest.</p>
+              <p>The effect of compounding depends on <span class="h h-g">the frequency at which interest is compounded</span>.</p>
+              <p>Contrasted with <span class="h h-p">simple interest, where previously accumulated interest is not added</span> to the principal.</p>
+            </div>
+          </div>
+          <ul class="bullets">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Highlights painted onto the real article</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Read in flow — quotes stay in context</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Save the shared highlights to your own library in one click</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
     <!-- Super-prominent "no sign-up" callout -->
     <section class="no-signup">
