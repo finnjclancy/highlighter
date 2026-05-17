@@ -223,29 +223,43 @@
   // segments. Works on any video where the transcript button is offered, since
   // we're reading the same data YouTube itself shows.
   async function getTranscriptFromUi() {
+    LOG("UI method: looking for 'Show transcript' button");
     let btn = findShowTranscriptButton();
+    if (btn) LOG("  found button immediately:", btn.tagName, btn.textContent?.trim().slice(0, 40));
 
     // Sometimes the button is hidden behind the description's "...more" expand
     if (!btn) {
+      LOG("  not visible; expanding description first");
       const expand = document.querySelector("tp-yt-paper-button#expand")
                   || document.querySelector("#expand");
       if (expand) {
         expand.click();
-        await sleep(300);
+        await sleep(500);
         btn = findShowTranscriptButton();
+        if (btn) LOG("  found button after expand");
+      } else {
+        LOG("  no expand button either");
       }
     }
-    if (!btn) return { error: "no-transcript-button" };
+    if (!btn) {
+      LOG("  giving up — no Show Transcript button on this layout");
+      return { error: "no-transcript-button" };
+    }
 
-    // Click it. If the engagement panel was already open, click again to ensure
+    LOG("UI method: clicking button");
     btn.click();
-    await sleep(100);
+    await sleep(150);
 
+    LOG("UI method: waiting for ytd-transcript-segment-renderer (6s timeout)");
     const segments = await waitForAny(
       ["ytd-transcript-segment-renderer", "ytd-transcript-body-renderer ytd-transcript-segment-renderer"],
       6000
     );
-    if (!segments || !segments.length) return { error: "no-segments" };
+    if (!segments || !segments.length) {
+      LOG("  no segments rendered after click — engagement panel may have failed to open");
+      return { error: "no-segments" };
+    }
+    LOG("UI method: got", segments.length, "segments");
 
     const lines = [];
     for (const seg of segments) {
@@ -320,6 +334,21 @@
     window.dispatchEvent(new CustomEvent("hl-yt-rendered"));
   });
 
+  async function waitForPlayerReady(timeoutMs = 12000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const p = document.getElementById("movie_player");
+      if (p && typeof p.getPlayerResponse === "function") {
+        try {
+          const pr = p.getPlayerResponse();
+          if (pr && pr.videoDetails) return p;
+        } catch (_) {}
+      }
+      await sleep(200);
+    }
+    return null;
+  }
+
   async function refresh() {
     const vid = videoIdFromUrl();
     if (!vid) { LOG("not a watch page, skipping"); return; }
@@ -327,7 +356,15 @@
     LOG("refreshing for video", vid);
     lastVideoId = vid;
     const p = await ensurePanelInDom();
-    if (!p) return;
+    if (!p) { LOG("ensurePanelInDom failed — no container"); return; }
+
+    setBody(`<div class="hl-yt-empty">Waiting for player…</div>`);
+    const player = await waitForPlayerReady();
+    if (!player) {
+      LOG("player not ready after 12s, attempting transcript anyway");
+    } else {
+      LOG("player ready");
+    }
     fetchTranscript(vid);
   }
 

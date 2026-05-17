@@ -4,7 +4,11 @@
 (async () => {
   const videoId = new URLSearchParams(location.search).get("v");
 
+  const LOG = (...a) => console.info("[Highlighter/YT-page]", ...a);
+  LOG("page-fetcher started for", videoId);
+
   function post(payload) {
+    LOG("posting", payload.error ? "error: " + payload.error : (payload.lines?.length || 0) + " lines");
     window.postMessage({ source: "hl-yt", videoId, ...payload }, "*");
   }
 
@@ -16,32 +20,42 @@
   }
 
   async function getTracks() {
+    LOG("trying source: player.getPlayerResponse()");
     try {
       const player = document.getElementById("movie_player");
       if (player && typeof player.getPlayerResponse === "function") {
         const tracks = tracksFromPlayerResponse(player.getPlayerResponse());
-        if (tracks && tracks.length) return { tracks, src: "player" };
-      }
-    } catch (_) {}
+        if (tracks && tracks.length) { LOG("  player provided", tracks.length, "tracks"); return { tracks, src: "player" }; }
+        LOG("  player has no caption tracks");
+      } else { LOG("  player not available"); }
+    } catch (e) { LOG("  player source threw:", e.message); }
+
+    LOG("trying source: window.ytInitialPlayerResponse");
     try {
       const tracks = tracksFromPlayerResponse(window.ytInitialPlayerResponse);
-      if (tracks && tracks.length) return { tracks, src: "global" };
-    } catch (_) {}
+      if (tracks && tracks.length) { LOG("  global provided", tracks.length, "tracks"); return { tracks, src: "global" }; }
+      LOG("  global has no caption tracks");
+    } catch (e) { LOG("  global source threw:", e.message); }
+
     if (videoId) {
+      LOG("trying source: re-fetch /watch?v=" + videoId);
       try {
         const res = await fetch("/watch?v=" + encodeURIComponent(videoId), { credentials: "include" });
+        LOG("  /watch returned", res.status);
         if (res.ok) {
           const html = await res.text();
           const m = html.match(/ytInitialPlayerResponse\s*=\s*(\{[\s\S]+?\})\s*;\s*var\s/)
                   || html.match(/ytInitialPlayerResponse\s*=\s*(\{[\s\S]+?\})\s*;\s*<\/script>/);
-          if (m) {
+          if (!m) LOG("  couldn't find ytInitialPlayerResponse in HTML");
+          else {
             try {
               const tracks = tracksFromPlayerResponse(JSON.parse(m[1]));
-              if (tracks && tracks.length) return { tracks, src: "html" };
-            } catch (_) {}
+              if (tracks && tracks.length) { LOG("  html provided", tracks.length, "tracks"); return { tracks, src: "html" }; }
+              LOG("  html parsed but no caption tracks present");
+            } catch (e) { LOG("  html JSON parse failed:", e.message); }
           }
         }
-      } catch (_) {}
+      } catch (e) { LOG("  /watch fetch threw:", e.message); }
     }
     return null;
   }
@@ -110,19 +124,25 @@
     let lastErr = "empty-response";
     for (const attempt of attempts) {
       const url = attempt.fmt ? urlWithFmt(baseUrl, attempt.fmt) : baseUrl;
+      LOG("fetching transcript", attempt.fmt || "raw", "→", url.slice(0, 140) + (url.length > 140 ? "…" : ""));
       try {
         const res = await fetch(url, { credentials: "include" });
+        LOG("  status", res.status, "content-type", res.headers.get("content-type"));
         if (!res.ok) { lastErr = "http-" + res.status; continue; }
         const body = await res.text();
+        LOG("  body length", body.length);
         if (!body || body.length < 20) { lastErr = "empty"; continue; }
         try {
           const lines = attempt.parse(body);
-          if (lines && lines.length) return { lines, fmt: attempt.fmt || "raw" };
+          if (lines && lines.length) { LOG("  parsed", lines.length, "lines"); return { lines, fmt: attempt.fmt || "raw" }; }
+          LOG("  parser returned 0 lines");
           lastErr = "no-lines-" + (attempt.fmt || "raw");
         } catch (e) {
+          LOG("  parser threw:", e.message);
           lastErr = "parse-" + (attempt.fmt || "raw");
         }
       } catch (e) {
+        LOG("  fetch threw:", e.message);
         lastErr = "fetch-" + (attempt.fmt || "raw");
       }
     }
