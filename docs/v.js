@@ -119,9 +119,9 @@ async function init() {
 
   // Helpful hint about the extension below the cards
   html += `
-    <div style="margin-top:36px;padding:16px 18px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-lg);font-size:13px;color:var(--text-2);">
-      <strong style="color:var(--text);">Want to see these on the real page?</strong>
-      Install the <a href="index.html">Highlighter extension</a> and click "Open on original page" above — your highlights will appear in-context as you read.
+    <div class="install-hint">
+      <strong>Want to see these on the real page?</strong>
+      Install the <a href="https://finnjclancy.github.io/highlighter/">Highlighter extension</a> and click "Open on original page" above — your highlights will appear in-context as you read.
     </div>`;
 
   root.innerHTML = html;
