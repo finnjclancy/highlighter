@@ -87,6 +87,7 @@ async function gzipB64Url(jsonStr) {
 }
 
 const GALLERY_BASE = "https://highlighter-share.finnjclancy.workers.dev/v";
+const SHORTEN_ENDPOINT = "https://highlighter-share.finnjclancy.workers.dev/api/shorten";
 
 function buildPayload(pageUrl, pageTitle, list, shareName) {
   return {
@@ -122,10 +123,30 @@ async function buildShareUrl(pageUrl, pageTitle, list, shareName) {
   return u.toString();
 }
 
-async function buildGalleryUrl(pageUrl, pageTitle, list, shareName) {
+async function buildEncodedPayload(pageUrl, pageTitle, list, shareName) {
   const payload = buildPayload(pageUrl, pageTitle, list, shareName);
-  const enc = await gzipB64Url(JSON.stringify(payload));
-  return GALLERY_BASE + "?d=" + enc;
+  return await gzipB64Url(JSON.stringify(payload));
+}
+
+async function shortenViaWorker(enc) {
+  try {
+    const res = await fetch(SHORTEN_ENDPOINT, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ payload: enc })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.url ? data.url : null;
+  } catch {
+    return null;
+  }
+}
+
+async function buildGalleryUrl(pageUrl, pageTitle, list, shareName) {
+  const enc = await buildEncodedPayload(pageUrl, pageTitle, list, shareName);
+  const short = await shortenViaWorker(enc);
+  return short || (GALLERY_BASE + "?d=" + enc);
 }
 
 let pendingShare = null;  // { tab, enriched } captured when share-link clicked

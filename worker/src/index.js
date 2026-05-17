@@ -1,23 +1,72 @@
 // Cloudflare Worker for Highlighter share URLs.
 //
-// Why this exists: messaging apps (iMessage, Slack, WhatsApp, etc.) generate
-// link-preview cards by SCRAPING the page's HTML on the server side. They
-// don't run JavaScript, so any <title> / og:* tags injected client-side are
-// invisible to them. This Worker decodes the share payload from the URL,
-// pulls out the custom name + title + count, and serves HTML with proper
-// per-link meta tags BEFORE any JavaScript runs.
+// Two URL shapes:
+//   • short:  /v/<id>           — looks up the payload in KV (preferred)
+//   • inline: /v?d=<payload>    — payload baked into the URL (legacy / fallback)
 //
-// The page body still includes the existing v.js viewer from GitHub Pages,
-// so the rendered gallery is unchanged for actual visitors.
+// Both render HTML with per-link Open Graph meta tags so messaging-app
+// preview cards show the share's custom name + description + image,
+// instead of the generic "Shared highlights — Highlighter".
+//
+// The body still loads v.js from GitHub Pages, which decodes the payload
+// (either from window.__hlPayload, injected inline, or from ?d=) and
+// renders the actual gallery.
 
 const STATIC_BASE = "https://finnjclancy.github.io/highlighter";
 const PROMO_IMAGE = STATIC_BASE + "/icons/promo-440x280.png";
+const ID_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"; // dropped o/l/1/0
+const ID_LENGTH = 8;
+const KV_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year
+
+const CORS_HEADERS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, GET, OPTIONS",
+  "access-control-allow-headers": "content-type"
+};
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
 
-    // /v?d=<payload>  — render a share gallery with custom OG tags
+    // CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: CORS_HEADERS });
+    }
+
+    // POST /api/shorten  { payload: "<gzipped-base64url-payload>" }
+    //   → { id, url }
+    if (request.method === "POST" && url.pathname === "/api/shorten") {
+      try {
+        const body = await request.json();
+        const payload = (body && body.payload) ? String(body.payload) : null;
+        if (!payload || payload.length > 200_000) {
+          return json({ error: "missing or too-large payload" }, 400);
+        }
+        // Try a few times in the (extremely unlikely) event of collision
+        let id = randomId(ID_LENGTH);
+        for (let i = 0; i < 5; i++) {
+          const existing = await env.HIGHLIGHTS.get(id);
+          if (!existing) break;
+          id = randomId(ID_LENGTH);
+        }
+        await env.HIGHLIGHTS.put(id, payload, { expirationTtl: KV_TTL_SECONDS });
+        return json({ id, url: url.origin + "/v/" + id }, 200);
+      } catch (e) {
+        return json({ error: "bad request" }, 400);
+      }
+    }
+
+    // GET /v/<id>  — short link, looked up in KV
+    if (url.pathname.startsWith("/v/")) {
+      const id = url.pathname.slice(3).replace(/[^a-z0-9]/gi, "");
+      if (!id) return Response.redirect(STATIC_BASE + "/", 302);
+      const enc = await env.HIGHLIGHTS.get(id);
+      if (!enc) return notFound();
+      const meta = await decodeMetadata(enc);
+      return renderHtml(meta, enc);
+    }
+
+    // GET /v?d=<payload>  — inline / legacy long URL
     if (url.pathname === "/v" || url.pathname === "/v.html") {
       const enc = url.searchParams.get("d");
       if (!enc) return Response.redirect(STATIC_BASE + "/", 302);
@@ -25,10 +74,24 @@ export default {
       return renderHtml(meta, enc);
     }
 
-    // Anything else → landing page
     return Response.redirect(STATIC_BASE + "/", 302);
   }
 };
+
+function randomId(len) {
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (let i = 0; i < len; i++) out += ID_ALPHABET[bytes[i] % ID_ALPHABET.length];
+  return out;
+}
+
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "content-type": "application/json", ...CORS_HEADERS }
+  });
+}
 
 function b64UrlToBytes(s) {
   let b64 = s.replace(/-/g, "+").replace(/_/g, "/");
@@ -69,6 +132,23 @@ function hostnameOf(u) {
   try { return new URL(u).hostname; } catch { return ""; }
 }
 
+function notFound() {
+  const html = `<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <title>Link not found — Highlighter</title>
+  <link rel="stylesheet" href="${STATIC_BASE}/styles.css">
+</head><body>
+  <div class="wrap">
+    <header class="brand"><span class="logo">✦</span><h1>Highlighter</h1></header>
+    <h2 class="page-title">Link not found</h2>
+    <p style="color:rgba(250,250,250,0.6);">This share link is invalid or has expired.</p>
+    <p><a href="${STATIC_BASE}/">Back to Highlighter →</a></p>
+  </div>
+</body></html>`;
+  return new Response(html, { status: 404, headers: { "content-type": "text/html;charset=utf-8" } });
+}
+
 function renderHtml(meta, enc) {
   const title = `${meta.name} — Highlighter`;
   const host = hostnameOf(meta.url);
@@ -101,6 +181,7 @@ function renderHtml(meta, enc) {
 
   <link rel="stylesheet" href="${STATIC_BASE}/styles.css">
   <meta name="robots" content="noindex">
+  <script>window.__hlPayload = ${JSON.stringify(enc)};</script>
 </head>
 <body>
   <div class="wrap">
@@ -115,15 +196,13 @@ function renderHtml(meta, enc) {
       Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlighter extension →</a>
     </footer>
   </div>
-  <script src="${STATIC_BASE}/v.js?v=3"></script>
+  <script src="${STATIC_BASE}/v.js?v=4"></script>
 </body>
 </html>`;
 
   return new Response(html, {
     headers: {
       "content-type": "text/html;charset=utf-8",
-      // Cache previews for an hour at the edge; long enough to be fast,
-      // short enough that re-shares with edited names refresh quickly.
       "cache-control": "public, max-age=300, s-maxage=3600"
     }
   });

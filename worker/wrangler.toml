@@ -11,3 +11,9 @@ compatibility_date = "2024-12-01"
 # Set to false here and configure a custom domain via the dashboard if
 # you'd rather have e.g. share.yourdomain.com.
 workers_dev = true
+
+# KV namespace for short-link storage. Each share gets a random 8-char id
+# whose value is the gzipped+base64 payload, retained for 1 year.
+[[kv_namespaces]]
+binding = "HIGHLIGHTS"
+id = "561bdc02f8784f9d8b252ef30e2304ca"

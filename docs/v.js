@@ -42,8 +42,13 @@ function renderEmpty(message, hint) {
 }
 
 async function decodePayload() {
-  const params = new URLSearchParams(location.search);
-  const enc = params.get("d");
+  // Worker can inject the payload server-side as window.__hlPayload (short
+  // links). Fall back to the ?d= query param for inline/legacy URLs.
+  let enc = (typeof window !== "undefined" && window.__hlPayload) || null;
+  if (!enc) {
+    const params = new URLSearchParams(location.search);
+    enc = params.get("d");
+  }
   if (!enc) return null;
   const json = await decodeShareEnc(enc);
   if (!json) return null;
