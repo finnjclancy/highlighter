@@ -74,13 +74,20 @@ async function init() {
   }
 
   const root = document.getElementById("content");
-  const title = payload.title || hostOf(payload.url) || "Shared highlights";
+  const displayName = (payload.name && payload.name.trim()) || payload.title || hostOf(payload.url) || "Shared highlights";
+  const subTitle = payload.name ? (payload.title || hostOf(payload.url)) : "";
   const count = payload.highlights.length;
   const live = buildLiveLink(payload);
 
+  // Update the browser-tab title so the user sees the custom name when the
+  // page is open. (Link-preview thumbnails in chat apps don't reflect this —
+  // they rely on the static <meta> tags fetched by their scrapers.)
+  document.title = displayName + " — Highlighter";
+
   let html = `
-    <h2 class="page-title">${escape(title)}</h2>
+    <h2 class="page-title">${escape(displayName)}</h2>
     <div class="meta">
+      ${subTitle ? `<span>${escape(subTitle)}</span><span class="sep">·</span>` : ""}
       <a href="${escape(payload.url || "#")}" target="_blank" rel="noopener">${escape(hostOf(payload.url) || "Open source")}</a>
       <span class="sep">·</span>
       <span>${count} ${count === 1 ? "highlight" : "highlights"}</span>

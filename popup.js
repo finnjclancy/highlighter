@@ -88,11 +88,12 @@ async function gzipB64Url(jsonStr) {
 
 const GALLERY_BASE = "https://finnjclancy.github.io/highlighter/v.html";
 
-function buildPayload(pageUrl, pageTitle, list) {
+function buildPayload(pageUrl, pageTitle, list, shareName) {
   return {
     v: 3,
     url: pageUrl,
     title: pageTitle || "",
+    name: shareName || "",
     highlights: list.map(h => {
       const out = {
         id: h.id, bg: h.bg, fg: h.fg,
@@ -113,19 +114,26 @@ function buildPayload(pageUrl, pageTitle, list) {
   };
 }
 
-async function buildShareUrl(pageUrl, pageTitle, list) {
-  const payload = buildPayload(pageUrl, pageTitle, list);
+async function buildShareUrl(pageUrl, pageTitle, list, shareName) {
+  const payload = buildPayload(pageUrl, pageTitle, list, shareName);
   const enc = await gzipB64Url(JSON.stringify(payload));
   const u = new URL(pageUrl);
   u.searchParams.set("hlshare", enc);
   return u.toString();
 }
 
-async function buildGalleryUrl(pageUrl, pageTitle, list) {
-  const payload = buildPayload(pageUrl, pageTitle, list);
+async function buildGalleryUrl(pageUrl, pageTitle, list, shareName) {
+  const payload = buildPayload(pageUrl, pageTitle, list, shareName);
   const enc = await gzipB64Url(JSON.stringify(payload));
   return GALLERY_BASE + "?d=" + enc;
 }
+
+let pendingShare = null;  // { tab, enriched } captured when share-link clicked
+
+const shareForm = document.getElementById("share-form");
+const shareNameInput = document.getElementById("share-name");
+const shareCancel = document.getElementById("share-cancel");
+const shareCopy = document.getElementById("share-copy");
 
 document.getElementById("share-link").addEventListener("click", async () => {
   const r = await getPageHighlights();
@@ -136,10 +144,35 @@ document.getElementById("share-link").addEventListener("click", async () => {
     const ctx = await chrome.tabs.sendMessage(r.tab.id, { type: "getContextForShare" });
     if (ctx?.ok && Array.isArray(ctx.highlights)) enriched = ctx.highlights;
   } catch {}
-  const n = enriched.length;
-  const url = await buildGalleryUrl(r.tab.url, r.tab.title, enriched);
+  pendingShare = { tab: r.tab, enriched };
+  // Default the input to the page title so the user just hits Enter to use it
+  shareNameInput.value = (r.tab.title || "").trim();
+  shareForm.style.display = "block";
+  shareNameInput.focus();
+  shareNameInput.select();
+});
+
+shareCancel.addEventListener("click", () => {
+  shareForm.style.display = "none";
+  pendingShare = null;
+});
+
+async function doShareCopy() {
+  if (!pendingShare) return;
+  const { tab, enriched } = pendingShare;
+  const name = shareNameInput.value.trim();
+  const url = await buildGalleryUrl(tab.url, tab.title, enriched, name);
   await copyToClipboard(url);
+  const n = enriched.length;
+  shareForm.style.display = "none";
+  pendingShare = null;
   toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
+}
+
+shareCopy.addEventListener("click", doShareCopy);
+shareNameInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); doShareCopy(); }
+  else if (e.key === "Escape") { shareForm.style.display = "none"; pendingShare = null; }
 });
 
 document.getElementById("share-text").addEventListener("click", async () => {

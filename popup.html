@@ -104,6 +104,14 @@
     <button id="toggle-draw"><span class="ico">✎</span> Draw on page</button>
     <button id="share-text"><span class="ico">📋</span> Copy text</button>
     <button id="share-link"><span class="ico">🔗</span> Share live link</button>
+    <div id="share-form" style="display:none;margin:6px 10px 0;padding:10px;border-radius:8px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.25);">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(250,250,250,0.45);margin-bottom:6px;font-weight:600;">Name this link</div>
+      <input id="share-name" type="text" maxlength="120" placeholder="e.g. Notes on Electricity" style="width:100%;background:#18181b;border:1px solid rgba(255,255,255,0.08);color:#fafafa;border-radius:6px;padding:7px 9px;font-family:inherit;font-size:12px;outline:none;box-sizing:border-box;">
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button id="share-cancel" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(250,250,250,0.7);border-radius:6px;padding:6px;font:inherit;font-size:11px;cursor:pointer;">Cancel</button>
+        <button id="share-copy" style="flex:2;background:#6366f1;border:1px solid #6366f1;color:#fff;border-radius:6px;padding:6px;font:inherit;font-size:11px;font-weight:500;cursor:pointer;">Copy link</button>
+      </div>
+    </div>
     <button id="toggle-panel"><span class="ico">⇆</span> Toggle overlay</button>
     <div id="toast" style="display:none;margin:6px 10px 0;padding:6px 10px;border-radius:6px;background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.4);font-size:11px;color:#cfd2ff;text-align:center;letter-spacing:-0.005em;"></div>
   </div>
