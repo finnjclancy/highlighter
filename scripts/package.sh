@@ -43,6 +43,7 @@ INCLUDE=(
   welcome.js
   youtube.js
   youtube.css
+  youtube-page.js
   icons
 )
 

@@ -143,53 +143,15 @@
 
   // Fetching the transcript needs access to window.ytInitialPlayerResponse,
   // which lives in the page's main-world realm — content scripts can't see
-  // it. So we inject a tiny script that does the fetch in page-world and
-  // postMessages the result back.
+  // it. YouTube's CSP blocks inline scripts, so we load a file from the
+  // extension instead. We pass the target video id via a window hint set
+  // immediately before the script element is appended.
   function fetchTranscript(videoId) {
     setBody(`<div class="hl-yt-empty">Loading transcript…</div>`);
-    const code = `
-      (async () => {
-        function post(payload) {
-          window.postMessage({ source: "hl-yt", videoId: ${JSON.stringify(videoId)}, ...payload }, "*");
-        }
-        try {
-          const data = window.ytInitialPlayerResponse;
-          const tracks = data && data.captions && data.captions.playerCaptionsTracklistRenderer && data.captions.playerCaptionsTracklistRenderer.captionTracks;
-          if (!tracks || !tracks.length) return post({ error: "no-tracks" });
-          // Prefer non-auto English, then any English, then first track
-          const eng = tracks.find(t => t.languageCode === "en" && t.kind !== "asr")
-                   || tracks.find(t => t.languageCode === "en")
-                   || tracks[0];
-          const res = await fetch(eng.baseUrl + "&fmt=json3");
-          if (!res.ok) return post({ error: "fetch-failed-" + res.status });
-          const tx = await res.json();
-          const lines = [];
-          for (const ev of tx.events || []) {
-            if (!ev.segs) continue;
-            const text = ev.segs.map(s => s.utf8 || "").join("").replace(/\\n/g, " ").trim();
-            if (!text) continue;
-            lines.push({ t: (ev.tStartMs || 0) / 1000, text });
-          }
-          // Group very short adjacent lines into more readable chunks (~3-8s)
-          const merged = [];
-          for (const l of lines) {
-            const last = merged[merged.length - 1];
-            if (last && (l.t - last.t) < 3 && (last.text.length + l.text.length) < 200) {
-              last.text = last.text + " " + l.text;
-            } else {
-              merged.push({ ...l });
-            }
-          }
-          post({ lines: merged });
-        } catch (e) {
-          post({ error: String(e && e.message || e) });
-        }
-      })();
-    `;
     const s = document.createElement("script");
-    s.textContent = code;
+    s.src = chrome.runtime.getURL("youtube-page.js");
+    s.addEventListener("load", () => s.remove());
     (document.head || document.documentElement).appendChild(s);
-    s.remove();
   }
 
   window.addEventListener("message", e => {
