@@ -2,7 +2,17 @@
   if (window.__highlighterLoaded) return;
   window.__highlighterLoaded = true;
 
-  let PAGE_KEY = "hl_page_" + location.origin + location.pathname;
+  function computePageKey() {
+    let path = location.pathname;
+    // Sites where multiple "logical pages" share a pathname need extra
+    // disambiguation from query params. YouTube is the obvious one.
+    if (/(^|\.)youtube\.com$/.test(location.hostname)) {
+      const v = new URLSearchParams(location.search).get("v");
+      if (v) path += "?v=" + v;
+    }
+    return "hl_page_" + location.origin + path;
+  }
+  let PAGE_KEY = computePageKey();
   let palette = [];
   let highlights = [];
   let toolbar = null;
@@ -799,12 +809,12 @@
 
 
   // ---------- SPA handling: watch URL changes (Twitter/X, etc.) ----------
-  let currentPath = location.pathname;
+  let currentKey = PAGE_KEY;
   async function onUrlChange() {
-    if (location.pathname === currentPath) return;
-    currentPath = location.pathname;
-    PAGE_KEY = "hl_page_" + location.origin + location.pathname;
-    // Clear current marks from the previous page before loading new ones
+    const next = computePageKey();
+    if (next === currentKey) return;
+    currentKey = next;
+    PAGE_KEY = next;
     document.querySelectorAll(".hl-mark").forEach(m => {
       const txt = document.createTextNode(m.textContent);
       m.parentNode.replaceChild(txt, m);

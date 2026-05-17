@@ -9,6 +9,15 @@ document.getElementById("toggle-panel").addEventListener("click", async () => {
   window.close();
 });
 
+function computePageKey(u) {
+  let path = u.pathname;
+  if (/(^|\.)youtube\.com$/.test(u.hostname)) {
+    const v = u.searchParams.get("v");
+    if (v) path += "?v=" + v;
+  }
+  return "hl_page_" + u.origin + path;
+}
+
 function toast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -40,7 +49,7 @@ async function getPageHighlights() {
   try {
     const u = new URL(tab.url);
     if (!/^https?:$/.test(u.protocol)) return { error: "Open a real web page first." };
-    const key = "hl_page_" + u.origin + u.pathname;
+    const key = computePageKey(u);
     const data = await chrome.storage.local.get(key);
     const list = data[key] || [];
     return { tab, list };
@@ -224,7 +233,7 @@ async function loadStats() {
   if (tab?.url) {
     try {
       const u = new URL(tab.url);
-      const key = "hl_page_" + u.origin + u.pathname;
+      const key = computePageKey(u);
       const list = all[key] || [];
       document.getElementById("count-page").textContent = list.length;
     } catch {}

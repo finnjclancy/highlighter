@@ -35,6 +35,13 @@
       "css": ["content.css", "drawing.css"],
       "run_at": "document_idle",
       "all_frames": false
+    },
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["youtube.js"],
+      "css": ["youtube.css"],
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [
