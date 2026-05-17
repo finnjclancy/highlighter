@@ -389,6 +389,26 @@
     #confirm-modal #confirm-ok:hover {
       filter: brightness(1.1);
     }
+    /* Folder picker chips */
+    #folder-existing { gap: 5px; }
+    #folder-existing .chip {
+      cursor: pointer;
+      padding: 4px 11px;
+      font-size: 12px;
+      transition: background 0.12s, color 0.12s;
+    }
+    #folder-existing .chip:hover {
+      background: rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+    #folder-existing .chip.selected {
+      background: var(--accent);
+      color: #fff;
+    }
+    #folder-existing .empty {
+      font-size: 12px; color: var(--text-4); font-style: italic;
+    }
+    #folder-new:focus { border-color: var(--accent); }
 
     /* ---------- DESIGN TAB ---------- */
     .design-page { max-width: 880px; margin: 0 auto; }
@@ -605,6 +625,27 @@
           <span class="spacer"></span>
           <span class="hint">Drag cards to reorder</span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folder picker -->
+  <div class="modal-bg" id="folder-bg">
+    <div class="modal" id="folder-modal" style="width: 380px;">
+      <div class="modal-head">
+        <span class="mtitle" id="folder-title">Add to folder</span>
+        <button class="mclose" id="folder-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="m-section-lbl">Existing folders</div>
+        <div class="m-tags" id="folder-existing"></div>
+        <div class="m-section-lbl" style="margin-top:14px;">Or create new</div>
+        <input id="folder-new" type="text" placeholder="folder name" autocomplete="off"
+               style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-md);padding:8px 10px;font:inherit;font-size:13px;outline:none;box-sizing:border-box;">
+      </div>
+      <div class="modal-foot">
+        <button class="mbtn" id="folder-cancel">Cancel</button>
+        <button class="mbtn primary" id="folder-apply">Apply</button>
       </div>
     </div>
   </div>

@@ -5,6 +5,7 @@ let search = "";
 let sortMode = "newest";
 let openId = null;
 let selected = new Set();
+let lastSelectedId = null;  // shift-click anchor
 
 const resultsEl = document.getElementById("results");
 const viewTitleEl = document.getElementById("view-title");
@@ -151,6 +152,32 @@ function titleForFilter() {
   return "";
 }
 
+function selectRangeTo(id) {
+  const list = filterFlat();
+  const ids = list.map(h => h.id);
+  const b = ids.indexOf(id);
+  if (b < 0) { selected.add(id); return; }
+  const a = lastSelectedId ? ids.indexOf(lastSelectedId) : -1;
+  if (a < 0) { selected.add(id); return; }
+  const [from, to] = a < b ? [a, b] : [b, a];
+  for (let i = from; i <= to; i++) selected.add(ids[i]);
+}
+
+function applySelectionToggle(h, e, row) {
+  if (e.shiftKey) {
+    selectRangeTo(h.id);
+    lastSelectedId = h.id;
+    render();
+    renderSelectionBar();
+    return;
+  }
+  if (selected.has(h.id)) selected.delete(h.id);
+  else selected.add(h.id);
+  lastSelectedId = h.id;
+  if (row) row.classList.toggle("selected", selected.has(h.id));
+  renderSelectionBar();
+}
+
 function renderRow(h) {
   const row = document.createElement("div");
   row.className = "row";
@@ -158,13 +185,10 @@ function renderRow(h) {
 
   const check = document.createElement("div");
   check.className = "rcheck";
-  check.title = "Select";
+  check.title = "Select (shift-click for range)";
   check.addEventListener("click", e => {
     e.stopPropagation();
-    if (selected.has(h.id)) selected.delete(h.id);
-    else selected.add(h.id);
-    row.classList.toggle("selected");
-    renderSelectionBar();
+    applySelectionToggle(h, e, row);
   });
 
   const swatch = document.createElement("div");
@@ -195,11 +219,10 @@ function renderRow(h) {
   row.appendChild(site);
   row.addEventListener("click", e => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) {
-      if (selected.has(h.id)) selected.delete(h.id); else selected.add(h.id);
-      row.classList.toggle("selected");
-      renderSelectionBar();
+      applySelectionToggle(h, e, row);
       return;
     }
+    lastSelectedId = h.id;
     openModal(h);
   });
   return row;
@@ -321,6 +344,29 @@ async function removeHighlight(h) {
   flat = flat.filter(x => x.id !== h.id);
   notifyTabs(h.pageKey, { type: "removeHighlight", id: h.id });
   buildNav(); render();
+}
+
+async function addTagToMany(items, tag) {
+  if (!tag) return;
+  const touchedPages = new Map();  // pageKey -> updated list
+  items.forEach(h => {
+    h.tags = h.tags || [];
+    if (!h.tags.includes(tag)) h.tags.push(tag);
+    // Update the source-of-truth allData entry too
+    const list = allData[h.pageKey] || [];
+    const orig = list.find(x => x.id === h.id);
+    if (orig) {
+      orig.tags = orig.tags || [];
+      if (!orig.tags.includes(tag)) orig.tags.push(tag);
+    }
+    touchedPages.set(h.pageKey, list);
+    notifyTabs(h.pageKey, { type: "updateHighlight", id: h.id, patch: { tags: h.tags } });
+  });
+  const toSet = {};
+  for (const [pageKey, list] of touchedPages) toSet[pageKey] = list;
+  await chrome.storage.local.set(toSet);
+  buildNav();
+  render();
 }
 
 async function removeManyHighlights(items) {
@@ -484,8 +530,9 @@ function renderSelectionBar() {
     selBar.innerHTML = `
       <span class="sel-count"></span>
       <button class="sel-clear" style="background:transparent;border:none;color:rgba(250,250,250,0.5);cursor:pointer;font:inherit;padding:4px 6px;border-radius:6px;">Clear</button>
+      <button class="sel-folder" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:#fafafa;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">🏷 Add to folder</button>
       <button class="sel-delete" style="background:transparent;border:1px solid rgba(239,68,68,0.4);color:#fca5a5;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">🗑 Delete</button>
-      <button class="sel-export" style="background:#6366f1;border:none;color:#fff;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">⬇ Export selected</button>
+      <button class="sel-export" style="background:#6366f1;border:none;color:#fff;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">⬇ Export</button>
     `;
     document.body.appendChild(selBar);
     selBar.querySelector(".sel-clear").addEventListener("click", () => {
@@ -496,6 +543,11 @@ function renderSelectionBar() {
     selBar.querySelector(".sel-export").addEventListener("click", () => {
       const items = flat.filter(h => selected.has(h.id));
       downloadMarkdown(items, `selected-${items.length}`);
+    });
+    selBar.querySelector(".sel-folder").addEventListener("click", () => {
+      const items = flat.filter(h => selected.has(h.id));
+      if (!items.length) return;
+      openFolderPicker(items);
     });
     selBar.querySelector(".sel-delete").addEventListener("click", () => {
       const items = flat.filter(h => selected.has(h.id));
@@ -525,6 +577,75 @@ function renderSelectionBar() {
   selBar.style.display = "flex";
   selBar.querySelector(".sel-count").textContent = selected.size + " selected";
 }
+
+// ---------- folder picker ----------
+const folderBg = document.getElementById("folder-bg");
+const folderTitle = document.getElementById("folder-title");
+const folderExisting = document.getElementById("folder-existing");
+const folderNew = document.getElementById("folder-new");
+const folderClose = document.getElementById("folder-close");
+const folderCancel = document.getElementById("folder-cancel");
+const folderApply = document.getElementById("folder-apply");
+let folderItems = [];
+let folderChosen = null;
+
+function openFolderPicker(items) {
+  folderItems = items;
+  folderChosen = null;
+  folderNew.value = "";
+  folderTitle.textContent = `Add ${items.length} ${items.length === 1 ? "highlight" : "highlights"} to folder`;
+
+  // Collect all existing tags across the library
+  const counts = {};
+  flat.forEach(h => (h.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+  const tags = Object.keys(counts).sort((a, b) => a.localeCompare(b));
+
+  folderExisting.innerHTML = "";
+  if (!tags.length) {
+    folderExisting.innerHTML = `<div class="empty">No folders yet. Create one below.</div>`;
+  } else {
+    tags.forEach(t => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = "#" + t;
+      chip.addEventListener("click", () => {
+        folderChosen = t;
+        folderNew.value = "";
+        folderExisting.querySelectorAll(".chip").forEach(c => c.classList.toggle("selected", c === chip));
+      });
+      folderExisting.appendChild(chip);
+    });
+  }
+  folderBg.classList.add("show");
+  setTimeout(() => folderNew.focus(), 30);
+}
+function closeFolderPicker() {
+  folderBg.classList.remove("show");
+  folderItems = []; folderChosen = null;
+}
+folderClose.addEventListener("click", closeFolderPicker);
+folderCancel.addEventListener("click", closeFolderPicker);
+folderBg.addEventListener("click", e => { if (e.target === folderBg) closeFolderPicker(); });
+folderNew.addEventListener("input", () => {
+  if (folderNew.value) {
+    folderChosen = null;
+    folderExisting.querySelectorAll(".chip.selected").forEach(c => c.classList.remove("selected"));
+  }
+});
+folderNew.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); folderApply.click(); }
+  else if (e.key === "Escape") closeFolderPicker();
+});
+folderApply.addEventListener("click", async () => {
+  const tag = (folderNew.value.trim().replace(/^#/, "")) || folderChosen;
+  if (!tag) return;
+  const items = folderItems.slice();
+  closeFolderPicker();
+  await addTagToMany(items, tag);
+});
+document.addEventListener("keydown", e => {
+  if (folderBg.classList.contains("show") && e.key === "Escape") closeFolderPicker();
+});
 
 load();
 chrome.storage.onChanged.addListener((changes, area) => {
