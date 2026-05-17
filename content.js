@@ -255,6 +255,7 @@
 
   function handleMouseUp(e) {
     if (toolbar && toolbar.contains(e.target)) return;
+    if (popover && popover.contains(e.target)) return;
     // Run twice — once immediately, and again after a microtask, to handle
     // pages (X/Twitter, etc.) that briefly mess with the selection.
     const tryShow = () => {
@@ -467,12 +468,51 @@
       popover.appendChild(tagsEl);
     }
 
-    if (h.note) {
-      const note = document.createElement("div");
-      note.className = "pop-note";
-      note.textContent = h.note;
-      popover.appendChild(note);
-    }
+    // Inline comment editor — always shown so the user can add one
+    const noteWrap = document.createElement("div");
+    noteWrap.className = "pop-note-wrap";
+    const noteLabel = document.createElement("div");
+    noteLabel.className = "pop-note-label";
+    noteLabel.textContent = "Comment";
+    const noteArea = document.createElement("textarea");
+    noteArea.className = "pop-note-input";
+    noteArea.rows = 2;
+    noteArea.placeholder = "Add a comment…";
+    noteArea.value = h.note || "";
+    noteArea.maxLength = 4000;
+    let noteSaveTimer;
+    const saveNoteSoon = () => {
+      clearTimeout(noteSaveTimer);
+      const indicator = noteWrap.querySelector(".pop-note-status");
+      if (indicator) indicator.textContent = "";
+      noteSaveTimer = setTimeout(async () => {
+        h.note = noteArea.value;
+        const idx = highlights.findIndex(x => x.id === h.id);
+        if (idx >= 0) highlights[idx].note = h.note;
+        await saveHighlights();
+        renderPanel();
+        if (indicator) {
+          indicator.textContent = "Saved";
+          setTimeout(() => { if (indicator) indicator.textContent = ""; }, 1100);
+        }
+      }, 350);
+    };
+    noteArea.addEventListener("input", saveNoteSoon);
+    noteArea.addEventListener("click", e => e.stopPropagation());
+    // Save immediately on blur to be safe
+    noteArea.addEventListener("blur", () => {
+      clearTimeout(noteSaveTimer);
+      h.note = noteArea.value;
+      const idx = highlights.findIndex(x => x.id === h.id);
+      if (idx >= 0) highlights[idx].note = h.note;
+      saveHighlights().then(() => renderPanel());
+    });
+    const statusEl = document.createElement("span");
+    statusEl.className = "pop-note-status";
+    noteLabel.appendChild(statusEl);
+    noteWrap.appendChild(noteLabel);
+    noteWrap.appendChild(noteArea);
+    popover.appendChild(noteWrap);
 
     // Recolor row
     if (palette && palette.length) {
