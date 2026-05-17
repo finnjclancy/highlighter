@@ -628,8 +628,9 @@
     }
     @keyframes btn-press {
       0%   { opacity: 0; }
-      4%   { opacity: 0.4; }
-      9%   { opacity: 0; }
+      8%   { opacity: 0; }
+      11%  { opacity: 0.45; }
+      16%  { opacity: 0; }
       100% { opacity: 0; }
     }
     .share-toast {
@@ -647,10 +648,10 @@
     }
     @keyframes toast-fly {
       0%   { opacity: 0; transform: translate(-50%, -45%); }
-      6%   { opacity: 0; transform: translate(-50%, -45%); }
-      14%  { opacity: 1; transform: translate(-50%, -55%); }
+      14%  { opacity: 0; transform: translate(-50%, -45%); }
+      20%  { opacity: 1; transform: translate(-50%, -55%); }
       32%  { opacity: 1; transform: translate(-50%, -55%); }
-      42%  { opacity: 0; transform: translate(-50%, -65%); }
+      38%  { opacity: 0; transform: translate(-50%, -65%); }
       100% { opacity: 0; transform: translate(-50%, -65%); }
     }
     .share-pop-wrap {
@@ -662,9 +663,10 @@
     }
     @keyframes share-pop-fade {
       0%   { opacity: 1; transform: translate(-50%, 0); }
-      45%  { opacity: 1; transform: translate(-50%, 0); }
-      55%  { opacity: 0; transform: translate(-50%, -6px); }
-      100% { opacity: 0; transform: translate(-50%, -6px); }
+      30%  { opacity: 1; transform: translate(-50%, 0); }
+      36%  { opacity: 0; transform: translate(-50%, -8px); visibility: hidden; }
+      96%  { opacity: 0; transform: translate(-50%, -8px); visibility: hidden; }
+      100% { opacity: 1; transform: translate(-50%, 0); visibility: visible; }
     }
 
     /* iMessage chat bubble — the third stage of the share animation */
@@ -674,12 +676,12 @@
       transform: translate(-50%, 12px);
       width: 260px;
       opacity: 0;
-      animation: imsg-rise 6s 2.4s infinite;
+      animation: imsg-rise 6s 0s infinite;
     }
     @keyframes imsg-rise {
       0%   { opacity: 0; transform: translate(-50%, 12px); }
-      6%   { opacity: 0; transform: translate(-50%, 12px); }
-      18%  { opacity: 1; transform: translate(-50%, 0); }
+      38%  { opacity: 0; transform: translate(-50%, 12px); }
+      48%  { opacity: 1; transform: translate(-50%, 0); }
       90%  { opacity: 1; transform: translate(-50%, 0); }
       100% { opacity: 0; transform: translate(-50%, -4px); }
     }
@@ -745,13 +747,9 @@
       letter-spacing: -0.005em;
     }
 
-    /* Bump the share-toast cycle to match the new 6s loop */
-    .share-toast {
-      animation: toast-fly 6s 0.8s infinite;
-    }
-    .share-pop .row.share-row::after {
-      animation: btn-press 6s 0.4s infinite;
-    }
+    /* All share-demo animations share a 6s 0-delay cycle so they stay in sync */
+    .share-toast { animation: toast-fly 6s 0s infinite; }
+    .share-pop .row.share-row::after { animation: btn-press 6s 0s infinite; }
 
     /* ─── Comment demo ─── */
     .comment-card {
@@ -801,22 +799,23 @@
       100% { opacity: 1; }
     }
     .cmt-form {
-      margin-top: 10px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 10px;
+      overflow: hidden;
       opacity: 0;
-      transform: translateY(6px);
+      max-height: 0;
+      margin-top: 0;
+      padding: 0 10px;
       animation: cmt-form-show 10s infinite;
     }
     @keyframes cmt-form-show {
-      0%   { opacity: 0; transform: translateY(6px); }
-      15%  { opacity: 0; transform: translateY(6px); }
-      20%  { opacity: 1; transform: none; }
-      50%  { opacity: 1; transform: none; }
-      55%  { opacity: 0; transform: translateY(-4px); }
-      100% { opacity: 0; }
+      0%   { opacity: 0; max-height: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; }
+      15%  { opacity: 0; max-height: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; }
+      20%  { opacity: 1; max-height: 150px; margin-top: 10px; padding-top: 10px; padding-bottom: 10px; }
+      50%  { opacity: 1; max-height: 150px; margin-top: 10px; padding-top: 10px; padding-bottom: 10px; }
+      55%  { opacity: 0; max-height: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; }
+      100% { opacity: 0; max-height: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; }
     }
     .cmt-form .cf-author {
       font-size: 11px;
@@ -1121,7 +1120,10 @@
         <div class="demo-stage">
           <div class="comment-card">
             <span class="quote">interest accumulated from a principal sum and previously accumulated interest</span>
-            <div><button class="add-cmt-btn">💬 Add a comment</button></div>
+            <div class="posted-cmt">
+              <div class="pc-head"><span class="pc-author">Sam</span><span class="pc-when">just now</span></div>
+              <div class="pc-text">Great point — this compounds fast.</div>
+            </div>
             <div class="cmt-form">
               <span class="cf-author">Sam</span>
               <div class="cf-text"><span class="typed">Great point — this compounds fast.</span></div>
@@ -1130,10 +1132,7 @@
                 <span class="cf-post">Post</span>
               </div>
             </div>
-            <div class="posted-cmt">
-              <div class="pc-head"><span class="pc-author">Sam</span><span class="pc-when">just now</span></div>
-              <div class="pc-text">Great point — this compounds fast.</div>
-            </div>
+            <div><button class="add-cmt-btn">💬 Add a comment</button></div>
           </div>
         </div>
       </div>
