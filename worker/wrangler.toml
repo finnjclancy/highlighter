@@ -1,0 +1,12 @@
+# Cloudflare Workers config — deploys src/index.js as a Worker.
+# Free tier covers 100,000 requests/day at no cost.
+
+name = "highlighter-share"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# Optional: pin to a workers.dev subdomain for free hosting at
+#   https://highlighter-share.<account>.workers.dev
+# Set to false here and configure a custom domain via the dashboard if
+# you'd rather have e.g. share.yourdomain.com.
+workers_dev = true
