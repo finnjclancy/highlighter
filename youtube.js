@@ -181,12 +181,126 @@
   // it. YouTube's CSP blocks inline scripts, so we load a file from the
   // extension instead. We pass the target video id via a window hint set
   // immediately before the script element is appended.
-  function fetchTranscript(videoId) {
-    setBody(`<div class="hl-yt-empty">Loading transcript…</div>`);
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function parseTimeString(s) {
+    const parts = (s || "").trim().split(":").map(p => parseInt(p, 10) || 0);
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    return parts[0] || 0;
+  }
+
+  async function waitForAny(selectors, timeoutMs = 4000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      for (const sel of selectors) {
+        const els = document.querySelectorAll(sel);
+        if (els.length) return Array.from(els);
+      }
+      await sleep(150);
+    }
+    return null;
+  }
+
+  function findShowTranscriptButton() {
+    // Several places to look — YouTube moves this around
+    const candidates = [
+      ...document.querySelectorAll(
+        "ytd-video-description-transcript-section-renderer button, " +
+        "ytd-button-renderer button, " +
+        "tp-yt-paper-button, " +
+        "yt-button-shape button, " +
+        "button"
+      )
+    ];
+    return candidates.find(b => {
+      const t = (b.textContent || b.ariaLabel || b.getAttribute("aria-label") || "").trim();
+      return /show transcript/i.test(t);
+    }) || document.querySelector('[aria-label*="transcript" i]:not([aria-label*="close" i])');
+  }
+
+  // Primary method: open YouTube's own transcript panel and read its rendered
+  // segments. Works on any video where the transcript button is offered, since
+  // we're reading the same data YouTube itself shows.
+  async function getTranscriptFromUi() {
+    let btn = findShowTranscriptButton();
+
+    // Sometimes the button is hidden behind the description's "...more" expand
+    if (!btn) {
+      const expand = document.querySelector("tp-yt-paper-button#expand")
+                  || document.querySelector("#expand");
+      if (expand) {
+        expand.click();
+        await sleep(300);
+        btn = findShowTranscriptButton();
+      }
+    }
+    if (!btn) return { error: "no-transcript-button" };
+
+    // Click it. If the engagement panel was already open, click again to ensure
+    btn.click();
+    await sleep(100);
+
+    const segments = await waitForAny(
+      ["ytd-transcript-segment-renderer", "ytd-transcript-body-renderer ytd-transcript-segment-renderer"],
+      6000
+    );
+    if (!segments || !segments.length) return { error: "no-segments" };
+
+    const lines = [];
+    for (const seg of segments) {
+      const timeEl = seg.querySelector(".segment-timestamp, [class*='timestamp']");
+      const textEl = seg.querySelector(".segment-text, yt-formatted-string.segment-text, [class*='segment-text']");
+      const text = (textEl?.textContent || "").replace(/\s+/g, " ").trim();
+      if (!text) continue;
+      lines.push({ t: parseTimeString(timeEl?.textContent), text });
+    }
+    if (!lines.length) return { error: "no-segments" };
+
+    // Close YouTube's native transcript panel to give our panel the space back
+    const close = document.querySelector(
+      'ytd-engagement-panel-section-list-renderer[target-id*="transcript"] button[aria-label*="lose" i], ' +
+      'ytd-engagement-panel-title-header-renderer button[aria-label*="lose" i]'
+    );
+    close?.click();
+
+    return { lines };
+  }
+
+  // Fallback: page-world script that tries multiple caption-fetch formats
+  function injectPageFetcher() {
     const s = document.createElement("script");
     s.src = chrome.runtime.getURL("youtube-page.js");
     s.addEventListener("load", () => s.remove());
     (document.head || document.documentElement).appendChild(s);
+  }
+
+  async function fetchTranscript(videoId) {
+    setBody(`<div class="hl-yt-empty">Loading transcript…</div>`);
+
+    // 1) Try YouTube's own UI first
+    const uiResult = await getTranscriptFromUi();
+    if (uiResult.lines) {
+      LOG("transcript loaded via UI:", uiResult.lines.length, "lines");
+
+      // Group very short adjacent lines into 3-8s chunks for readability
+      const merged = [];
+      for (const l of uiResult.lines) {
+        const last = merged[merged.length - 1];
+        if (last && (l.t - last.t) < 3 && (last.text.length + l.text.length) < 200) {
+          last.text = last.text + " " + l.text;
+        } else {
+          merged.push({ ...l });
+        }
+      }
+      renderLines(merged);
+      window.dispatchEvent(new CustomEvent("hl-yt-rendered"));
+      return;
+    }
+    LOG("UI method failed:", uiResult.error, "— falling back to fetch");
+
+    // 2) Fall back to the page-world fetch with multiple format attempts
+    injectPageFetcher();
   }
 
   window.addEventListener("message", e => {
