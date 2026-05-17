@@ -137,7 +137,7 @@ function notFound() {
 <html lang="en"><head>
   <meta charset="utf-8">
   <title>Link not found — Highlighter</title>
-  <link rel="stylesheet" href="${STATIC_BASE}/styles.css">
+  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=2">
 </head><body>
   <div class="wrap">
     <header class="brand"><span class="logo">✦</span><h1>Highlighter</h1></header>
@@ -179,7 +179,7 @@ function renderHtml(meta, enc) {
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(PROMO_IMAGE)}">
 
-  <link rel="stylesheet" href="${STATIC_BASE}/styles.css">
+  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=2">
   <meta name="robots" content="noindex">
   <script>window.__hlPayload = ${JSON.stringify(enc)};</script>
 </head>
