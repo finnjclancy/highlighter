@@ -68,8 +68,36 @@
     /* Hero */
     .hero {
       text-align: center;
-      margin-bottom: 64px;
+      margin-bottom: 36px;
       animation: fade-up 0.7s cubic-bezier(0.2,0.8,0.2,1) both;
+    }
+    .features-hero { margin-bottom: 80px; }
+    .features-hero .section-h { margin-bottom: 24px; }
+    .features-hero .section-h h2 { font-size: 26px; }
+    .hero-cta { text-align: center; margin-top: 36px; }
+    .cta-xl {
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 18px 36px;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 999px;
+      letter-spacing: -0.01em;
+      box-shadow:
+        0 10px 28px rgba(99,102,241,0.45),
+        0 0 0 1px rgba(255,255,255,0.06) inset;
+    }
+    .cta-xl:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 14px 36px rgba(99,102,241,0.55),
+        0 0 0 1px rgba(255,255,255,0.1) inset;
+    }
+    .cta-xl .cta-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 8px;
+      font-size: 14px;
     }
     .hero .eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
@@ -101,16 +129,6 @@
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-    }
-    .hero p.subtitle {
-      font-size: 17px; line-height: 1.55;
-      color: var(--text-2);
-      max-width: 56ch;
-      margin: 0 auto 28px;
-    }
-    .hero .ctas {
-      display: inline-flex; gap: 10px;
-      flex-wrap: wrap; justify-content: center;
     }
 
     @keyframes fade-up {
@@ -1017,12 +1035,12 @@
 
     @media (max-width: 640px) {
       .hero h1 { font-size: 40px; }
-      .hero p.subtitle { font-size: 15px; }
       .demo-toolbar { display: none; }
       .demo-body { padding: 22px 22px; }
       .demo-body h3 { font-size: 17px; }
       nav.topnav .links { gap: 12px; }
-      .section-h h2 { font-size: 26px; }
+      .section-h h2 { font-size: 22px; }
+      .cta-xl { font-size: 16px; padding: 14px 26px; }
     }
   </style>
 </head>
@@ -1048,12 +1066,84 @@
         Live for Chrome &amp; Edge
       </div>
       <h1>Highlight any page.<br><span class="accent">Share what you read.</span></h1>
-      <p class="subtitle">
-        Mark up the web in your own colours. Organise quotes into folders, comment on them, and share a single link — your friends see the highlights painted onto the original page. <b>No account. No sign-up. Ever.</b>
-      </p>
-      <div class="ctas">
-        <a class="cta" href="https://github.com/finnjclancy/highlighter">Get the extension</a>
-        <a class="cta cta-secondary" href="#features">See it in action</a>
+    </section>
+
+    <!-- Feature grid moved up to sit right under the hero -->
+    <section id="features" class="features-hero">
+      <div class="section-h">
+        <h2>Everything you need to think on the web</h2>
+        <p>A small set of well-considered tools — nothing more, nothing less.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feat f-highlight">
+          <div class="feat-text">
+            <span class="feat-tag">Colour</span>
+            <h3>Highlight in any colour</h3>
+            <p>Custom palette with text + background per swatch. Hover any highlight to re-colour or remove it instantly.</p>
+          </div>
+          <div class="art">
+            <span class="line l1"></span>
+            <span class="line l2"></span>
+            <span class="line l3"></span>
+            <span class="line l4"></span>
+            <span class="line l5"></span>
+            <div class="toolbar">
+              <span class="sw1">A</span><span class="sw2">A</span><span class="sw3">A</span><span class="sw4">A</span>
+            </div>
+          </div>
+        </div>
+        <div class="feat f-folders">
+          <div class="feat-text">
+            <span class="feat-tag">Organise</span>
+            <h3>Folders, comments, tags</h3>
+            <p>Group quotes the way you think. Export any folder as plain text or Markdown.</p>
+          </div>
+          <div class="art">
+            <div class="folder f1"></div>
+            <div class="folder f2"></div>
+            <span class="chip c1">#study</span>
+            <span class="chip c2">#ideas</span>
+          </div>
+        </div>
+        <div class="feat f-draw">
+          <div class="feat-text">
+            <span class="feat-tag">Markup</span>
+            <h3>Draw on the page</h3>
+            <p>Pen, line, and rectangle tools for marking up diagrams, screenshots, or PDFs in place.</p>
+          </div>
+          <div class="art">
+            <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="30" y="20" width="80" height="50" rx="6" stroke="#ec4899" stroke-width="2.5" stroke-dasharray="0" opacity="0.85"/>
+              <path d="M 50 90 Q 80 70 130 90 T 180 75" stroke="#ec4899" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.9"/>
+              <line x1="120" y1="20" x2="180" y2="55" stroke="#ec4899" stroke-width="2.5" stroke-linecap="round" opacity="0.75"/>
+              <circle cx="180" cy="55" r="4" fill="#ec4899"/>
+            </svg>
+          </div>
+        </div>
+        <div class="feat f-share">
+          <div class="feat-text">
+            <span class="feat-tag">Share</span>
+            <h3>Share what you read</h3>
+            <p>One link works for everyone — live overlay with the extension, clean gallery without.</p>
+          </div>
+          <div class="art">
+            <div class="pcard">
+              <div class="img"></div>
+              <div class="body">
+                <div class="title">Compound interest</div>
+                <div class="meta">3 highlights · finance</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Big centred install CTA -->
+      <div class="hero-cta">
+        <a class="cta cta-xl" href="https://github.com/finnjclancy/highlighter">
+          <span class="cta-mark">✦</span>
+          Get the extension
+        </a>
       </div>
     </section>
 
@@ -1165,80 +1255,6 @@
           <div class="promise">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             <span><b>Everyone</b><br>Zero tracking. Zero data collection. Your highlights stay yours.</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="features">
-      <div class="section-h">
-        <div class="label">Built for learners, readers, sharers</div>
-        <h2>Everything you need to think on the web</h2>
-        <p>A small set of well-considered tools — nothing more, nothing less.</p>
-      </div>
-      <div class="features-grid">
-        <div class="feat f-highlight">
-          <div class="feat-text">
-            <span class="feat-tag">Colour</span>
-            <h3>Highlight in any colour</h3>
-            <p>Custom palette with text + background per swatch. Hover any highlight to re-colour or remove it instantly.</p>
-          </div>
-          <div class="art">
-            <span class="line l1"></span>
-            <span class="line l2"></span>
-            <span class="line l3"></span>
-            <span class="line l4"></span>
-            <span class="line l5"></span>
-            <div class="toolbar">
-              <span class="sw1">A</span><span class="sw2">A</span><span class="sw3">A</span><span class="sw4">A</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="feat f-folders">
-          <div class="feat-text">
-            <span class="feat-tag">Organise</span>
-            <h3>Folders, comments, tags</h3>
-            <p>Group quotes the way you think. Export any folder as plain text or Markdown.</p>
-          </div>
-          <div class="art">
-            <div class="folder f1"></div>
-            <div class="folder f2"></div>
-            <span class="chip c1">#study</span>
-            <span class="chip c2">#ideas</span>
-          </div>
-        </div>
-
-        <div class="feat f-draw">
-          <div class="feat-text">
-            <span class="feat-tag">Markup</span>
-            <h3>Draw on the page</h3>
-            <p>Pen, line, and rectangle tools for marking up diagrams, screenshots, or PDFs in place.</p>
-          </div>
-          <div class="art">
-            <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="30" y="20" width="80" height="50" rx="6" stroke="#ec4899" stroke-width="2.5" stroke-dasharray="0" opacity="0.85"/>
-              <path d="M 50 90 Q 80 70 130 90 T 180 75" stroke="#ec4899" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.9"/>
-              <line x1="120" y1="20" x2="180" y2="55" stroke="#ec4899" stroke-width="2.5" stroke-linecap="round" opacity="0.75"/>
-              <circle cx="180" cy="55" r="4" fill="#ec4899"/>
-            </svg>
-          </div>
-        </div>
-
-        <div class="feat f-share">
-          <div class="feat-text">
-            <span class="feat-tag">Share</span>
-            <h3>Share what you read</h3>
-            <p>One link works for everyone — live overlay with the extension, clean gallery without.</p>
-          </div>
-          <div class="art">
-            <div class="pcard">
-              <div class="img"></div>
-              <div class="body">
-                <div class="title">Compound interest</div>
-                <div class="meta">3 highlights · finance</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
