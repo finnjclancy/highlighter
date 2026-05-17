@@ -41,8 +41,6 @@ INCLUDE=(
   tabs.js
   welcome.html
   welcome.js
-  youtube.js
-  youtube.css
   icons
 )
 
