@@ -220,6 +220,9 @@ function renderHtml(meta, enc, shareId) {
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(PROMO_IMAGE)}">
 
+  <link rel="icon" type="image/png" sizes="32x32" href="${STATIC_BASE}/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="${STATIC_BASE}/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="${STATIC_BASE}/apple-touch-icon.png">
   <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=5">
   <meta name="robots" content="noindex">
   <script>
