@@ -903,6 +903,119 @@
     .posted-cmt .pc-when { color: var(--text-4); font-size: 10px; }
     .posted-cmt .pc-text { color: var(--text-2); }
 
+    /* ─── No-signup callout ─── */
+    .no-signup {
+      position: relative;
+      margin: 0 auto 80px;
+      max-width: 920px;
+      padding: 36px 32px;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(99,102,241,0.22), transparent 55%),
+        radial-gradient(circle at 80% 90%, rgba(236,72,153,0.18), transparent 55%),
+        rgba(20,20,23,0.6);
+      border: 1px solid rgba(99,102,241,0.35);
+      overflow: hidden;
+      text-align: center;
+    }
+    .no-signup::before, .no-signup::after {
+      content: ""; position: absolute;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(60px);
+    }
+    .no-signup::before {
+      top: -80px; left: -80px;
+      background: rgba(99,102,241,0.45);
+    }
+    .no-signup::after {
+      bottom: -80px; right: -80px;
+      background: rgba(236,72,153,0.35);
+    }
+    .no-signup-inner { position: relative; z-index: 1; }
+    .no-signup .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 12px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 999px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #c7caff;
+      margin-bottom: 18px;
+    }
+    .no-signup .eyebrow .pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 10px rgba(74,222,128,0.85);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.35; transform: scale(0.85); } }
+    .no-signup h2 {
+      font-size: 44px; font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.05;
+      margin: 0 0 12px;
+      background: linear-gradient(120deg, #fff 0%, #c7caff 50%, #ffa1d0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .no-signup .strike {
+      position: relative;
+      display: inline-block;
+      color: rgba(255,255,255,0.35);
+      -webkit-text-fill-color: rgba(255,255,255,0.35);
+    }
+    .no-signup .strike::after {
+      content: "";
+      position: absolute;
+      left: -4%; right: -4%;
+      top: 52%;
+      height: 4px;
+      background: linear-gradient(90deg, #ef4444, #ec4899);
+      border-radius: 4px;
+      transform: rotate(-3deg);
+    }
+    .no-signup p {
+      max-width: 56ch;
+      margin: 0 auto 20px;
+      font-size: 16px; line-height: 1.55;
+      color: var(--text-2);
+    }
+    .no-signup .promise-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      max-width: 720px;
+      margin: 0 auto;
+      text-align: left;
+    }
+    .no-signup .promise {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--text-2);
+    }
+    .no-signup .promise svg {
+      width: 18px; height: 18px;
+      color: #4ade80;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .no-signup .promise b { color: var(--text); font-weight: 600; }
+
+    @media (max-width: 640px) {
+      .no-signup { padding: 26px 20px; }
+      .no-signup h2 { font-size: 30px; }
+    }
+
     @media (max-width: 640px) {
       .hero h1 { font-size: 40px; }
       .hero p.subtitle { font-size: 15px; }
@@ -937,7 +1050,7 @@
       </div>
       <h1>Highlight any page.<br><span class="accent">Share what you read.</span></h1>
       <p class="subtitle">
-        Mark up the web in your own colours. Organise quotes into folders, comment on them, and share a single link — your friends see the highlights painted onto the original page.
+        Mark up the web in your own colours. Organise quotes into folders, comment on them, and share a single link — your friends see the highlights painted onto the original page. <b>No account. No sign-up. Ever.</b>
       </p>
       <div class="ctas">
         <a class="cta" href="https://github.com/finnjclancy/highlighter">Get the extension</a>
@@ -1025,6 +1138,38 @@
         </div>
       </div>
     </div>
+
+    <!-- Super-prominent "no sign-up" callout -->
+    <section class="no-signup">
+      <div class="no-signup-inner">
+        <div class="eyebrow">
+          <span class="pulse"></span>
+          The catch — there is no catch
+        </div>
+        <h2>
+          <span class="strike">No sign-up.</span><br>
+          <span class="strike">No accounts.</span><br>
+          Just&nbsp;share.
+        </h2>
+        <p>
+          Anyone with the extension can install it, highlight a page, and share a link — instantly. Anyone can open a share link and read the quotes. No email, no password, no profile. Ever.
+        </p>
+        <div class="promise-grid">
+          <div class="promise">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span><b>Sharers</b><br>Install, highlight, click Share. Three steps, zero forms.</span>
+          </div>
+          <div class="promise">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span><b>Recipients</b><br>Open the link and read. No login wall. Comment anonymously if you want.</span>
+          </div>
+          <div class="promise">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span><b>Everyone</b><br>Zero tracking. Zero data collection. Your highlights stay yours.</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section id="features">
       <div class="section-h">
