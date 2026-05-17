@@ -10,12 +10,7 @@ document.getElementById("toggle-panel").addEventListener("click", async () => {
 });
 
 function computePageKey(u) {
-  let path = u.pathname;
-  if (/(^|\.)youtube\.com$/.test(u.hostname)) {
-    const v = u.searchParams.get("v");
-    if (v) path += "?v=" + v;
-  }
-  return "hl_page_" + u.origin + path;
+  return "hl_page_" + u.origin + u.pathname;
 }
 
 function toast(msg) {
