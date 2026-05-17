@@ -350,25 +350,104 @@
     const uiResult = await getTranscriptFromUi();
     if (uiResult.lines) {
       LOG("transcript loaded via UI:", uiResult.lines.length, "lines");
-
-      // Group very short adjacent lines into 3-8s chunks for readability
-      const merged = [];
-      for (const l of uiResult.lines) {
-        const last = merged[merged.length - 1];
-        if (last && (l.t - last.t) < 3 && (last.text.length + l.text.length) < 200) {
-          last.text = last.text + " " + l.text;
-        } else {
-          merged.push({ ...l });
-        }
-      }
-      renderLines(merged);
-      window.dispatchEvent(new CustomEvent("hl-yt-rendered"));
+      renderMerged(uiResult.lines);
       return;
     }
     LOG("UI method failed:", uiResult.error, "— falling back to fetch");
 
     // 2) Fall back to the page-world fetch with multiple format attempts
+    //    (kept for the small fraction of videos where it works). We wait
+    //    briefly for the result and only show the manual button if it fails.
     injectPageFetcher();
+    showManualLoadFallback(uiResult.error);
+  }
+
+  function renderMerged(lines) {
+    const merged = [];
+    for (const l of lines) {
+      const last = merged[merged.length - 1];
+      if (last && (l.t - last.t) < 3 && (last.text.length + l.text.length) < 200) {
+        last.text = last.text + " " + l.text;
+      } else {
+        merged.push({ ...l });
+      }
+    }
+    renderLines(merged);
+    window.dispatchEvent(new CustomEvent("hl-yt-rendered"));
+  }
+
+  // YouTube blocks programmatic caption loads — segments only populate
+  // when a real user gesture triggers the transcript panel. This fallback
+  // surfaces a button so the click chain originates from the user.
+  function showManualLoadFallback(reason) {
+    setBody(`
+      <div class="hl-yt-empty" style="padding: 24px 16px;">
+        <div style="font-size: 14px; color: rgba(250,250,250,0.9); margin-bottom: 8px;">
+          YouTube blocked the auto-load
+        </div>
+        <div style="margin-bottom: 16px; font-size: 12px; line-height: 1.5;">
+          They require a real user click to release the transcript data.
+          Press the button below and the transcript will load here.
+        </div>
+        <button id="hl-yt-load" style="
+          background: #6366f1; border: none; color: #fff;
+          padding: 10px 18px; border-radius: 8px;
+          font: inherit; font-weight: 500; font-size: 13px;
+          cursor: pointer;
+        ">Load transcript</button>
+      </div>
+    `);
+    const btn = panel?.querySelector("#hl-yt-load");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Loading…";
+      // Real user gesture is live here — click YouTube's button synchronously
+      const ytBtn = findShowTranscriptButton();
+      if (!ytBtn) {
+        setBody(`<div class="hl-yt-empty">Couldn't find YouTube's transcript button on this layout.</div>`);
+        return;
+      }
+      fireRealClick(ytBtn);
+      // Now wait for segments — with a real gesture, YouTube will fill the panel
+      const lines = await waitForUserTriggeredSegments();
+      if (!lines.length) {
+        setBody(`<div class="hl-yt-empty">YouTube didn't load segments even with a real click — this video may not have a usable transcript.</div>`);
+        return;
+      }
+      renderMerged(lines);
+    });
+  }
+
+  async function waitForUserTriggeredSegments() {
+    // Panel may open in any of these containers; segments may appear under any
+    const PANEL_SELS = [
+      'ytd-engagement-panel-section-list-renderer[target-id*="transcript"]',
+      'ytd-engagement-panel-section-list-renderer[panel-identifier*="transcript"]',
+      'ytd-transcript-renderer',
+      'ytd-transcript-search-panel-renderer'
+    ];
+    const start = Date.now();
+    while (Date.now() - start < 15000) {
+      for (const sel of PANEL_SELS) {
+        const p = document.querySelector(sel);
+        if (!p) continue;
+        const segs = p.querySelectorAll("ytd-transcript-segment-renderer, [class*='transcript-segment']");
+        if (segs.length) {
+          const out = [];
+          for (const seg of segs) {
+            const timeEl = seg.querySelector(".segment-timestamp, [class*='timestamp']");
+            const textEl = seg.querySelector(".segment-text, yt-formatted-string.segment-text, [class*='segment-text']");
+            const text = (textEl?.textContent || "").replace(/\s+/g, " ").trim();
+            if (!text) continue;
+            out.push({ t: parseTimeString(timeEl?.textContent), text });
+          }
+          if (out.length) return out;
+        }
+      }
+      await sleep(200);
+    }
+    return [];
   }
 
   window.addEventListener("message", e => {
@@ -383,9 +462,8 @@
       setBody(`<div class="hl-yt-empty">${escapeHtml(msg)}</div>`);
       return;
     }
-    LOG("transcript loaded:", (d.lines || []).length, "lines from", d.source);
-    renderLines(d.lines || []);
-    window.dispatchEvent(new CustomEvent("hl-yt-rendered"));
+    LOG("transcript loaded via fetcher:", (d.lines || []).length, "lines from", d.source);
+    renderMerged(d.lines || []);
   });
 
   async function waitForPlayerReady(timeoutMs = 12000) {
