@@ -1,4 +1,5 @@
 # Cloudflare Workers config — deploys src/index.js as a Worker.
+# Tip: from this folder, just run `npm run deploy` (or `npm run dev` to test).
 # Free tier covers 100,000 requests/day at no cost.
 
 name = "highlighter-share"

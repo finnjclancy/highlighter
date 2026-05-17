@@ -1,0 +1,15 @@
+{
+  "name": "highlighter-share",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker that serves Highlighter share URLs with per-link Open Graph meta tags for messaging-app preview cards.",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "login": "wrangler login",
+    "whoami": "wrangler whoami"
+  },
+  "devDependencies": {
+    "wrangler": "^4.92.0"
+  }
+}
