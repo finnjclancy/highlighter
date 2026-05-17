@@ -625,12 +625,11 @@
       border-radius: 6px;
       background: rgba(255,255,255,0.18);
       opacity: 0;
-      animation: btn-press 3.6s 0.4s infinite;
     }
     @keyframes btn-press {
       0%   { opacity: 0; }
-      11%  { opacity: 0.4; }
-      14%  { opacity: 0; }
+      4%   { opacity: 0.4; }
+      9%   { opacity: 0; }
       100% { opacity: 0; }
     }
     .share-toast {
@@ -645,42 +644,75 @@
       font-size: 12px; font-weight: 600;
       box-shadow: 0 0 0 4px rgba(99,102,241,0.12), 0 12px 32px rgba(0,0,0,0.4);
       opacity: 0;
-      animation: toast-fly 3.6s 0.8s infinite;
     }
     @keyframes toast-fly {
       0%   { opacity: 0; transform: translate(-50%, -45%); }
-      10%  { opacity: 0; transform: translate(-50%, -45%); }
-      20%  { opacity: 1; transform: translate(-50%, -55%); }
-      55%  { opacity: 1; transform: translate(-50%, -55%); }
-      70%  { opacity: 0; transform: translate(-50%, -65%); }
+      6%   { opacity: 0; transform: translate(-50%, -45%); }
+      14%  { opacity: 1; transform: translate(-50%, -55%); }
+      32%  { opacity: 1; transform: translate(-50%, -55%); }
+      42%  { opacity: 0; transform: translate(-50%, -65%); }
       100% { opacity: 0; transform: translate(-50%, -65%); }
     }
-    .preview-card {
+    .share-pop-wrap {
       position: absolute;
-      bottom: 0;
-      left: 50%;
+      top: 0; left: 50%;
       transform: translateX(-50%);
-      width: 280px;
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.5);
-      opacity: 0;
-      animation: preview-rise 3.6s 1.4s infinite;
+      opacity: 1;
+      animation: share-pop-fade 6s 0s infinite;
     }
-    @keyframes preview-rise {
+    @keyframes share-pop-fade {
+      0%   { opacity: 1; transform: translate(-50%, 0); }
+      45%  { opacity: 1; transform: translate(-50%, 0); }
+      55%  { opacity: 0; transform: translate(-50%, -6px); }
+      100% { opacity: 0; transform: translate(-50%, -6px); }
+    }
+
+    /* iMessage chat bubble — the third stage of the share animation */
+    .imessage-wrap {
+      position: absolute;
+      left: 50%; bottom: 0;
+      transform: translate(-50%, 12px);
+      width: 260px;
+      opacity: 0;
+      animation: imsg-rise 6s 2.4s infinite;
+    }
+    @keyframes imsg-rise {
       0%   { opacity: 0; transform: translate(-50%, 12px); }
-      18%  { opacity: 0; transform: translate(-50%, 12px); }
-      32%  { opacity: 1; transform: translate(-50%, 0); }
-      75%  { opacity: 1; transform: translate(-50%, 0); }
-      90%  { opacity: 0; transform: translate(-50%, -6px); }
-      100% { opacity: 0; }
+      6%   { opacity: 0; transform: translate(-50%, 12px); }
+      18%  { opacity: 1; transform: translate(-50%, 0); }
+      90%  { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -4px); }
+    }
+    .imessage-bubble {
+      background: linear-gradient(180deg, #2997ff 0%, #007aff 100%);
+      border-radius: 18px;
+      padding: 8px 6px 6px;
+      position: relative;
+      box-shadow: 0 10px 28px rgba(0,122,255,0.32);
+    }
+    .imessage-bubble::after {
+      content: "";
+      position: absolute;
+      right: -5px; bottom: 0;
+      width: 14px; height: 16px;
+      background: radial-gradient(circle at 0 0, transparent 14px, #007aff 14.5px);
+    }
+    .imessage-bubble .msg-text {
+      font: 600 12px/1.3 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      color: #fff;
+      padding: 0 8px 6px;
+      letter-spacing: -0.005em;
+    }
+    .preview-card {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      overflow: hidden;
     }
     .preview-card .pc-img {
-      height: 78px;
-      background:
-        linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+      height: 68px;
+      background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
       position: relative;
     }
     .preview-card .pc-img::after {
@@ -688,29 +720,37 @@
       position: absolute;
       inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font: 600 14px/1 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-      color: rgba(255,255,255,0.92);
+      font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      color: rgba(255,255,255,0.95);
       letter-spacing: -0.01em;
     }
-    .preview-card .pc-body {
-      padding: 9px 12px;
-    }
+    .preview-card .pc-body { padding: 8px 11px; }
     .preview-card .pc-title {
-      font-size: 12px; font-weight: 600;
-      color: var(--text);
+      font: 600 11.5px/1.25 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      color: #fff;
       letter-spacing: -0.005em;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .preview-card .pc-desc {
-      font-size: 11px;
-      color: var(--text-3);
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.78);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .share-pop-wrap {
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
+    .imessage-meta {
+      font-size: 10px;
+      color: var(--text-4);
+      text-align: right;
+      margin-top: 6px;
+      letter-spacing: -0.005em;
+    }
+
+    /* Bump the share-toast cycle to match the new 6s loop */
+    .share-toast {
+      animation: toast-fly 6s 0.8s infinite;
+    }
+    .share-pop .row.share-row::after {
+      animation: btn-press 6s 0.4s infinite;
     }
 
     /* ─── Comment demo ─── */
@@ -751,14 +791,13 @@
       padding: 4px 11px;
       font: inherit; font-size: 11px; font-weight: 500;
       margin-top: 12px;
-      animation: cmt-btn-fade 5s infinite;
+      animation: cmt-btn-fade 10s infinite;
     }
     @keyframes cmt-btn-fade {
       0%   { opacity: 1; }
-      18%  { opacity: 1; }
-      24%  { opacity: 0; }
-      85%  { opacity: 0; }
-      92%  { opacity: 1; }
+      10%  { opacity: 1; }
+      15%  { opacity: 0; }
+      95%  { opacity: 0; }
       100% { opacity: 1; }
     }
     .cmt-form {
@@ -769,14 +808,14 @@
       padding: 10px;
       opacity: 0;
       transform: translateY(6px);
-      animation: cmt-form-show 5s infinite;
+      animation: cmt-form-show 10s infinite;
     }
     @keyframes cmt-form-show {
       0%   { opacity: 0; transform: translateY(6px); }
-      20%  { opacity: 0; transform: translateY(6px); }
-      28%  { opacity: 1; transform: none; }
-      82%  { opacity: 1; transform: none; }
-      92%  { opacity: 0; transform: translateY(-4px); }
+      15%  { opacity: 0; transform: translateY(6px); }
+      20%  { opacity: 1; transform: none; }
+      50%  { opacity: 1; transform: none; }
+      55%  { opacity: 0; transform: translateY(-4px); }
       100% { opacity: 0; }
     }
     .cmt-form .cf-author {
@@ -809,15 +848,15 @@
       display: inline-block;
       overflow: hidden;
       white-space: nowrap;
-      animation: type-out 5s steps(20, end) infinite;
+      animation: type-out 10s steps(20, end) infinite;
       max-width: 0;
     }
     @keyframes type-out {
       0%   { max-width: 0; }
-      30%  { max-width: 0; }
+      20%  { max-width: 0; }
+      40%  { max-width: 18em; }
       55%  { max-width: 18em; }
-      82%  { max-width: 18em; }
-      100% { max-width: 0; }
+      100% { max-width: 18em; }
     }
     .cmt-form .cf-actions {
       display: flex; justify-content: flex-end; gap: 6px;
@@ -845,13 +884,14 @@
       padding: 8px 12px;
       font-size: 12px;
       opacity: 0;
-      animation: cmt-post 5s infinite;
+      animation: cmt-post 10s infinite;
     }
     @keyframes cmt-post {
       0%   { opacity: 0; transform: translateY(8px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; }
-      85%  { opacity: 0; transform: translateY(8px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; }
-      94%  { opacity: 1; transform: none; max-height: 60px; padding-top: 8px; padding-bottom: 8px; margin-top: 10px; }
-      100% { opacity: 1; transform: none; max-height: 60px; padding-top: 8px; padding-bottom: 8px; margin-top: 10px; }
+      55%  { opacity: 0; transform: translateY(8px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; }
+      62%  { opacity: 1; transform: none; max-height: 80px; padding-top: 8px; padding-bottom: 8px; margin-top: 10px; }
+      94%  { opacity: 1; transform: none; max-height: 80px; padding-top: 8px; padding-bottom: 8px; margin-top: 10px; }
+      100% { opacity: 0; transform: translateY(-4px); max-height: 80px; padding-top: 8px; padding-bottom: 8px; margin-top: 10px; }
     }
     .posted-cmt .pc-head {
       display: flex; gap: 6px; align-items: baseline;
@@ -946,12 +986,18 @@
             </div>
           </div>
           <div class="share-toast">✓ Link copied</div>
-          <div class="preview-card">
-            <div class="pc-img"></div>
-            <div class="pc-body">
-              <div class="pc-title">Compound interest — Wikipedia</div>
-              <div class="pc-desc">3 highlights · finance, study</div>
+          <div class="imessage-wrap">
+            <div class="imessage-bubble">
+              <div class="msg-text">Check these out 👇</div>
+              <div class="preview-card">
+                <div class="pc-img"></div>
+                <div class="pc-body">
+                  <div class="pc-title">Compound interest — Wikipedia</div>
+                  <div class="pc-desc">3 highlights · finance, study</div>
+                </div>
+              </div>
             </div>
+            <div class="imessage-meta">Delivered</div>
           </div>
         </div>
       </div>
