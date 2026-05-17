@@ -1,18 +1,24 @@
 /* Transcript panel injected above YouTube's right-side recommendations */
 #hl-yt-panel {
-  background: rgba(16, 16, 19, 0.96);
-  color: #fafafa;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  margin-bottom: 16px;
-  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  background: rgba(16, 16, 19, 0.96) !important;
+  color: #fafafa !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 12px !important;
+  margin: 0 0 16px 0 !important;
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif !important;
   font-feature-settings: "cv11", "ss01";
   letter-spacing: -0.005em;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  max-height: 70vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-height: 200px !important;
+  position: relative !important;
+  z-index: 1 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 #hl-yt-panel .hl-yt-head {

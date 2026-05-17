@@ -15,23 +15,45 @@
   if (window.__hlYouTubeLoaded) return;
   window.__hlYouTubeLoaded = true;
 
+  const LOG = (...a) => console.info("[Highlighter/YT]", ...a);
+  LOG("script loaded on", location.href);
+
   let lastVideoId = null;
   let panel = null;
   let pendingTimer = null;
+  let keepAliveObserver = null;
+
+  // YouTube uses different right-column containers depending on layout /
+  // experiments. Try them in order until one is in the DOM.
+  const CONTAINER_SELECTORS = [
+    "#secondary-inner",
+    "#secondary",
+    "ytd-watch-next-secondary-results-renderer",
+    "#related",
+    "ytd-watch-grid #related"
+  ];
 
   function videoIdFromUrl() {
     if (!location.pathname.startsWith("/watch")) return null;
     return new URLSearchParams(location.search).get("v");
   }
 
-  function waitForElement(selector, timeoutMs = 8000) {
+  function findContainer() {
+    for (const sel of CONTAINER_SELECTORS) {
+      const el = document.querySelector(sel);
+      if (el) return { el, sel };
+    }
+    return null;
+  }
+
+  function waitForContainer(timeoutMs = 15000) {
     return new Promise(resolve => {
-      const found = document.querySelector(selector);
-      if (found) return resolve(found);
+      const initial = findContainer();
+      if (initial) return resolve(initial);
       const start = Date.now();
       const obs = new MutationObserver(() => {
-        const el = document.querySelector(selector);
-        if (el) { obs.disconnect(); resolve(el); }
+        const got = findContainer();
+        if (got) { obs.disconnect(); resolve(got); }
         else if (Date.now() - start > timeoutMs) { obs.disconnect(); resolve(null); }
       });
       obs.observe(document.documentElement, { subtree: true, childList: true });
@@ -57,13 +79,26 @@
   }
 
   async function ensurePanelInDom() {
-    const secondary = await waitForElement("#secondary");
-    if (!secondary) return null;
+    const container = await waitForContainer();
+    if (!container) {
+      LOG("could not find a sidebar container — layout may have changed");
+      return null;
+    }
+    LOG("using container", container.sel);
     if (!panel || !panel.isConnected) buildPanel();
-    if (panel.parentElement !== secondary) {
-      secondary.insertBefore(panel, secondary.firstChild);
+    if (panel.parentElement !== container.el) {
+      container.el.insertBefore(panel, container.el.firstChild);
     }
     wireSearch();
+    // If YouTube's polymer wipes the container, re-insert
+    if (keepAliveObserver) keepAliveObserver.disconnect();
+    keepAliveObserver = new MutationObserver(() => {
+      if (!panel.isConnected) {
+        const c = findContainer();
+        if (c) c.el.insertBefore(panel, c.el.firstChild);
+      }
+    });
+    keepAliveObserver.observe(document.body, { childList: true, subtree: true });
     return panel;
   }
 
@@ -174,10 +209,12 @@
 
   async function refresh() {
     const vid = videoIdFromUrl();
-    if (!vid) return;
+    if (!vid) { LOG("not a watch page, skipping"); return; }
     if (vid === lastVideoId && panel && panel.isConnected) return;
+    LOG("refreshing for video", vid);
     lastVideoId = vid;
-    await ensurePanelInDom();
+    const p = await ensurePanelInDom();
+    if (!p) return;
     fetchTranscript(vid);
   }
 
