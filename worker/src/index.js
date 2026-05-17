@@ -188,15 +188,13 @@ function renderHtml(meta, enc) {
     <header class="brand">
       <span class="logo">✦</span>
       <h1>Highlighter</h1>
-      <span class="sep">·</span>
-      <span style="color:var(--text-3);font-size:13px;">Shared highlights</span>
     </header>
     <div id="content"></div>
     <footer class="foot">
       Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlighter extension →</a>
     </footer>
   </div>
-  <script src="${STATIC_BASE}/v.js?v=7"></script>
+  <script src="${STATIC_BASE}/v.js?v=8"></script>
 </body>
 </html>`;
 

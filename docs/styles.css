@@ -39,44 +39,39 @@ a:hover { text-decoration: underline; }
 
 /* Header */
 header.brand {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 .logo {
-  width: 28px; height: 28px;
+  width: 40px; height: 40px;
   background: linear-gradient(135deg, #6366f1, #ec4899);
-  border-radius: 8px;
+  border-radius: 10px;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 14px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 .brand h1 {
-  font-size: 14px; margin: 0; font-weight: 600;
-  letter-spacing: -0.005em;
+  font-size: 22px; margin: 0; font-weight: 600;
+  letter-spacing: -0.015em;
 }
-.brand .sep { color: var(--text-4); }
+.brand .sep, .brand .brand-sub { display: none; }
 
 /* Title block */
-.title-block {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-.title-block .title-text { min-width: 0; flex: 1; }
 h2.page-title {
   font-size: 28px; font-weight: 600;
   letter-spacing: -0.025em;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   line-height: 1.2;
   word-wrap: break-word;
+  text-align: center;
 }
 .meta {
   color: var(--text-3); font-size: 13px;
-  margin: 0 0 16px;
+  margin: 0;
   display: flex; align-items: baseline; gap: 10px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 .meta .sep { color: var(--text-4); }
 .meta .source-link {
@@ -120,17 +115,16 @@ h2.page-title {
 .cta-secondary:hover { background: var(--surface-2); }
 .cta-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* Meta + CTAs share one row to save vertical space */
+/* Meta + CTAs stack centered */
 .meta-bar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
 }
 .meta-bar .meta { margin: 0; }
-.meta-bar .cta-row { flex-shrink: 0; }
+.meta-bar .cta-row { justify-content: center; }
 .meta-bar .cta { padding: 7px 14px; font-size: 12px; }
 
 /* Quote cards */
