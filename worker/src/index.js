@@ -178,7 +178,7 @@ function notFound() {
 <html lang="en"><head>
   <meta charset="utf-8">
   <title>Link not found — Highlighter</title>
-  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=3">
+  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=4">
 </head><body>
   <div class="wrap">
     <header class="brand"><span class="logo">✦</span><h1>Highlighter</h1></header>
@@ -220,7 +220,7 @@ function renderHtml(meta, enc, shareId) {
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(PROMO_IMAGE)}">
 
-  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=3">
+  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=4">
   <meta name="robots" content="noindex">
   <script>
     window.__hlPayload = ${JSON.stringify(enc)};
@@ -238,7 +238,7 @@ function renderHtml(meta, enc, shareId) {
       Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlighter extension →</a>
     </footer>
   </div>
-  <script src="${STATIC_BASE}/v.js?v=9"></script>
+  <script src="${STATIC_BASE}/v.js?v=10"></script>
 </body>
 </html>`;
 

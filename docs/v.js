@@ -119,7 +119,7 @@ async function init() {
     const tags = (h.tags || []).map(t => `<span class="chip">#${escape(t)}</span>`).join("");
     const note = h.note
       ? `<div class="note">
-           <div class="note-label"><span class="note-icon">💬</span> Note from the sharer</div>
+           <div class="note-label">💬 Note from the sharer</div>
            <div class="note-text">${escape(h.note)}</div>
          </div>`
       : "";
