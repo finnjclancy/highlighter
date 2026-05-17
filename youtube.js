@@ -222,42 +222,96 @@
   // Primary method: open YouTube's own transcript panel and read its rendered
   // segments. Works on any video where the transcript button is offered, since
   // we're reading the same data YouTube itself shows.
+  function fireRealClick(el) {
+    // Some YT buttons want a richer event sequence to fire their Polymer
+    // bindings reliably.
+    try { el.click(); } catch (_) {}
+    for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
+      try { el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window })); } catch (_) {}
+    }
+  }
+
+  async function waitForInside(parent, selectors, timeoutMs) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      for (const sel of selectors) {
+        const els = parent.querySelectorAll(sel);
+        if (els.length) return Array.from(els);
+      }
+      await sleep(200);
+    }
+    return null;
+  }
+
+  function isVisible(el) {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
   async function getTranscriptFromUi() {
     LOG("UI method: looking for 'Show transcript' button");
     let btn = findShowTranscriptButton();
     if (btn) LOG("  found button immediately:", btn.tagName, btn.textContent?.trim().slice(0, 40));
 
-    // Sometimes the button is hidden behind the description's "...more" expand
     if (!btn) {
       LOG("  not visible; expanding description first");
       const expand = document.querySelector("tp-yt-paper-button#expand")
                   || document.querySelector("#expand");
       if (expand) {
-        expand.click();
-        await sleep(500);
+        fireRealClick(expand);
+        await sleep(600);
         btn = findShowTranscriptButton();
         if (btn) LOG("  found button after expand");
       } else {
         LOG("  no expand button either");
       }
     }
-    if (!btn) {
-      LOG("  giving up — no Show Transcript button on this layout");
-      return { error: "no-transcript-button" };
+    if (!btn) return { error: "no-transcript-button" };
+
+    LOG("UI method: clicking button (rich event sequence)");
+    fireRealClick(btn);
+
+    // Wait up to 10s for the transcript engagement panel to appear AND be visible
+    LOG("UI method: waiting for engagement panel (transcript) to open");
+    const PANEL_SELS = [
+      'ytd-engagement-panel-section-list-renderer[target-id*="transcript"]',
+      'ytd-engagement-panel-section-list-renderer[panel-identifier*="transcript"]',
+      'ytd-transcript-renderer',
+      'ytd-transcript-search-panel-renderer'
+    ];
+    let transcriptPanelEl = null;
+    const panelStart = Date.now();
+    while (Date.now() - panelStart < 10000) {
+      for (const sel of PANEL_SELS) {
+        const el = document.querySelector(sel);
+        if (el && isVisible(el)) { transcriptPanelEl = el; break; }
+      }
+      if (transcriptPanelEl) break;
+      await sleep(200);
     }
+    if (!transcriptPanelEl) {
+      LOG("  engagement panel never opened — clicking once more");
+      fireRealClick(btn);
+      await sleep(800);
+      transcriptPanelEl = PANEL_SELS.map(s => document.querySelector(s)).find(Boolean);
+    }
+    if (!transcriptPanelEl) {
+      LOG("  panel still missing after 10s, giving up on UI method");
+      return { error: "panel-never-opened" };
+    }
+    LOG("  panel found:", transcriptPanelEl.tagName);
 
-    LOG("UI method: clicking button");
-    btn.click();
-    await sleep(150);
-
-    LOG("UI method: waiting for ytd-transcript-segment-renderer (6s timeout)");
-    const segments = await waitForAny(
-      ["ytd-transcript-segment-renderer", "ytd-transcript-body-renderer ytd-transcript-segment-renderer"],
-      6000
-    );
+    // Now wait up to 12s for segments inside the panel
+    LOG("UI method: waiting for transcript segments inside the panel");
+    const segments = await waitForInside(transcriptPanelEl, [
+      "ytd-transcript-segment-renderer",
+      "[class*='transcript-segment']",
+      "ytd-transcript-segment-list-renderer ytd-transcript-segment-renderer"
+    ], 12000);
     if (!segments || !segments.length) {
-      LOG("  no segments rendered after click — engagement panel may have failed to open");
-      return { error: "no-segments" };
+      LOG("  panel opened but no segments inside after 12s");
+      return { error: "no-segments-in-panel" };
     }
     LOG("UI method: got", segments.length, "segments");
 
@@ -365,6 +419,8 @@
     } else {
       LOG("player ready");
     }
+    // Give YouTube an extra moment to wire the description / engagement panels
+    await sleep(800);
     fetchTranscript(vid);
   }
 
