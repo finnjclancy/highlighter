@@ -3,52 +3,521 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Highlighter — Share your reading</title>
-  <meta name="description" content="A browser extension for highlighting any web page in custom colours, with folders, comments, and shareable links.">
-  <link rel="stylesheet" href="styles.css">
+  <title>Highlighter — Highlight any page, share what you read</title>
+  <meta name="description" content="A clean browser extension that lets you highlight text on the web in custom colours, organise quotes into folders, and share live links.">
+
+  <meta property="og:title" content="Highlighter">
+  <meta property="og:description" content="Highlight any page in custom colours, organise quotes into folders, share live links.">
+  <meta property="og:image" content="https://finnjclancy.github.io/highlighter/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="stylesheet" href="styles.css?v=5">
+  <style>
+    /* ─── Landing-page specific ─── */
+
+    /* Bigger landing wrap */
+    body.landing { background: var(--bg); }
+    .landing-wrap { max-width: 960px; margin: 0 auto; padding: 36px 24px 96px; }
+
+    /* Background atmospherics */
+    .bg-glow {
+      position: fixed; inset: 0; pointer-events: none; z-index: -1;
+      background:
+        radial-gradient(800px circle at 12% -10%, rgba(99,102,241,0.18), transparent 50%),
+        radial-gradient(700px circle at 90% 0%, rgba(236,72,153,0.15), transparent 55%),
+        radial-gradient(900px circle at 50% 110%, rgba(99,102,241,0.10), transparent 55%);
+    }
+
+    /* Nav bar */
+    nav.topnav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 56px;
+    }
+    nav.topnav .brand-mini {
+      display: flex; align-items: center; gap: 9px;
+      font-weight: 600; font-size: 14px;
+      letter-spacing: -0.005em;
+    }
+    nav.topnav .brand-mini .logo {
+      width: 26px; height: 26px; border-radius: 7px; font-size: 13px;
+    }
+    nav.topnav .links {
+      display: flex; align-items: center; gap: 18px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    nav.topnav .links a {
+      color: var(--text-2);
+      transition: color 0.15s;
+    }
+    nav.topnav .links a:hover { color: var(--text); text-decoration: none; }
+    nav.topnav .links .primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-weight: 500;
+      transition: background 0.15s, transform 0.06s;
+    }
+    nav.topnav .links .primary:hover { background: var(--accent-hover); color: #fff; }
+    nav.topnav .links .primary:active { transform: scale(0.97); }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 64px;
+      animation: fade-up 0.7s cubic-bezier(0.2,0.8,0.2,1) both;
+    }
+    .hero .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 12px;
+      background: rgba(99,102,241,0.10);
+      border: 1px solid rgba(99,102,241,0.28);
+      border-radius: 999px;
+      font-size: 12px; font-weight: 500;
+      color: var(--text-2);
+      margin-bottom: 18px;
+    }
+    .hero .eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px rgba(74,222,128,0.6);
+    }
+    .hero h1 {
+      font-size: 56px; font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.05;
+      margin: 0 0 18px;
+      background: linear-gradient(180deg, #fff 0%, #b4b4c5 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero h1 .accent {
+      background: linear-gradient(120deg, #6366f1, #ec4899);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p.subtitle {
+      font-size: 17px; line-height: 1.55;
+      color: var(--text-2);
+      max-width: 56ch;
+      margin: 0 auto 28px;
+    }
+    .hero .ctas {
+      display: inline-flex; gap: 10px;
+      flex-wrap: wrap; justify-content: center;
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* Animated demo */
+    .demo {
+      margin: 0 auto 80px;
+      max-width: 760px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.2);
+      animation: fade-up 0.9s cubic-bezier(0.2,0.8,0.2,1) 0.1s both;
+    }
+    .demo .browser-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.025);
+      border-bottom: 1px solid var(--border);
+    }
+    .demo .dots { display: flex; gap: 6px; }
+    .demo .dots span {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+    .demo .url {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font: 12px ui-monospace, "SF Mono", Menlo, monospace;
+      color: var(--text-3);
+    }
+    .demo-body {
+      padding: 30px 36px;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-2);
+      position: relative;
+    }
+    .demo-body h3 {
+      color: var(--text);
+      font-size: 19px; font-weight: 600;
+      letter-spacing: -0.015em;
+      margin: 0 0 12px;
+    }
+    .demo-body p { margin: 0 0 12px; }
+    .demo-body .h {
+      padding: 1px 4px;
+      border-radius: 2px;
+      transition: background 0.6s ease, color 0.6s ease;
+      background: transparent;
+    }
+    .demo.animate .h-1 { background: #fff59d; color: #1a1a1a; transition-delay: 0.2s; }
+    .demo.animate .h-2 { background: #b9f6ca; color: #0b3d1a; transition-delay: 1.0s; }
+    .demo.animate .h-3 { background: #f8bbd0; color: #4a0028; transition-delay: 1.8s; }
+
+    /* Floating mini-toolbar above the demo text */
+    .demo-toolbar {
+      position: absolute;
+      top: 96px; left: 42%;
+      background: rgba(20,20,23,0.96);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 4px;
+      display: flex; gap: 3px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: translateY(4px);
+      animation: toolbar-appear 0.9s cubic-bezier(0.2,0.8,0.2,1) 0.5s forwards;
+    }
+    @keyframes toolbar-appear {
+      0%   { opacity: 0; transform: translateY(4px); }
+      40%  { opacity: 1; transform: none; }
+      85%  { opacity: 1; transform: none; }
+      100% { opacity: 0; transform: translateY(-4px); }
+    }
+    .demo-toolbar .sw {
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+    }
+    .demo-toolbar .sw-y { background: #fff59d; color: #1a1a1a; }
+    .demo-toolbar .sw-g { background: #b9f6ca; color: #0b3d1a; }
+    .demo-toolbar .sw-p { background: #f8bbd0; color: #4a0028; }
+    .demo-toolbar .sw-b { background: #b3e5fc; color: #0b2a3d; }
+
+    /* Section header */
+    .section-h {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .section-h .label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .section-h h2 {
+      font-size: 32px; font-weight: 600;
+      letter-spacing: -0.025em;
+      margin: 0 0 8px;
+      line-height: 1.15;
+    }
+    .section-h p {
+      color: var(--text-2);
+      font-size: 15px; line-height: 1.55;
+      max-width: 56ch;
+      margin: 0 auto;
+    }
+
+    /* Feature grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+      gap: 14px;
+      margin-bottom: 80px;
+    }
+    .feat {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+    }
+    .feat:hover {
+      border-color: rgba(99,102,241,0.4);
+      transform: translateY(-2px);
+      background: #16161b;
+    }
+    .feat .icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px;
+      background: rgba(99,102,241,0.14);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #c7caff;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .feat .icon svg { width: 18px; height: 18px; }
+    .feat h3 {
+      font-size: 15px; font-weight: 600;
+      letter-spacing: -0.01em;
+      margin: 0 0 6px;
+      color: var(--text);
+    }
+    .feat p {
+      margin: 0;
+      color: var(--text-3);
+      font-size: 13px; line-height: 1.55;
+    }
+
+    /* Steps */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 80px;
+    }
+    .step {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      position: relative;
+    }
+    .step .num {
+      position: absolute; top: 18px; right: 20px;
+      font-size: 36px; font-weight: 600;
+      color: rgba(99,102,241,0.18);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .step h3 {
+      font-size: 15px; font-weight: 600;
+      margin: 0 0 6px;
+      max-width: calc(100% - 36px);
+    }
+    .step p {
+      margin: 0;
+      color: var(--text-3);
+      font-size: 13px; line-height: 1.55;
+    }
+
+    /* Privacy callout */
+    .privacy-callout {
+      background: linear-gradient(135deg, rgba(99,102,241,0.10), rgba(236,72,153,0.06));
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 14px;
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 56px;
+    }
+    .privacy-callout .shield {
+      width: 44px; height: 44px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(99,102,241,0.2);
+      border: 1px solid rgba(99,102,241,0.4);
+      border-radius: 12px;
+      color: #c7caff;
+    }
+    .privacy-callout .shield svg { width: 22px; height: 22px; }
+    .privacy-callout h3 {
+      font-size: 16px; font-weight: 600;
+      margin: 0 0 4px;
+      letter-spacing: -0.01em;
+    }
+    .privacy-callout p {
+      margin: 0;
+      color: var(--text-2);
+      font-size: 13px; line-height: 1.55;
+    }
+
+    /* Final CTA */
+    .final-cta {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .final-cta h2 {
+      font-size: 30px; font-weight: 600;
+      letter-spacing: -0.025em;
+      margin: 0 0 22px;
+    }
+    .final-cta .cta { font-size: 14px; padding: 11px 22px; }
+
+    /* Footer */
+    footer.foot {
+      text-align: center;
+      color: var(--text-4);
+      font-size: 12px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      line-height: 1.7;
+    }
+    footer.foot a { color: var(--text-3); }
+    footer.foot a:hover { color: var(--text-2); }
+
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 40px; }
+      .hero p.subtitle { font-size: 15px; }
+      .demo-toolbar { display: none; }
+      .demo-body { padding: 22px 22px; }
+      .demo-body h3 { font-size: 17px; }
+      nav.topnav .links { gap: 12px; }
+      .section-h h2 { font-size: 26px; }
+    }
+  </style>
 </head>
-<body>
-  <div class="wrap">
-    <header class="brand">
-      <span class="logo">✦</span>
-      <h1>Highlighter</h1>
-    </header>
+<body class="landing">
+  <div class="bg-glow"></div>
+  <div class="landing-wrap">
 
-    <h2 class="page-title">Highlight any page. Share what you read.</h2>
-    <p class="lede">
-      A clean browser extension that lets you highlight text on the web in custom colours, organize quotes into folders, and share live links so anyone with the extension sees the same highlights on the page.
-    </p>
+    <nav class="topnav">
+      <div class="brand-mini">
+        <span class="logo">✦</span>
+        <span>Highlighter</span>
+      </div>
+      <div class="links">
+        <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/finnjclancy/highlighter" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/finnjclancy/highlighter" class="primary">Install</a>
+      </div>
+    </nav>
 
-    <div class="cta-row">
-      <a class="cta" href="https://github.com/finnjclancy/highlighter">Get the extension</a>
-      <a class="cta cta-secondary" href="https://github.com/finnjclancy/highlighter#readme">How it works</a>
+    <section class="hero">
+      <div class="eyebrow">
+        <span class="dot"></span>
+        Live for Chrome &amp; Edge
+      </div>
+      <h1>Highlight any page.<br><span class="accent">Share what you read.</span></h1>
+      <p class="subtitle">
+        Mark up the web in your own colours. Organise quotes into folders, comment on them, and share a single link — your friends see the highlights painted onto the original page.
+      </p>
+      <div class="ctas">
+        <a class="cta" href="https://github.com/finnjclancy/highlighter">Get the extension</a>
+        <a class="cta cta-secondary" href="#features">See it in action</a>
+      </div>
+    </section>
+
+    <!-- Animated demo card -->
+    <div class="demo" id="demo">
+      <div class="browser-bar">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span class="url">en.wikipedia.org/wiki/Compound_interest</span>
+      </div>
+      <div class="demo-body">
+        <div class="demo-toolbar">
+          <span class="sw sw-y">A</span>
+          <span class="sw sw-g">A</span>
+          <span class="sw sw-p">A</span>
+          <span class="sw sw-b">A</span>
+        </div>
+        <h3>Compound interest</h3>
+        <p>
+          Compound interest is interest <span class="h h-1">accumulated from a principal sum and previously accumulated interest</span>. It is the result of reinvesting or retaining interest that would otherwise be paid out.
+        </p>
+        <p>
+          The effect of compounding depends on the <span class="h h-2">frequency at which interest is compounded</span> and the periodic interest rate which is applied. Therefore, in order to define accurately the amount to be paid under a legal contract with interest, the frequency of compounding (monthly, yearly, etc.) and the interest rate must be specified.
+        </p>
+        <p>
+          Compound interest is contrasted with <span class="h h-3">simple interest, where previously accumulated interest is not added</span> to the principal amount of the current period.
+        </p>
+      </div>
     </div>
 
-    <div class="section-lbl">What it does</div>
-    <div class="features">
-      <div class="card">
-        <h3>Highlight in any colour</h3>
-        <p>Custom palette with text + background per swatch. Hover any highlight to re-colour or remove it.</p>
+    <section id="features">
+      <div class="section-h">
+        <div class="label">Built for readers</div>
+        <h2>Everything you need to think on the web</h2>
+        <p>A small set of well-considered tools — nothing more, nothing less.</p>
       </div>
-      <div class="card">
-        <h3>Folders, comments, tags</h3>
-        <p>Organize quotes the way you think. Export any folder or selection as plain text or Markdown.</p>
+      <div class="features-grid">
+        <div class="feat">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <h3>Highlight in any colour</h3>
+          <p>Custom palette with text + background per swatch. Hover a highlight to re-colour or remove it.</p>
+        </div>
+        <div class="feat">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Folders, comments, tags</h3>
+          <p>Organise quotes the way you think. Export any folder or selection as plain text or Markdown.</p>
+        </div>
+        <div class="feat">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+          </div>
+          <h3>Draw on the page</h3>
+          <p>Pen, line, and rectangle tools for marking up diagrams, screenshots, or PDFs in place.</p>
+        </div>
+        <div class="feat">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+          <h3>Share what you read</h3>
+          <p>A single link recipients can open: in-place highlights for extension users, a clean gallery for everyone else.</p>
+        </div>
       </div>
-      <div class="card">
-        <h3>Draw on the page</h3>
-        <p>Pen, line, and rectangle tools for marking up diagrams, screenshots, or PDFs in-place.</p>
+    </section>
+
+    <section>
+      <div class="section-h">
+        <div class="label">How it works</div>
+        <h2>Three clicks, no setup</h2>
+        <p>Install once, then highlight as you read. Everything lives in your own browser storage.</p>
       </div>
-      <div class="card">
-        <h3>Share what you read</h3>
-        <p>A live link recipients open to see your highlights painted onto the original page (extension required for live overlay).</p>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Install</h3>
+          <p>Pin Highlighter to your toolbar. The extension is ready instantly — no account, no sign-in.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>Highlight</h3>
+          <p>Select text on any page → click a colour. The highlight saves locally and reappears on revisit.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>Share</h3>
+          <p>Click Share → name your collection → copy. One short link works for anyone, with or without the extension.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="privacy-callout">
+      <div class="shield">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <div>
+        <h3>Privacy-first, by design</h3>
+        <p>No accounts, no telemetry, no third-party scripts. Your highlights live in your own browser storage and never leave your device unless you explicitly share a link.</p>
       </div>
     </div>
+
+    <section class="final-cta">
+      <h2>Start highlighting in 30 seconds.</h2>
+      <a class="cta" href="https://github.com/finnjclancy/highlighter">Install Highlighter →</a>
+    </section>
 
     <footer class="foot">
       Built with no servers, no tracking. Highlights live in your own browser storage.
       <br>
       <a href="privacy.html">Privacy policy</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/finnjclancy/highlighter" target="_blank" rel="noopener">Source on GitHub</a>
     </footer>
+
   </div>
+
+  <script>
+    // Kick off demo highlight animation
+    const demo = document.getElementById("demo");
+    if (demo) {
+      requestAnimationFrame(() => {
+        setTimeout(() => demo.classList.add("animate"), 250);
+      });
+    }
+  </script>
 </body>
 </html>
