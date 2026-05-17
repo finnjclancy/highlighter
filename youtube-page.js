@@ -75,11 +75,27 @@
              || tracks.find(t => t.languageCode === "en")
              || tracks[0];
 
-    const url = eng.baseUrl + (eng.baseUrl.includes("fmt=") ? "" : "&fmt=json3");
-    const res = await fetch(url);
-    if (!res.ok) return post({ error: "fetch-failed-" + res.status });
+    // Force fmt=json3 regardless of what's already in baseUrl — sometimes
+    // YouTube hands us URLs preset to srv3 (XML) which our parser can't read.
+    let captionUrl;
+    try {
+      const u = new URL(eng.baseUrl, location.origin);
+      u.searchParams.set("fmt", "json3");
+      captionUrl = u.toString();
+    } catch (_) {
+      captionUrl = eng.baseUrl.replace(/&fmt=[^&]*/g, "") + "&fmt=json3";
+    }
 
-    const tx = await res.json();
+    const res = await fetch(captionUrl);
+    if (!res.ok) return post({ error: "fetch-failed-" + res.status });
+    const bodyText = await res.text();
+    if (!bodyText) return post({ error: "empty-response" });
+    let tx;
+    try {
+      tx = JSON.parse(bodyText);
+    } catch (_) {
+      return post({ error: "non-json-response" });
+    }
     const lines = [];
     for (const ev of tx.events || []) {
       if (!ev.segs) continue;
