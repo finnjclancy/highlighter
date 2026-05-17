@@ -34,12 +34,12 @@
       margin-bottom: 56px;
     }
     nav.topnav .brand-mini {
-      display: flex; align-items: center; gap: 9px;
-      font-weight: 600; font-size: 14px;
-      letter-spacing: -0.005em;
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 600; font-size: 20px;
+      letter-spacing: -0.015em;
     }
     nav.topnav .brand-mini .logo {
-      width: 26px; height: 26px; border-radius: 7px; font-size: 13px;
+      width: 36px; height: 36px; border-radius: 10px; font-size: 18px;
     }
     nav.topnav .links {
       display: flex; align-items: center; gap: 18px;
@@ -255,14 +255,15 @@
     }
     .feat .icon svg { width: 18px; height: 18px; }
     .feat h3 {
-      font-size: 15px; font-weight: 600;
-      letter-spacing: -0.01em;
-      margin: 0 0 6px;
+      font-size: 18px; font-weight: 600;
+      letter-spacing: -0.015em;
+      margin: 0 0 8px;
       color: var(--text);
+      line-height: 1.25;
     }
     .feat p {
       margin: 0;
-      color: var(--text-3);
+      color: var(--text-2);
       font-size: 13px; line-height: 1.55;
     }
 
@@ -288,13 +289,15 @@
       line-height: 1;
     }
     .step h3 {
-      font-size: 15px; font-weight: 600;
-      margin: 0 0 6px;
+      font-size: 18px; font-weight: 600;
+      letter-spacing: -0.015em;
+      margin: 0 0 8px;
       max-width: calc(100% - 36px);
+      line-height: 1.25;
     }
     .step p {
       margin: 0;
-      color: var(--text-3);
+      color: var(--text-2);
       font-size: 13px; line-height: 1.55;
     }
 
@@ -353,6 +356,315 @@
     }
     footer.foot a { color: var(--text-3); }
     footer.foot a:hover { color: var(--text-2); }
+
+    /* Smaller demo cards (share + comment) */
+    .demo-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 18px;
+      margin: 0 auto 80px;
+      max-width: 920px;
+    }
+    .demo-mini {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .demo-mini .demo-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.005em;
+      margin-bottom: 4px;
+    }
+    .demo-mini .demo-sub {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-bottom: 16px;
+    }
+    .demo-stage {
+      position: relative;
+      min-height: 240px;
+    }
+
+    /* ─── Share demo ─── */
+    .share-pop {
+      background: rgba(20,20,23,0.96);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+      width: 232px;
+      animation: pop-in 0.6s cubic-bezier(0.2,0.8,0.2,1) both;
+    }
+    @keyframes pop-in {
+      from { opacity: 0; transform: translateY(6px) scale(0.97); }
+      to { opacity: 1; transform: none; }
+    }
+    .share-pop .row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 9px;
+      border-radius: 6px;
+      font-size: 12px; font-weight: 500;
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      margin-bottom: 4px;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .share-pop .row:last-child { margin-bottom: 0; }
+    .share-pop .row .ico { font-size: 12px; width: 14px; text-align: center; }
+    .share-pop .row.share-row {
+      background: linear-gradient(120deg, #6366f1, #5457e0);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .share-pop .row.share-row::after {
+      content: ""; position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.18);
+      opacity: 0;
+      animation: btn-press 3.6s 0.4s infinite;
+    }
+    @keyframes btn-press {
+      0%   { opacity: 0; }
+      11%  { opacity: 0.4; }
+      14%  { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .share-toast {
+      position: absolute;
+      left: 50%; top: 38%;
+      transform: translate(-50%, -50%);
+      background: #1c1c20;
+      border: 1px solid rgba(99,102,241,0.6);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.12), 0 12px 32px rgba(0,0,0,0.4);
+      opacity: 0;
+      animation: toast-fly 3.6s 0.8s infinite;
+    }
+    @keyframes toast-fly {
+      0%   { opacity: 0; transform: translate(-50%, -45%); }
+      10%  { opacity: 0; transform: translate(-50%, -45%); }
+      20%  { opacity: 1; transform: translate(-50%, -55%); }
+      55%  { opacity: 1; transform: translate(-50%, -55%); }
+      70%  { opacity: 0; transform: translate(-50%, -65%); }
+      100% { opacity: 0; transform: translate(-50%, -65%); }
+    }
+    .preview-card {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 280px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+      opacity: 0;
+      animation: preview-rise 3.6s 1.4s infinite;
+    }
+    @keyframes preview-rise {
+      0%   { opacity: 0; transform: translate(-50%, 12px); }
+      18%  { opacity: 0; transform: translate(-50%, 12px); }
+      32%  { opacity: 1; transform: translate(-50%, 0); }
+      75%  { opacity: 1; transform: translate(-50%, 0); }
+      90%  { opacity: 0; transform: translate(-50%, -6px); }
+      100% { opacity: 0; }
+    }
+    .preview-card .pc-img {
+      height: 78px;
+      background:
+        linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+      position: relative;
+    }
+    .preview-card .pc-img::after {
+      content: "✦ Highlighter";
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font: 600 14px/1 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      color: rgba(255,255,255,0.92);
+      letter-spacing: -0.01em;
+    }
+    .preview-card .pc-body {
+      padding: 9px 12px;
+    }
+    .preview-card .pc-title {
+      font-size: 12px; font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.005em;
+      margin-bottom: 3px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .preview-card .pc-desc {
+      font-size: 11px;
+      color: var(--text-3);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .share-pop-wrap {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* ─── Comment demo ─── */
+    .comment-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px 12px 17px;
+      position: relative;
+      overflow: hidden;
+    }
+    .comment-card::before {
+      content: "";
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      width: 3px;
+      background: #b9f6ca;
+    }
+    .comment-card .quote {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text);
+      padding: 2px 6px;
+      background: #b9f6ca;
+      color: #0b3d1a;
+      border-radius: 3px;
+      display: inline;
+      font-weight: 500;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    .add-cmt-btn {
+      display: inline-flex;
+      background: transparent;
+      border: 1px dashed rgba(255,255,255,0.18);
+      color: var(--text-3);
+      border-radius: 999px;
+      padding: 4px 11px;
+      font: inherit; font-size: 11px; font-weight: 500;
+      margin-top: 12px;
+      animation: cmt-btn-fade 5s infinite;
+    }
+    @keyframes cmt-btn-fade {
+      0%   { opacity: 1; }
+      18%  { opacity: 1; }
+      24%  { opacity: 0; }
+      85%  { opacity: 0; }
+      92%  { opacity: 1; }
+      100% { opacity: 1; }
+    }
+    .cmt-form {
+      margin-top: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      opacity: 0;
+      transform: translateY(6px);
+      animation: cmt-form-show 5s infinite;
+    }
+    @keyframes cmt-form-show {
+      0%   { opacity: 0; transform: translateY(6px); }
+      20%  { opacity: 0; transform: translateY(6px); }
+      28%  { opacity: 1; transform: none; }
+      82%  { opacity: 1; transform: none; }
+      92%  { opacity: 0; transform: translateY(-4px); }
+      100% { opacity: 0; }
+    }
+    .cmt-form .cf-author {
+      font-size: 11px;
+      color: var(--text-3);
+      padding: 4px 8px;
+      background: var(--bg-2);
+      border-radius: 5px;
+      margin-bottom: 5px;
+      display: block;
+    }
+    .cmt-form .cf-text {
+      font-size: 12px; line-height: 1.5;
+      color: var(--text);
+      padding: 7px 10px;
+      background: var(--bg-2);
+      border-radius: 5px;
+      min-height: 36px;
+      position: relative;
+      white-space: pre;
+    }
+    .cmt-form .cf-text::after {
+      content: "│";
+      animation: caret-blink 0.9s steps(1) infinite;
+      color: var(--accent);
+      margin-left: 1px;
+    }
+    @keyframes caret-blink { 50% { opacity: 0; } }
+    .cmt-form .cf-text .typed {
+      display: inline-block;
+      overflow: hidden;
+      white-space: nowrap;
+      animation: type-out 5s steps(20, end) infinite;
+      max-width: 0;
+    }
+    @keyframes type-out {
+      0%   { max-width: 0; }
+      30%  { max-width: 0; }
+      55%  { max-width: 18em; }
+      82%  { max-width: 18em; }
+      100% { max-width: 0; }
+    }
+    .cmt-form .cf-actions {
+      display: flex; justify-content: flex-end; gap: 6px;
+      margin-top: 6px;
+    }
+    .cmt-form .cf-actions .cf-cancel,
+    .cmt-form .cf-actions .cf-post {
+      font-size: 10px; font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+    .cmt-form .cf-actions .cf-cancel {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-3);
+    }
+    .cmt-form .cf-actions .cf-post {
+      background: var(--accent);
+      color: #fff;
+    }
+    .posted-cmt {
+      margin-top: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      opacity: 0;
+      animation: cmt-post 5s infinite;
+    }
+    @keyframes cmt-post {
+      0%   { opacity: 0; transform: translateY(8px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; }
+      85%  { opacity: 0; transform: translateY(8px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; }
+      94%  { opacity: 1; transform: none; max-height: 60px; padding-top: 8px; padding-bottom: 8px; margin-top: 10px; }
+      100% { opacity: 1; transform: none; max-height: 60px; padding-top: 8px; padding-bottom: 8px; margin-top: 10px; }
+    }
+    .posted-cmt .pc-head {
+      display: flex; gap: 6px; align-items: baseline;
+      margin-bottom: 2px;
+    }
+    .posted-cmt .pc-author {
+      font-weight: 600; color: var(--text); font-size: 11px;
+    }
+    .posted-cmt .pc-when { color: var(--text-4); font-size: 10px; }
+    .posted-cmt .pc-text { color: var(--text-2); }
 
     @media (max-width: 640px) {
       .hero h1 { font-size: 40px; }
@@ -422,9 +734,58 @@
       </div>
     </div>
 
+    <!-- Two smaller animated demos: share + comment -->
+    <div class="demo-row">
+      <div class="demo-mini">
+        <div class="demo-title">Share a page</div>
+        <div class="demo-sub">One link, with or without the extension.</div>
+        <div class="demo-stage">
+          <div class="share-pop-wrap">
+            <div class="share-pop">
+              <div class="row"><span class="ico">📚</span> Open library</div>
+              <div class="row share-row"><span class="ico">🔗</span> Share live link</div>
+              <div class="row"><span class="ico">✎</span> Draw on page</div>
+              <div class="row"><span class="ico">📋</span> Copy text</div>
+            </div>
+          </div>
+          <div class="share-toast">✓ Link copied</div>
+          <div class="preview-card">
+            <div class="pc-img"></div>
+            <div class="pc-body">
+              <div class="pc-title">Compound interest — Wikipedia</div>
+              <div class="pc-desc">3 highlights · finance, study</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-mini">
+        <div class="demo-title">Add a comment</div>
+        <div class="demo-sub">Anyone with the link can join the conversation.</div>
+        <div class="demo-stage">
+          <div class="comment-card">
+            <span class="quote">interest accumulated from a principal sum and previously accumulated interest</span>
+            <div><button class="add-cmt-btn">💬 Add a comment</button></div>
+            <div class="cmt-form">
+              <span class="cf-author">Sam</span>
+              <div class="cf-text"><span class="typed">Great point — this compounds fast.</span></div>
+              <div class="cf-actions">
+                <span class="cf-cancel">Cancel</span>
+                <span class="cf-post">Post</span>
+              </div>
+            </div>
+            <div class="posted-cmt">
+              <div class="pc-head"><span class="pc-author">Sam</span><span class="pc-when">just now</span></div>
+              <div class="pc-text">Great point — this compounds fast.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <section id="features">
       <div class="section-h">
-        <div class="label">Built for readers</div>
+        <div class="label">Built for learners, readers, sharers</div>
         <h2>Everything you need to think on the web</h2>
         <p>A small set of well-considered tools — nothing more, nothing less.</p>
       </div>
