@@ -13,7 +13,7 @@
 // renders the actual gallery.
 
 const STATIC_BASE = "https://finnjclancy.github.io/highlighter";
-const PROMO_IMAGE = STATIC_BASE + "/icons/promo-440x280.png";
+const PROMO_IMAGE = STATIC_BASE + "/og-image.png";
 const ID_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"; // dropped o/l/1/0
 const ID_LENGTH = 8;
 const KV_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year

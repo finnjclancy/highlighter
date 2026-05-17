@@ -140,3 +140,75 @@ def render_promo(width: int = 440, height: int = 280) -> Image.Image:
 promo_out = os.path.join(OUT_DIR, "promo-440x280.png")
 render_promo().save(promo_out, "PNG", optimize=True)
 print(f"wrote {promo_out}")
+
+
+# -------- Open Graph image for messaging-app preview cards (1200 x 630) --------
+def render_og(width: int = 1200, height: int = 630) -> Image.Image:
+    """Larger, richer card for iMessage / Slack / Twitter link previews."""
+    img = Image.new("RGBA", (width, height), (12, 12, 14, 255))
+    draw = ImageDraw.Draw(img)
+
+    # Full-face diagonal gradient panel
+    panel = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    ppx = panel.load()
+    for y in range(height):
+        for x in range(width):
+            t = (x + y) / (width + height)
+            r, g, b = lerp(START, END, t)
+            ppx[x, y] = (r, g, b, 255)
+    # Darken edges a little for depth
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    opx = overlay.load()
+    for y in range(height):
+        for x in range(width):
+            dx = (x / width) - 0.5
+            dy = (y / height) - 0.5
+            d = (dx * dx + dy * dy) ** 0.5
+            a = int(min(120, max(0, (d - 0.35) * 360)))
+            opx[x, y] = (0, 0, 0, a)
+    panel.alpha_composite(overlay)
+    img.alpha_composite(panel)
+
+    # Large icon, left side
+    icon_size = 280
+    icon = render(icon_size)
+    img.alpha_composite(icon, (90, (height - icon_size) // 2))
+
+    # Wordmark + tagline
+    try:
+        from PIL import ImageFont
+        font_title = None
+        font_sub = None
+        font_small = None
+        for cand in (
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/System/Library/Fonts/SFNS.ttf",
+            "/Library/Fonts/Arial Bold.ttf",
+        ):
+            if os.path.exists(cand):
+                font_title = ImageFont.truetype(cand, 88)
+                font_sub = ImageFont.truetype(cand, 32)
+                font_small = ImageFont.truetype(cand, 22)
+                break
+        if not font_title:
+            font_title = ImageFont.load_default()
+            font_sub = ImageFont.load_default()
+            font_small = ImageFont.load_default()
+    except Exception:
+        font_title = ImageFont.load_default()
+        font_sub = ImageFont.load_default()
+        font_small = ImageFont.load_default()
+
+    text_x = 90 + icon_size + 60
+    draw.text((text_x, 200), "Highlighter", fill=(255, 255, 255, 255), font=font_title)
+    draw.text((text_x, 310), "Highlight any page. Share what you read.", fill=(235, 235, 245, 235), font=font_sub)
+    draw.text((text_x, 365), "Custom colours · folders · live links", fill=(200, 200, 215, 220), font=font_small)
+
+    return img
+
+
+# Write the OG image into docs/ so GitHub Pages serves it at a stable URL
+DOCS_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
+og_out = os.path.join(DOCS_DIR, "og-image.png")
+render_og().save(og_out, "PNG", optimize=True)
+print(f"wrote {og_out}")
