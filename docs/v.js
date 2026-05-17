@@ -79,27 +79,36 @@ async function init() {
   }
 
   const root = document.getElementById("content");
-  const displayName = (payload.name && payload.name.trim()) || payload.title || hostOf(payload.url) || "Shared highlights";
-  const subTitle = payload.name ? (payload.title || hostOf(payload.url)) : "";
+  const hasName = !!(payload.name && payload.name.trim());
+  const pageTitle = payload.title || "";
+  const host = hostOf(payload.url);
+  const displayName = hasName ? payload.name.trim() : (pageTitle || host || "Shared highlights");
+  const sourceLabel = pageTitle || host || "Open source";
   const count = payload.highlights.length;
   const live = buildLiveLink(payload);
 
-  // Update the browser-tab title so the user sees the custom name when the
-  // page is open. (Link-preview thumbnails in chat apps don't reflect this —
-  // they rely on the static <meta> tags fetched by their scrapers.)
   document.title = displayName + " — Highlighter";
+
+  // If the user named the share, show name big + page title as the source
+  // link. Otherwise the page title is the big title and the host is the
+  // source link.
+  const sourceRow = hasName
+    ? `<a class="source-link" href="${escape(payload.url || "#")}" target="_blank" rel="noopener">
+         ${escape(sourceLabel)}
+         <span class="arrow">↗</span>
+       </a>`
+    : (host ? `<a class="source-link" href="${escape(payload.url || "#")}" target="_blank" rel="noopener">${escape(host)}<span class="arrow">↗</span></a>` : "");
 
   let html = `
     <h2 class="page-title">${escape(displayName)}</h2>
     <div class="meta">
-      ${subTitle ? `<span>${escape(subTitle)}</span><span class="sep">·</span>` : ""}
-      <a href="${escape(payload.url || "#")}" target="_blank" rel="noopener">${escape(hostOf(payload.url) || "Open source")}</a>
-      <span class="sep">·</span>
+      ${sourceRow}
+      ${sourceRow ? `<span class="sep">·</span>` : ""}
       <span>${count} ${count === 1 ? "highlight" : "highlights"}</span>
     </div>
     <div class="cta-row">
       ${live ? `<a class="cta" href="${escape(live)}" rel="noopener">Open on original page →</a>` : ""}
-      <a class="cta cta-secondary" href="index.html">About Highlighter</a>
+      <a class="cta cta-secondary" href="https://finnjclancy.github.io/highlighter/">About Highlighter</a>
     </div>
     <div class="cards">
   `;

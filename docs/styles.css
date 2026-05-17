@@ -67,12 +67,28 @@ h2.page-title {
 .meta {
   color: var(--text-3); font-size: 13px;
   margin-bottom: 32px;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: baseline; gap: 10px;
   flex-wrap: wrap;
 }
-.meta a { color: var(--text-2); }
-.meta a:hover { color: var(--text); }
 .meta .sep { color: var(--text-4); }
+.meta .source-link {
+  color: var(--text-2);
+  display: inline-flex; align-items: center; gap: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.12s;
+  text-decoration: none;
+}
+.meta .source-link:hover { color: var(--text); text-decoration: none; }
+.meta .source-link .arrow {
+  color: var(--text-4);
+  font-size: 11px;
+  transform: translateY(-1px);
+  transition: color 0.12s, transform 0.12s;
+}
+.meta .source-link:hover .arrow { color: var(--accent); transform: translate(1px, -2px); }
 
 /* CTAs */
 .cta {
