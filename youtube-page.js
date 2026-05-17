@@ -1,15 +1,6 @@
-// Runs in YouTube's main-world realm (not the content-script isolated world)
-// so it can read window.ytInitialPlayerResponse + the live player API.
-// Loaded as an extension file via chrome.runtime.getURL() because YouTube's
-// CSP blocks inline <script>.
-//
-// Three layered approaches to find the caption tracks (since ytInitial-
-// PlayerResponse can be stale after SPA navigation, and YouTube has been
-// known to lazy-load captions):
-//   1. Live player instance: #movie_player.getPlayerResponse()
-//   2. Global window.ytInitialPlayerResponse
-//   3. Re-fetch the current /watch?v=… HTML and parse ytInitialPlayerResponse
-//      out of the response
+// Runs in YouTube's main-world realm so it can read ytInitialPlayerResponse
+// and use the live player API. Loaded via chrome.runtime.getURL() because
+// YouTube's CSP blocks inline <script>.
 (async () => {
   const videoId = new URLSearchParams(location.search).get("v");
 
@@ -25,44 +16,117 @@
   }
 
   async function getTracks() {
-    // 1. Live player — most reliable, reflects the actual loaded video
     try {
       const player = document.getElementById("movie_player");
       if (player && typeof player.getPlayerResponse === "function") {
-        const pr = player.getPlayerResponse();
-        const tracks = tracksFromPlayerResponse(pr);
+        const tracks = tracksFromPlayerResponse(player.getPlayerResponse());
         if (tracks && tracks.length) return { tracks, src: "player" };
       }
-    } catch (_) { /* fall through */ }
-
-    // 2. Global from initial page render
+    } catch (_) {}
     try {
       const tracks = tracksFromPlayerResponse(window.ytInitialPlayerResponse);
       if (tracks && tracks.length) return { tracks, src: "global" };
-    } catch (_) { /* fall through */ }
-
-    // 3. Re-fetch the watch HTML for a fresh player response
+    } catch (_) {}
     if (videoId) {
       try {
-        const res = await fetch("/watch?v=" + encodeURIComponent(videoId), {
-          credentials: "include"
-        });
+        const res = await fetch("/watch?v=" + encodeURIComponent(videoId), { credentials: "include" });
         if (res.ok) {
           const html = await res.text();
           const m = html.match(/ytInitialPlayerResponse\s*=\s*(\{[\s\S]+?\})\s*;\s*var\s/)
                   || html.match(/ytInitialPlayerResponse\s*=\s*(\{[\s\S]+?\})\s*;\s*<\/script>/);
           if (m) {
             try {
-              const pr = JSON.parse(m[1]);
-              const tracks = tracksFromPlayerResponse(pr);
+              const tracks = tracksFromPlayerResponse(JSON.parse(m[1]));
               if (tracks && tracks.length) return { tracks, src: "html" };
-            } catch (_) { /* JSON malformed, fall through */ }
+            } catch (_) {}
           }
         }
-      } catch (_) { /* network failed, fall through */ }
+      } catch (_) {}
     }
-
     return null;
+  }
+
+  function urlWithFmt(baseUrl, fmt) {
+    try {
+      const u = new URL(baseUrl, location.origin);
+      u.searchParams.set("fmt", fmt);
+      return u.toString();
+    } catch (_) {
+      return baseUrl.replace(/[?&]fmt=[^&]*/g, "") + (baseUrl.includes("?") ? "&" : "?") + "fmt=" + fmt;
+    }
+  }
+
+  function parseJson3(text) {
+    const json = JSON.parse(text);
+    const out = [];
+    for (const ev of json.events || []) {
+      if (!ev.segs) continue;
+      const t = (ev.segs.map(s => s.utf8 || "").join("")).replace(/\n/g, " ").trim();
+      if (!t) continue;
+      out.push({ t: (ev.tStartMs || 0) / 1000, text: t });
+    }
+    return out;
+  }
+
+  function parseSrv3(xmlText) {
+    // <p t="ms" d="ms"><s>chunk</s>…</p>
+    const doc = new DOMParser().parseFromString(xmlText, "text/xml");
+    const out = [];
+    for (const p of doc.querySelectorAll("p")) {
+      const t = parseInt(p.getAttribute("t") || "0", 10) / 1000;
+      const text = p.textContent.replace(/\n/g, " ").trim();
+      if (!text) continue;
+      out.push({ t, text });
+    }
+    return out;
+  }
+
+  function parseSrv1(xmlText) {
+    // <text start="sec" dur="sec">…</text>
+    const doc = new DOMParser().parseFromString(xmlText, "text/xml");
+    const out = [];
+    for (const node of doc.querySelectorAll("text")) {
+      const t = parseFloat(node.getAttribute("start") || "0");
+      const text = decodeEntities(node.textContent).replace(/\n/g, " ").trim();
+      if (!text) continue;
+      out.push({ t, text });
+    }
+    return out;
+  }
+
+  function decodeEntities(s) {
+    const ta = document.createElement("textarea");
+    ta.innerHTML = s;
+    return ta.value;
+  }
+
+  async function fetchCaptions(baseUrl) {
+    const attempts = [
+      { fmt: "json3", parse: parseJson3 },
+      { fmt: "srv3",  parse: parseSrv3  },
+      { fmt: "srv1",  parse: parseSrv1  },
+      { fmt: "",      parse: parseSrv3  }  // raw baseUrl as last resort
+    ];
+    let lastErr = "empty-response";
+    for (const attempt of attempts) {
+      const url = attempt.fmt ? urlWithFmt(baseUrl, attempt.fmt) : baseUrl;
+      try {
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) { lastErr = "http-" + res.status; continue; }
+        const body = await res.text();
+        if (!body || body.length < 20) { lastErr = "empty"; continue; }
+        try {
+          const lines = attempt.parse(body);
+          if (lines && lines.length) return { lines, fmt: attempt.fmt || "raw" };
+          lastErr = "no-lines-" + (attempt.fmt || "raw");
+        } catch (e) {
+          lastErr = "parse-" + (attempt.fmt || "raw");
+        }
+      } catch (e) {
+        lastErr = "fetch-" + (attempt.fmt || "raw");
+      }
+    }
+    return { error: lastErr };
   }
 
   try {
@@ -70,41 +134,15 @@
     if (!got) return post({ error: "no-tracks" });
 
     const tracks = got.tracks;
-    // Prefer manual English → any English → first available
     const eng = tracks.find(t => t.languageCode === "en" && t.kind !== "asr")
              || tracks.find(t => t.languageCode === "en")
              || tracks[0];
 
-    // Force fmt=json3 regardless of what's already in baseUrl — sometimes
-    // YouTube hands us URLs preset to srv3 (XML) which our parser can't read.
-    let captionUrl;
-    try {
-      const u = new URL(eng.baseUrl, location.origin);
-      u.searchParams.set("fmt", "json3");
-      captionUrl = u.toString();
-    } catch (_) {
-      captionUrl = eng.baseUrl.replace(/&fmt=[^&]*/g, "") + "&fmt=json3";
-    }
-
-    const res = await fetch(captionUrl);
-    if (!res.ok) return post({ error: "fetch-failed-" + res.status });
-    const bodyText = await res.text();
-    if (!bodyText) return post({ error: "empty-response" });
-    let tx;
-    try {
-      tx = JSON.parse(bodyText);
-    } catch (_) {
-      return post({ error: "non-json-response" });
-    }
-    const lines = [];
-    for (const ev of tx.events || []) {
-      if (!ev.segs) continue;
-      const text = ev.segs.map(s => s.utf8 || "").join("").replace(/\n/g, " ").trim();
-      if (!text) continue;
-      lines.push({ t: (ev.tStartMs || 0) / 1000, text });
-    }
+    const result = await fetchCaptions(eng.baseUrl);
+    if (result.error) return post({ error: result.error });
 
     // Merge very short adjacent lines into 3-8s chunks for readability
+    const lines = result.lines;
     const merged = [];
     for (const l of lines) {
       const last = merged[merged.length - 1];
@@ -115,7 +153,7 @@
       }
     }
 
-    post({ lines: merged, source: got.src });
+    post({ lines: merged, source: got.src, fmt: result.fmt });
   } catch (e) {
     post({ error: String((e && e.message) || e) });
   }
