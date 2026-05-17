@@ -86,7 +86,7 @@ async function gzipB64Url(jsonStr) {
   }
 }
 
-const GALLERY_BASE = "https://finnjclancy.github.io/highlighter/v.html";
+const GALLERY_BASE = "https://highlighter-share.finnjclancy.workers.dev/v";
 
 function buildPayload(pageUrl, pageTitle, list, shareName) {
   return {
