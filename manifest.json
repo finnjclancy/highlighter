@@ -46,7 +46,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content.css", "drawing.css", "youtube-page.js"],
+      "resources": ["content.css", "drawing.css"],
       "matches": ["<all_urls>"]
     }
   ]
