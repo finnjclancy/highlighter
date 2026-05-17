@@ -35,12 +35,12 @@ body {
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-.wrap { max-width: 720px; margin: 0 auto; padding: 56px 24px 96px; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 28px 24px 48px; }
 
 /* Header */
 header.brand {
   display: flex; align-items: center; gap: 10px;
-  margin-bottom: 36px;
+  margin-bottom: 18px;
 }
 .logo {
   width: 28px; height: 28px;
@@ -57,16 +57,24 @@ header.brand {
 .brand .sep { color: var(--text-4); }
 
 /* Title block */
+.title-block {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.title-block .title-text { min-width: 0; flex: 1; }
 h2.page-title {
-  font-size: 30px; font-weight: 600;
+  font-size: 28px; font-weight: 600;
   letter-spacing: -0.025em;
-  margin: 0 0 10px;
+  margin: 0 0 4px;
   line-height: 1.2;
   word-wrap: break-word;
 }
 .meta {
   color: var(--text-3); font-size: 13px;
-  margin-bottom: 32px;
+  margin: 0 0 16px;
   display: flex; align-items: baseline; gap: 10px;
   flex-wrap: wrap;
 }
@@ -110,16 +118,29 @@ h2.page-title {
   color: var(--text);
 }
 .cta-secondary:hover { background: var(--surface-2); }
-.cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 36px; }
+.cta-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Meta + CTAs share one row to save vertical space */
+.meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.meta-bar .meta { margin: 0; }
+.meta-bar .cta-row { flex-shrink: 0; }
+.meta-bar .cta { padding: 7px 14px; font-size: 12px; }
 
 /* Quote cards */
-.cards { display: flex; flex-direction: column; gap: 14px; }
+.cards { display: flex; flex-direction: column; gap: 8px; }
 
 .card {
   background: var(--bg-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 22px 24px 20px 26px;
+  border-radius: 10px;
+  padding: 14px 18px 14px 22px;
   position: relative;
   overflow: hidden;
 }
@@ -146,23 +167,23 @@ h2.page-title {
 }
 
 .card .chip-row {
-  display: flex; gap: 6px; flex-wrap: wrap;
-  margin-top: 16px;
+  display: flex; gap: 5px; flex-wrap: wrap;
+  margin-top: 10px;
 }
 .card .chip {
   font-size: 11px; font-weight: 500;
   background: rgba(255,255,255,0.06);
   color: var(--text-2);
-  padding: 3px 10px; border-radius: 999px;
+  padding: 2px 9px; border-radius: 999px;
   letter-spacing: -0.005em;
 }
 .card .note {
-  margin-top: 16px;
-  padding: 12px 14px;
+  margin-top: 10px;
+  padding: 10px 12px;
   background: rgba(255,255,255,0.025);
   border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  font-size: 14px; line-height: 1.6;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px; line-height: 1.55;
   color: var(--text-2);
   white-space: pre-wrap;
 }
@@ -173,12 +194,12 @@ h2.page-title {
 }
 
 footer.foot {
-  margin-top: 64px;
-  padding-top: 24px;
+  margin-top: 28px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
   color: var(--text-4); font-size: 12px;
   text-align: center;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 /* Landing-page bits */
@@ -211,13 +232,13 @@ footer.foot {
 
 /* Bottom install hint on the share page */
 .install-hint {
-  margin-top: 40px;
-  padding: 18px 20px;
+  margin-top: 18px;
+  padding: 12px 16px;
   background: rgba(99,102,241,0.06);
   border: 1px solid rgba(99,102,241,0.18);
-  border-radius: var(--radius-lg);
+  border-radius: 10px;
   font-size: 13px;
   color: var(--text-2);
-  line-height: 1.55;
+  line-height: 1.5;
 }
-.install-hint strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 14px; }
+.install-hint strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 13px; }

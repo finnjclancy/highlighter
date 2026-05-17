@@ -101,14 +101,16 @@ async function init() {
 
   let html = `
     <h2 class="page-title">${escape(displayName)}</h2>
-    <div class="meta">
-      ${sourceRow}
-      ${sourceRow ? `<span class="sep">·</span>` : ""}
-      <span>${count} ${count === 1 ? "highlight" : "highlights"}</span>
-    </div>
-    <div class="cta-row">
-      ${live ? `<a class="cta" href="${escape(live)}" rel="noopener">Open on original page →</a>` : ""}
-      <a class="cta cta-secondary" href="https://finnjclancy.github.io/highlighter/">About Highlighter</a>
+    <div class="meta-bar">
+      <div class="meta">
+        ${sourceRow}
+        ${sourceRow ? `<span class="sep">·</span>` : ""}
+        <span>${count} ${count === 1 ? "highlight" : "highlights"}</span>
+      </div>
+      <div class="cta-row">
+        ${live ? `<a class="cta" href="${escape(live)}" rel="noopener">Open on original page →</a>` : ""}
+        <a class="cta cta-secondary" href="https://finnjclancy.github.io/highlighter/">About</a>
+      </div>
     </div>
     <div class="cards">
   `;
