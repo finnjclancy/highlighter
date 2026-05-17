@@ -150,7 +150,17 @@ async function shortenViaWorker(enc) {
 async function buildGalleryUrl(pageUrl, pageTitle, list, shareName) {
   const enc = await buildEncodedPayload(pageUrl, pageTitle, list, shareName);
   const short = await shortenViaWorker(enc);
-  return short || (GALLERY_BASE + "?d=" + enc);
+  return { url: short || (GALLERY_BASE + "?d=" + enc), shortened: !!short };
+}
+
+const SHARES_KEY = "hl_shares";
+async function recordShare(entry) {
+  try {
+    const { [SHARES_KEY]: shares = [] } = await chrome.storage.local.get(SHARES_KEY);
+    shares.unshift(entry);
+    // Keep the most recent 250 — plenty for a personal history without bloating storage
+    await chrome.storage.local.set({ [SHARES_KEY]: shares.slice(0, 250) });
+  } catch {}
 }
 
 let pendingShare = null;  // { tab, enriched } captured when share-link clicked
@@ -186,12 +196,32 @@ async function doShareCopy() {
   if (!pendingShare) return;
   const { tab, enriched } = pendingShare;
   const name = shareNameInput.value.trim();
-  const url = await buildGalleryUrl(tab.url, tab.title, enriched, name);
+  const { url, shortened } = await buildGalleryUrl(tab.url, tab.title, enriched, name);
   await copyToClipboard(url);
   const n = enriched.length;
   shareForm.style.display = "none";
   pendingShare = null;
+  // Persist a history entry so the user can see / re-copy this link later
+  await recordShare({
+    id: extractShareId(url),
+    name,
+    url,
+    shortened,
+    sourceUrl: tab.url,
+    sourceTitle: tab.title || "",
+    count: n,
+    createdAt: Date.now()
+  });
   toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
+}
+
+function extractShareId(url) {
+  try {
+    const u = new URL(url);
+    const m = u.pathname.match(/\/v\/([a-z0-9]+)$/i);
+    if (m) return m[1];
+  } catch {}
+  return null;
 }
 
 shareCopy.addEventListener("click", doShareCopy);

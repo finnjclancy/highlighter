@@ -558,6 +558,75 @@
 
     .panel { display: none; }
     .panel.active { display: block; }
+
+    /* ---------- SHARES TAB ---------- */
+    .shares-page { max-width: 880px; margin: 0 auto; }
+    .shares-page .topbar { margin-bottom: 6px; }
+    .shares-lead {
+      color: var(--text-3); font-size: 12px;
+      margin: 0 0 16px;
+      letter-spacing: -0.005em;
+    }
+    .share-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .share-card:hover { border-color: var(--border-strong); }
+    .share-info { min-width: 0; }
+    .share-name {
+      font-size: 14px; font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.005em;
+      margin-bottom: 4px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .share-source {
+      font-size: 12px; color: var(--text-3);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-bottom: 4px;
+    }
+    .share-source a { color: var(--text-2); }
+    .share-source a:hover { color: var(--accent); }
+    .share-meta {
+      font-size: 11px; color: var(--text-4);
+      display: flex; gap: 8px;
+      font-feature-settings: "tnum";
+    }
+    .share-meta .dot { color: var(--text-4); }
+    .share-actions {
+      display: flex; gap: 6px;
+      flex-shrink: 0;
+    }
+    .share-actions button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-md);
+      padding: 6px 10px; cursor: pointer;
+      font: inherit; font-size: 11px; font-weight: 500;
+      letter-spacing: -0.005em;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .share-actions button:hover { background: var(--surface-2); border-color: var(--border-strong); }
+    .share-actions .copy { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .share-actions .copy:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .share-actions .del { color: var(--text-2); }
+    .share-actions .del:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+    .shares-empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--text-3); font-size: 13px;
+    }
+    .shares-empty h3 {
+      color: var(--text-2); font-weight: 500;
+      font-size: 14px; margin: 0 0 4px;
+    }
   </style>
 </head>
 <body>
@@ -566,6 +635,7 @@
       <div class="brand"><span class="logo">✦</span> Highlighter</div>
       <div class="tabs">
         <button class="tab active" data-tab="quotes">Quotes</button>
+        <button class="tab" data-tab="shares">Shares</button>
         <button class="tab" data-tab="design">Design</button>
       </div>
     </div>
@@ -598,6 +668,20 @@
           </div>
           <div id="results"></div>
         </main>
+      </div>
+    </div>
+
+    <!-- Shares panel -->
+    <div class="panel" id="panel-shares">
+      <div class="shares-page">
+        <div class="topbar">
+          <h2>Shared links</h2>
+          <span class="count" id="shares-count"></span>
+          <input type="search" id="shares-search" placeholder="Search by name or page title…">
+          <button class="export-btn" id="shares-clear" title="Remove every share from this local history list">Clear history</button>
+        </div>
+        <p class="shares-lead">Every share link you've created. The links themselves stay alive for ~1 year; this list lives only in your own browser.</p>
+        <div id="shares-results"></div>
       </div>
     </div>
 

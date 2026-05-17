@@ -647,6 +647,130 @@ document.addEventListener("keydown", e => {
   if (folderBg.classList.contains("show") && e.key === "Escape") closeFolderPicker();
 });
 
+// ---------- shares tab ----------
+const SHARES_KEY = "hl_shares";
+const sharesResults = document.getElementById("shares-results");
+const sharesCount = document.getElementById("shares-count");
+const sharesSearch = document.getElementById("shares-search");
+const sharesClear = document.getElementById("shares-clear");
+let shares = [];
+let sharesQ = "";
+
+async function loadShares() {
+  const data = await chrome.storage.local.get(SHARES_KEY);
+  shares = data[SHARES_KEY] || [];
+  renderShares();
+}
+
+function renderShares() {
+  const q = sharesQ.toLowerCase();
+  const filtered = q
+    ? shares.filter(s =>
+        (s.name || "").toLowerCase().includes(q) ||
+        (s.sourceTitle || "").toLowerCase().includes(q) ||
+        (s.sourceUrl || "").toLowerCase().includes(q))
+    : shares;
+  sharesCount.textContent = filtered.length;
+  if (!filtered.length) {
+    sharesResults.innerHTML = `
+      <div class="shares-empty">
+        <h3>${shares.length ? "Nothing matches" : "No shares yet"}</h3>
+        <div>${shares.length ? "Try a different search." : "Use Share live link from the popup to create your first share."}</div>
+      </div>`;
+    return;
+  }
+  sharesResults.innerHTML = "";
+  filtered.forEach(s => sharesResults.appendChild(renderShareCard(s)));
+}
+
+function renderShareCard(s) {
+  const card = document.createElement("div");
+  card.className = "share-card";
+
+  const info = document.createElement("div");
+  info.className = "share-info";
+  const name = document.createElement("div");
+  name.className = "share-name";
+  name.textContent = s.name || s.sourceTitle || "Untitled share";
+  const source = document.createElement("div");
+  source.className = "share-source";
+  let host = "";
+  try { host = new URL(s.sourceUrl).hostname; } catch {}
+  source.innerHTML = `<a href="${escape(s.sourceUrl)}" target="_blank" rel="noopener">${escape(s.sourceTitle || host)}</a>${host && s.sourceTitle ? ` · ${escape(host)}` : ""}`;
+  const meta = document.createElement("div");
+  meta.className = "share-meta";
+  const when = s.createdAt ? new Date(s.createdAt).toLocaleString() : "";
+  meta.innerHTML = `<span>${s.count || 0} ${s.count === 1 ? "highlight" : "highlights"}</span><span class="dot">·</span><span>${escape(when)}</span>`;
+  info.appendChild(name);
+  info.appendChild(source);
+  info.appendChild(meta);
+  card.appendChild(info);
+
+  const actions = document.createElement("div");
+  actions.className = "share-actions";
+  const openBtn = document.createElement("button");
+  openBtn.textContent = "Open";
+  openBtn.title = "Open the share gallery in a new tab";
+  openBtn.addEventListener("click", () => chrome.tabs.create({ url: s.url }));
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "copy";
+  copyBtn.textContent = "Copy";
+  copyBtn.title = "Copy the share link to clipboard";
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(s.url);
+      copyBtn.textContent = "✓ Copied";
+      setTimeout(() => copyBtn.textContent = "Copy", 1300);
+    } catch {}
+  });
+  const delBtn = document.createElement("button");
+  delBtn.className = "del";
+  delBtn.textContent = "×";
+  delBtn.title = "Remove from this list (the link itself stays alive)";
+  delBtn.addEventListener("click", () => {
+    openConfirm({
+      title: "Remove this share from the list?",
+      body: `<div class="cf-lead">This only deletes the local record. The link itself keeps working until it expires (~1 year from when you created it).</div>
+             <div class="cf-preview"><span class="cf-text">${escape(s.name || s.sourceTitle || "Untitled share")}</span></div>`,
+      confirmText: "Remove",
+      onConfirm: async () => {
+        shares = shares.filter(x => x !== s);
+        await chrome.storage.local.set({ [SHARES_KEY]: shares });
+        renderShares();
+      }
+    });
+  });
+  actions.appendChild(openBtn);
+  actions.appendChild(copyBtn);
+  actions.appendChild(delBtn);
+  card.appendChild(actions);
+  return card;
+}
+
+sharesSearch.addEventListener("input", () => {
+  sharesQ = sharesSearch.value.trim();
+  renderShares();
+});
+
+sharesClear.addEventListener("click", () => {
+  if (!shares.length) return;
+  openConfirm({
+    title: "Clear share history?",
+    body: `<div class="cf-lead">Removes all ${shares.length} entries from this list. The links themselves stay alive until they expire.</div>`,
+    confirmText: "Clear",
+    onConfirm: async () => {
+      shares = [];
+      await chrome.storage.local.set({ [SHARES_KEY]: [] });
+      renderShares();
+    }
+  });
+});
+
+loadShares();
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes[SHARES_KEY]) loadShares();
+});
+
 load();
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local") load();
