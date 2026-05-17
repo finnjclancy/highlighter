@@ -342,6 +342,81 @@ footer.foot {
 }
 .empty h2 { color: var(--text-2); font-weight: 500; margin: 0 0 6px; font-size: 18px; }
 
+/* Install banner — sticky at top of shared gallery, hidden when extension is detected */
+.install-banner {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: linear-gradient(120deg, rgba(99,102,241,0.18), rgba(236,72,153,0.14));
+  border-bottom: 1px solid rgba(99,102,241,0.32);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+}
+.install-banner .ib-inner {
+  max-width: 920px; margin: 0 auto;
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 18px;
+}
+.install-banner .ib-mark {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: #fff;
+  border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.install-banner .ib-text {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 1px;
+  font-size: 13px; line-height: 1.4;
+  letter-spacing: -0.005em;
+}
+.install-banner .ib-text strong {
+  color: var(--text); font-weight: 600;
+  display: block;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.install-banner .ib-text span {
+  color: var(--text-2);
+  font-size: 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.install-banner .ib-cta {
+  background: #fff;
+  color: #1c1c20;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font: inherit; font-weight: 600; font-size: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
+  letter-spacing: -0.005em;
+  transition: transform 0.06s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(255,255,255,0.12);
+}
+.install-banner .ib-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,255,255,0.18); text-decoration: none; }
+.install-banner .ib-cta:active { transform: scale(0.97); }
+.install-banner .ib-close {
+  background: transparent; border: none;
+  color: rgba(255,255,255,0.55);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.install-banner .ib-close:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+/* Hide whenever the extension is present (the content script sets this) */
+html[data-hl-extension="installed"] .install-banner { display: none !important; }
+
+@media (max-width: 640px) {
+  .install-banner .ib-text span { display: none; }
+  .install-banner .ib-inner { padding: 8px 12px; gap: 10px; }
+}
+
 /* Bottom install hint on the share page */
 .install-hint {
   margin-top: 18px;

@@ -220,7 +220,7 @@ function renderHtml(meta, enc, shareId) {
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(PROMO_IMAGE)}">
 
-  <link rel="icon" type="image/png" sizes="32x32" href="${STATIC_BASE}/favicon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="${STATIC_BASE}/favicon.png?v=2">
   <link rel="icon" type="image/png" sizes="16x16" href="${STATIC_BASE}/favicon-16.png">
   <link rel="apple-touch-icon" sizes="128x128" href="${STATIC_BASE}/apple-touch-icon.png">
   <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=5">
@@ -231,6 +231,30 @@ function renderHtml(meta, enc, shareId) {
   </script>
 </head>
 <body>
+  <!-- Install prompt — hidden when the extension is detected (html[data-hl-extension]) -->
+  <div id="install-banner" class="install-banner">
+    <div class="ib-inner">
+      <span class="ib-mark">✦</span>
+      <div class="ib-text">
+        <strong>See these highlights painted onto the original page.</strong>
+        <span>Install the Highlighter extension to highlight, comment on, and share any page yourself.</span>
+      </div>
+      <a class="ib-cta" href="${STATIC_BASE}/" rel="noopener">Install Highlighter</a>
+      <button class="ib-close" aria-label="Dismiss">×</button>
+    </div>
+  </div>
+  <script>
+    (function () {
+      try {
+        var dismissed = localStorage.getItem("hl_install_dismissed") === "1";
+        if (dismissed) document.getElementById("install-banner").style.display = "none";
+      } catch (e) {}
+      document.getElementById("install-banner").querySelector(".ib-close").addEventListener("click", function () {
+        document.getElementById("install-banner").style.display = "none";
+        try { localStorage.setItem("hl_install_dismissed", "1"); } catch (e) {}
+      });
+    })();
+  </script>
   <div class="wrap">
     <header class="brand">
       <span class="logo">✦</span>

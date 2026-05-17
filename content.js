@@ -897,7 +897,31 @@
   });
 
   // ---------- init ----------
+  // ---------- announce extension presence to Highlighter-owned pages ----------
+  // The shared-gallery and landing pages check for this marker to hide the
+  // "Install Highlighter" banner when the viewer already has the extension.
+  function announcePresenceIfHighlighterPage() {
+    const host = location.hostname;
+    const isOurPage =
+      host === "highlighter-share.finnjclancy.workers.dev" ||
+      host === "finnjclancy.github.io";
+    if (!isOurPage) return;
+    const mark = () => {
+      if (document.getElementById("__hl-ext-installed")) return;
+      const m = document.createElement("meta");
+      m.id = "__hl-ext-installed";
+      m.name = "highlighter-extension-installed";
+      m.content = "1";
+      (document.head || document.documentElement).appendChild(m);
+      document.documentElement.dataset.hlExtension = "installed";
+    };
+    mark();
+    // Also re-announce after a tick in case the page swaps its <head>
+    setTimeout(mark, 500);
+  }
+
   (async function init() {
+    announcePresenceIfHighlighterPage();
     await loadPalette();
     await loadHighlights();
     buildPanel();
