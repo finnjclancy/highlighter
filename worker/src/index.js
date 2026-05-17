@@ -33,6 +33,47 @@ export default {
       return new Response(null, { headers: CORS_HEADERS });
     }
 
+    // POST /api/c/<shareId>  { author?, text, highlightId? }
+    //   → { ok, comment, comments }
+    // Adds a viewer comment to a share. Comments live under "c:<shareId>"
+    // in the same KV namespace as the share itself.
+    if (request.method === "POST" && /^\/api\/c\/[a-z0-9]+$/i.test(url.pathname)) {
+      const id = url.pathname.split("/").pop();
+      const exists = await env.HIGHLIGHTS.get(id);
+      if (!exists) return json({ error: "share not found" }, 404);
+      try {
+        const body = await request.json();
+        const text = (body && typeof body.text === "string") ? body.text.trim() : "";
+        if (!text) return json({ error: "missing text" }, 400);
+        if (text.length > 2000) return json({ error: "comment too long" }, 400);
+        const author = ((body && body.author) ? String(body.author).trim() : "").slice(0, 40) || "Anonymous";
+        const highlightId = body && body.highlightId ? String(body.highlightId).slice(0, 64) : "";
+        const newComment = {
+          id: randomId(8),
+          highlightId,
+          author,
+          text,
+          createdAt: Date.now()
+        };
+        const existing = (await env.HIGHLIGHTS.get("c:" + id, "json")) || [];
+        if (existing.length >= 500) {
+          return json({ error: "too many comments on this share" }, 429);
+        }
+        existing.push(newComment);
+        await env.HIGHLIGHTS.put("c:" + id, JSON.stringify(existing), { expirationTtl: KV_TTL_SECONDS });
+        return json({ ok: true, comment: newComment, comments: existing });
+      } catch (e) {
+        return json({ error: "bad request" }, 400);
+      }
+    }
+
+    // GET /api/c/<shareId>  → { comments: [...] }
+    if (request.method === "GET" && /^\/api\/c\/[a-z0-9]+$/i.test(url.pathname)) {
+      const id = url.pathname.split("/").pop();
+      const existing = (await env.HIGHLIGHTS.get("c:" + id, "json")) || [];
+      return json({ comments: existing });
+    }
+
     // POST /api/shorten  { payload: "<gzipped-base64url-payload>" }
     //   → { id, url }
     if (request.method === "POST" && url.pathname === "/api/shorten") {
@@ -63,7 +104,7 @@ export default {
       const enc = await env.HIGHLIGHTS.get(id);
       if (!enc) return notFound();
       const meta = await decodeMetadata(enc);
-      return renderHtml(meta, enc);
+      return renderHtml(meta, enc, id);
     }
 
     // GET /v?d=<payload>  — inline / legacy long URL
@@ -71,7 +112,7 @@ export default {
       const enc = url.searchParams.get("d");
       if (!enc) return Response.redirect(STATIC_BASE + "/", 302);
       const meta = await decodeMetadata(enc);
-      return renderHtml(meta, enc);
+      return renderHtml(meta, enc, null);
     }
 
     return Response.redirect(STATIC_BASE + "/", 302);
@@ -137,7 +178,7 @@ function notFound() {
 <html lang="en"><head>
   <meta charset="utf-8">
   <title>Link not found — Highlighter</title>
-  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=2">
+  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=3">
 </head><body>
   <div class="wrap">
     <header class="brand"><span class="logo">✦</span><h1>Highlighter</h1></header>
@@ -149,7 +190,7 @@ function notFound() {
   return new Response(html, { status: 404, headers: { "content-type": "text/html;charset=utf-8" } });
 }
 
-function renderHtml(meta, enc) {
+function renderHtml(meta, enc, shareId) {
   const title = `${meta.name} — Highlighter`;
   const host = hostnameOf(meta.url);
   const descParts = [];
@@ -179,9 +220,12 @@ function renderHtml(meta, enc) {
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(PROMO_IMAGE)}">
 
-  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=2">
+  <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=3">
   <meta name="robots" content="noindex">
-  <script>window.__hlPayload = ${JSON.stringify(enc)};</script>
+  <script>
+    window.__hlPayload = ${JSON.stringify(enc)};
+    window.__hlShareId = ${JSON.stringify(shareId || null)};
+  </script>
 </head>
 <body>
   <div class="wrap">
@@ -194,7 +238,7 @@ function renderHtml(meta, enc) {
       Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlighter extension →</a>
     </footer>
   </div>
-  <script src="${STATIC_BASE}/v.js?v=8"></script>
+  <script src="${STATIC_BASE}/v.js?v=9"></script>
 </body>
 </html>`;
 

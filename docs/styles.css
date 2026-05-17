@@ -171,16 +171,132 @@ h2.page-title {
   padding: 2px 9px; border-radius: 999px;
   letter-spacing: -0.005em;
 }
+/* Sender's note — given strong visual prominence so a reader can't miss it */
 .card .note {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.025);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 6px 6px 0;
+  margin-top: 12px;
+  padding: 12px 14px 12px 16px;
+  background: rgba(99,102,241,0.10);
+  border: 1px solid rgba(99,102,241,0.32);
+  border-left-width: 4px;
+  border-radius: 8px;
+  color: var(--text);
   font-size: 14px; line-height: 1.55;
-  color: var(--text-2);
   white-space: pre-wrap;
 }
+.card .note-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.card .note-label .note-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.card .note-text { color: var(--text); }
+
+/* ---------- viewer comments ---------- */
+.comments-wrap {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-strong);
+}
+.comments-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.comments-list:empty { display: none; }
+.comment {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.comment .c-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 4px;
+}
+.comment .c-author {
+  font-weight: 600; color: var(--text);
+  font-size: 12px;
+}
+.comment .c-when { color: var(--text-4); font-size: 11px; font-feature-settings: "tnum"; }
+.comment .c-text { color: var(--text-2); white-space: pre-wrap; word-wrap: break-word; }
+
+.add-comment-btn {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-3);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.add-comment-btn:hover {
+  background: rgba(99,102,241,0.08);
+  color: var(--text);
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.comment-form {
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.comment-form input.cf-author {
+  width: 100%; box-sizing: border-box;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font: inherit; font-size: 12px;
+  margin-bottom: 6px;
+  outline: none;
+}
+.comment-form input.cf-author:focus { border-color: var(--accent); }
+.comment-form textarea.cf-text {
+  width: 100%; box-sizing: border-box;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit; font-size: 13px; line-height: 1.5;
+  resize: vertical; min-height: 60px;
+  outline: none;
+}
+.comment-form textarea.cf-text:focus { border-color: var(--accent); }
+.comment-form .cf-actions {
+  display: flex; gap: 6px; justify-content: flex-end;
+  margin-top: 6px;
+}
+.comment-form .cf-actions button {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font: inherit; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.comment-form .cf-actions button:hover { background: rgba(255,255,255,0.04); }
+.comment-form .cf-actions .cf-post {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.comment-form .cf-actions .cf-post:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.comment-form .cf-actions .cf-post:disabled { opacity: 0.6; cursor: default; }
 
 .section-lbl {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
