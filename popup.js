@@ -119,14 +119,6 @@ function buildPayload(pageUrl, pageTitle, list, shareName) {
   };
 }
 
-async function buildShareUrl(pageUrl, pageTitle, list, shareName) {
-  const payload = buildPayload(pageUrl, pageTitle, list, shareName);
-  const enc = await gzipB64Url(JSON.stringify(payload));
-  const u = new URL(pageUrl);
-  u.searchParams.set("hlshare", enc);
-  return u.toString();
-}
-
 async function buildEncodedPayload(pageUrl, pageTitle, list, shareName) {
   const payload = buildPayload(pageUrl, pageTitle, list, shareName);
   return await gzipB64Url(JSON.stringify(payload));

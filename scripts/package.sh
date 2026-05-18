@@ -36,7 +36,6 @@ INCLUDE=(
   popup.js
   library.html
   library.js
-  options.html
   options.js
   tabs.js
   welcome.html
