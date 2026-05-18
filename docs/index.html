@@ -1109,117 +1109,6 @@
       .recipients-grid { grid-template-columns: 1fr; }
     }
 
-    /* ─── Horizontal scroll section ─── */
-    .hscroll-section {
-      position: relative;
-      width: 100%;
-      /* (slides - 1) × 100vh of vertical scroll drives horizontal motion */
-      height: 600vh;
-      margin: 0 0 80px;
-    }
-    .hscroll-inner {
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      width: 100%;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      background: var(--bg);
-    }
-    .hscroll-track {
-      display: flex;
-      height: 100%;
-      will-change: transform;
-    }
-    .hscroll-slide {
-      flex: 0 0 100vw;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 60px 36px;
-      box-sizing: border-box;
-    }
-    .hscroll-slide > * {
-      width: 100%;
-      max-width: 920px;
-      margin-left: auto;
-      margin-right: auto;
-      /* Override the per-section bottom margin so they sit centred in the slide */
-      margin-bottom: 0 !important;
-    }
-    /* Override the big mini-grid bottom margins inside the slides */
-    .hscroll-slide .features-hero { padding-bottom: 0; }
-    /* Hide the inline install CTA only when the slide is part of the
-       pinned horizontal scroll (desktop). On mobile the hscroll collapses
-       back to vertical stacking, so the inline CTA is the only one users
-       hit early. */
-    @media (min-width: 901px) {
-      .hscroll-slide .features-hero .hero-cta { display: none; }
-    }
-    .hscroll-slide .demo,
-    .hscroll-slide .demo-row,
-    .hscroll-slide .recipients,
-    .hscroll-slide .no-signup,
-    .hscroll-slide .use-cases,
-    .hscroll-slide .steps-section { margin-bottom: 0; }
-
-    .hscroll-progress {
-      position: absolute;
-      bottom: 28px; left: 50%;
-      transform: translateX(-50%);
-      display: flex; gap: 8px;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .hscroll-progress .dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.14);
-      transition: background 0.3s, transform 0.3s;
-    }
-    .hscroll-progress .dot.active {
-      background: var(--accent);
-      transform: scale(1.5);
-      box-shadow: 0 0 8px rgba(99,102,241,0.6);
-    }
-
-    .hscroll-hint {
-      position: absolute;
-      top: 18px; right: 24px;
-      z-index: 10;
-      font-size: 11px; font-weight: 500;
-      letter-spacing: -0.005em;
-      color: var(--text-3);
-      pointer-events: none;
-      display: flex; align-items: center; gap: 6px;
-      padding: 4px 10px;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      backdrop-filter: blur(8px);
-      transition: opacity 0.3s;
-    }
-    .hscroll-hint::after {
-      content: "↓";
-      display: inline-block;
-      animation: hint-bob 1.6s ease-in-out infinite;
-      color: var(--accent);
-    }
-    @keyframes hint-bob { 50% { transform: translateY(3px); } }
-
-    /* On narrow viewports, collapse back to vertical stacking */
-    @media (max-width: 900px) {
-      .hscroll-section { height: auto; margin-bottom: 0; }
-      .hscroll-inner { position: static; height: auto; overflow: visible; display: block; background: transparent; }
-      .hscroll-track { width: 100% !important; flex-direction: column; height: auto; transform: none !important; }
-      .hscroll-slide { flex: none; width: 100%; height: auto; padding: 28px 12px; }
-      .hscroll-slide > * { max-width: 100%; }
-      .hscroll-progress, .hscroll-hint { display: none; }
-    }
-
     /* ─── Use-cases section ─── */
     .use-cases {
       max-width: 920px;
@@ -1473,18 +1362,6 @@
       <h1>Highlight any page.<br><span class="accent">Share what you read.</span></h1>
     </section>
 
-    <!-- Pinned horizontal scroll — each section is a slide -->
-    <div class="hscroll-section" id="hscroll">
-      <div class="hscroll-hint">scroll</div>
-      <div class="hscroll-inner">
-        <div class="hscroll-progress">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        </div>
-        <div class="hscroll-track">
-
-        <!-- Slide 1: Features grid -->
-        <div class="hscroll-slide">
     <section id="features" class="features-hero">
       <div class="section-h">
         <h2>Everything you need to think on the web</h2>
@@ -1564,10 +1441,7 @@
         <span class="cta-note">No sign-up · works in Chrome &amp; Edge</span>
       </div>
     </section>
-        </div><!-- /slide 1 -->
 
-        <!-- Slide 2: Big highlight demo -->
-        <div class="hscroll-slide">
     <!-- Animated demo card -->
     <div class="demo" id="demo">
       <div class="browser-bar">
@@ -1593,10 +1467,7 @@
         </p>
       </div>
     </div>
-        </div><!-- /slide 2 -->
 
-        <!-- Slide 3: Share + Comment demos -->
-        <div class="hscroll-slide">
     <!-- Two smaller animated demos: share + comment -->
     <div class="demo-row">
       <div class="demo-mini">
@@ -1651,10 +1522,7 @@
         </div>
       </div>
     </div>
-        </div><!-- /slide 3 -->
 
-        <!-- Slide 4: What recipients see -->
-        <div class="hscroll-slide">
     <!-- What recipients actually see -->
     <section class="recipients">
       <div class="section-h">
@@ -1709,10 +1577,7 @@
         </div>
       </div>
     </section>
-        </div><!-- /slide 4 -->
 
-        <!-- Slide 5: No sign-up callout -->
-        <div class="hscroll-slide">
     <!-- Super-prominent "no sign-up" callout -->
     <section class="no-signup">
       <div class="no-signup-inner">
@@ -1744,10 +1609,7 @@
         </div>
       </div>
     </section>
-        </div><!-- /slide 5 -->
 
-        <!-- Slide 6: Use cases -->
-        <div class="hscroll-slide">
     <!-- Use cases — study, research, solo -->
     <section class="use-cases">
       <div class="section-h">
@@ -1791,11 +1653,8 @@
         </div>
       </div>
     </section>
-        </div><!-- /slide 6 -->
 
-        <!-- Slide 7: How it works -->
-        <div class="hscroll-slide">
-    <section class="steps-section">
+    <section>
       <div class="section-h">
         <div class="label">How it works</div>
         <h2>Three clicks, no setup</h2>
@@ -1831,21 +1690,6 @@
         </div>
       </div>
     </section>
-        </div><!-- /slide 7 -->
-
-        </div><!-- /hscroll-track -->
-      </div><!-- /hscroll-inner -->
-    </div><!-- /hscroll-section -->
-
-    <!-- Standalone install CTA (the one inside the features slide is hidden during hscroll) -->
-    <div class="hero-cta" style="margin: 0 auto 60px;">
-      <a class="cta-xl" href="https://github.com/finnjclancy/highlighter">
-        <span class="cta-badge">Free</span>
-        Install
-        <span class="cta-arrow">→</span>
-      </a>
-      <span class="cta-note">No sign-up · works in Chrome &amp; Edge</span>
-    </div>
 
     <div class="privacy-callout">
       <div class="pc-head">
@@ -1888,46 +1732,6 @@
         setTimeout(() => demo.classList.add("animate"), 250);
       });
     }
-
-    // Pinned horizontal-on-vertical scroll
-    (function () {
-      const section = document.getElementById("hscroll");
-      if (!section) return;
-      const track = section.querySelector(".hscroll-track");
-      const slides = track.children;
-      const dots = section.querySelectorAll(".hscroll-progress .dot");
-      const hint = section.querySelector(".hscroll-hint");
-      const count = slides.length;
-      // Set track width to match the number of slides
-      track.style.width = (count * 100) + "vw";
-      let ticking = false;
-      function update() {
-        if (window.innerWidth <= 900) {
-          track.style.transform = "";
-          return;
-        }
-        const rect = section.getBoundingClientRect();
-        const total = section.offsetHeight - window.innerHeight;
-        const scrolled = -rect.top;
-        const progress = Math.max(0, Math.min(1, scrolled / total));
-        const maxX = (count - 1) * 100;
-        track.style.transform = "translate3d(" + (-progress * maxX) + "vw, 0, 0)";
-        const activeIdx = Math.round(progress * (count - 1));
-        for (let i = 0; i < dots.length; i++) {
-          dots[i].classList.toggle("active", i === activeIdx);
-        }
-        if (hint) hint.style.opacity = progress > 0.02 ? "0" : "1";
-        ticking = false;
-      }
-      window.addEventListener("scroll", function () {
-        if (!ticking) {
-          requestAnimationFrame(update);
-          ticking = true;
-        }
-      }, { passive: true });
-      window.addEventListener("resize", update);
-      update();
-    })();
   </script>
 </body>
 </html>
