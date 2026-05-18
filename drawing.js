@@ -191,13 +191,48 @@
     return { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY };
   }
 
+  // Drag state for moving an existing text element
+  let dragText = null; // { element, stroke, startMouseX, startMouseY, origX, origY, moved }
+  const DRAG_THRESHOLD = 4;
+
+  function findTextHit(target) {
+    if (!target) return null;
+    const id = target.dataset?.id;
+    if (!id) return null;
+    if (target.tagName !== "text" && target.tagName !== "TEXT") return null;
+    const stroke = strokes.find(s => s.id === id);
+    if (!stroke || stroke.type !== "text") return null;
+    return { element: target, stroke };
+  }
+
   function onDown(e) {
     if (!active) return;
     e.preventDefault();
+
+    // 1) Always check if the user is grabbing an existing text element first —
+    //    this works regardless of which tool is selected.
+    const hit = findTextHit(e.target);
+    if (hit) {
+      dragText = {
+        element: hit.element,
+        stroke: hit.stroke,
+        startMouseX: e.clientX,
+        startMouseY: e.clientY,
+        origX: hit.stroke.x,
+        origY: hit.stroke.y,
+        moved: false
+      };
+      hit.element.classList.add("hl-dragging");
+      return;
+    }
+
+    // 2) Text tool on empty canvas — spawn a new text input
     if (tool === "text") {
       promptForText(e);
       return;
     }
+
+    // 3) Drawing tools (pen / line / rect)
     startPt = evtPoint(e);
     const id = "d_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
     if (tool === "pen") {
@@ -211,7 +246,21 @@
   }
 
   function onMove(e) {
-    if (!active || !drawingShape) return;
+    if (!active) return;
+
+    if (dragText) {
+      const dx = e.clientX - dragText.startMouseX;
+      const dy = e.clientY - dragText.startMouseY;
+      if (!dragText.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      dragText.moved = true;
+      const nx = dragText.origX + dx;
+      const ny = dragText.origY + dy;
+      dragText.element.setAttribute("x", nx);
+      dragText.element.setAttribute("y", ny);
+      return;
+    }
+
+    if (!drawingShape) return;
     const p = evtPoint(e);
     if (drawingShape.type === "pen") {
       drawingShape.points.push(p);
@@ -233,8 +282,27 @@
     }
   }
 
-  function onUp() {
-    if (!active || !drawingShape) return;
+  function onUp(e) {
+    if (!active) return;
+
+    if (dragText) {
+      dragText.element.classList.remove("hl-dragging");
+      if (dragText.moved) {
+        // Commit the new position
+        const dx = e.clientX - dragText.startMouseX;
+        const dy = e.clientY - dragText.startMouseY;
+        dragText.stroke.x = dragText.origX + dx;
+        dragText.stroke.y = dragText.origY + dy;
+        saveStrokes();
+      } else {
+        // No drag — treat as a click, open inline edit
+        editExistingText(dragText.stroke, dragText.element);
+      }
+      dragText = null;
+      return;
+    }
+
+    if (!drawingShape) return;
     // Discard zero-size shapes
     const negligible =
       (drawingShape.type === "pen" && drawingShape.points.length < 2) ||
@@ -249,6 +317,59 @@
     }
     drawingShape = null;
     startPt = null;
+  }
+
+  function editExistingText(stroke, element) {
+    if (textInput) textInput.remove();
+    const input = document.createElement("textarea");
+    textInput = input;
+    input.id = "hl-draw-text-input";
+    input.rows = 1;
+    input.value = stroke.text || "";
+    input.placeholder = "Type, then Enter — empty to delete";
+    input.style.left = stroke.x + "px";
+    input.style.top  = stroke.y + "px";
+    input.style.color = stroke.color;
+    input.style.fontSize = (stroke.fontSize || 22) + "px";
+    input.style.minWidth = Math.max(120, (stroke.fontSize || 22) * 6) + "px";
+    // Hide the SVG text while editing so we don't see both
+    element.style.visibility = "hidden";
+    document.body.appendChild(input);
+    input.focus();
+    input.select();
+
+    let committed = false;
+    const commit = () => {
+      if (committed) return;
+      committed = true;
+      const newText = input.value;
+      input.remove();
+      textInput = null;
+      if (!newText.trim()) {
+        // Empty value → delete the text element
+        strokes = strokes.filter(s => s.id !== stroke.id);
+        element.remove();
+        saveStrokes();
+        return;
+      }
+      stroke.text = newText;
+      element.textContent = newText;
+      element.style.visibility = "";
+      saveStrokes();
+    };
+    const cancel = () => {
+      committed = true;
+      input.remove();
+      textInput = null;
+      element.style.visibility = "";
+    };
+
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); commit(); }
+      else if (ev.key === "Escape") { ev.preventDefault(); cancel(); }
+    });
+    input.addEventListener("blur", commit);
+    input.addEventListener("mousedown", ev => ev.stopPropagation());
   }
 
   // ---------- toolbar ----------

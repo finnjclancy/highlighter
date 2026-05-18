@@ -12,6 +12,21 @@
 }
 #hl-draw-canvas.hl-draw-active.tool-text { cursor: text; }
 
+/* Existing text strokes are grabbable / clickable to edit */
+#hl-draw-canvas.hl-draw-active text {
+  cursor: move;
+  transition: opacity 0.15s;
+}
+#hl-draw-canvas.hl-draw-active text:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+#hl-draw-canvas.hl-draw-active text.hl-dragging {
+  opacity: 0.75;
+}
+
 /* Floating text-tool input that appears at the click point */
 #hl-draw-text-input {
   position: absolute;
