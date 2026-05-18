@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Highlighter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Highlight any web page in custom colours. Organise quotes into folders, add comments, and share live links.",
   "permissions": ["storage", "activeTab", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
