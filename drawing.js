@@ -425,7 +425,8 @@
       eraser: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M15.5 3.5l5 5L9 20H4v-5z"/></svg>`,
       undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/></svg>`,
       clear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>`,
-      close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`
+      close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+      collapse: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>`
     };
     return icons[name] || "";
   }
@@ -501,6 +502,21 @@
     closeBtn.innerHTML = svgIcon("close");
     closeBtn.addEventListener("click", () => setActive(false));
     toolbar.appendChild(closeBtn);
+
+    // Always-visible toggle in the top-right corner — collapses the toolbar
+    // to just this 28x28 chip; click again to expand. The chip's screen
+    // position stays fixed (top-right) whether collapsed or expanded so the
+    // user always knows where to grab it.
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "hl-dt-toggle";
+    toggleBtn.title = "Collapse drawing toolbar";
+    toggleBtn.innerHTML = svgIcon("collapse");
+    toggleBtn.addEventListener("click", () => {
+      const collapsed = toolbar.classList.toggle("collapsed");
+      toggleBtn.innerHTML = svgIcon(collapsed ? "pen" : "collapse");
+      toggleBtn.title = collapsed ? "Expand drawing toolbar" : "Collapse drawing toolbar";
+    });
+    toolbar.appendChild(toggleBtn);
 
     document.body.appendChild(toolbar);
   }
