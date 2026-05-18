@@ -12,7 +12,7 @@
   let toolbar = null;
   let active = false;
 
-  let tool = "pen";           // pen | line | rect
+  let tool = "pen";           // pen | line | rect | text
   let color = COLORS[0];
   let width = WIDTHS[1];
 
@@ -89,6 +89,19 @@
       el.setAttribute("width", w);
       el.setAttribute("height", h);
       el.setAttribute("fill", "none");
+    } else if (s.type === "text") {
+      el = document.createElementNS(SVG_NS, "text");
+      el.setAttribute("x", s.x);
+      el.setAttribute("y", s.y);
+      el.setAttribute("fill", s.color);
+      el.setAttribute("font-size", s.fontSize || 22);
+      el.setAttribute("font-family", "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif");
+      el.setAttribute("font-weight", "600");
+      el.setAttribute("dominant-baseline", "text-before-edge");
+      el.textContent = s.text || "";
+      el.dataset.id = s.id;
+      canvas.appendChild(el);
+      return el;
     } else {
       return;
     }
@@ -97,6 +110,12 @@
     el.dataset.id = s.id;
     canvas.appendChild(el);
     return el;
+  }
+
+  function fontSizeForWidth(w) {
+    if (w <= 2) return 16;
+    if (w <= 5) return 24;
+    return 36;
   }
 
   function pointsToPath(points) {
@@ -108,6 +127,65 @@
     return d;
   }
 
+  // ---------- text tool ----------
+  let textInput = null;
+  function promptForText(e) {
+    if (textInput) textInput.remove();
+    const pt = evtPoint(e);
+    const fontSize = fontSizeForWidth(width);
+
+    const input = document.createElement("textarea");
+    textInput = input;
+    input.id = "hl-draw-text-input";
+    input.rows = 1;
+    input.placeholder = "Type, then Enter…";
+    input.style.left = (pt.x) + "px";
+    input.style.top  = (pt.y) + "px";
+    input.style.color = color;
+    input.style.fontSize = fontSize + "px";
+    input.style.minWidth = Math.max(120, fontSize * 6) + "px";
+    document.body.appendChild(input);
+    input.focus();
+
+    let committed = false;
+    const commit = () => {
+      if (committed) return;
+      committed = true;
+      const text = input.value;
+      input.remove();
+      textInput = null;
+      if (!text.trim()) return;
+      const stroke = {
+        id: "d_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        type: "text",
+        color, fontSize,
+        x: pt.x, y: pt.y,
+        text
+      };
+      strokes.push(stroke);
+      renderStroke(stroke);
+      saveStrokes();
+    };
+    const cancel = () => {
+      committed = true;
+      input.remove();
+      textInput = null;
+    };
+
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey) {
+        ev.preventDefault();
+        commit();
+      } else if (ev.key === "Escape") {
+        ev.preventDefault();
+        cancel();
+      }
+    });
+    input.addEventListener("blur", commit);
+    // Prevent click-through from dismissing the canvas
+    input.addEventListener("mousedown", ev => ev.stopPropagation());
+  }
+
   // ---------- input ----------
   function evtPoint(e) {
     return { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY };
@@ -116,6 +194,10 @@
   function onDown(e) {
     if (!active) return;
     e.preventDefault();
+    if (tool === "text") {
+      promptForText(e);
+      return;
+    }
     startPt = evtPoint(e);
     const id = "d_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
     if (tool === "pen") {
@@ -175,6 +257,7 @@
       pen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>`,
       line: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="19" x2="19" y2="5"/></svg>`,
       rect: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="1"/></svg>`,
+      text: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`,
       eraser: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M15.5 3.5l5 5L9 20H4v-5z"/></svg>`,
       undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/></svg>`,
       clear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>`,
@@ -190,7 +273,8 @@
     const tools = [
       { id: "pen", title: "Pen (free draw)" },
       { id: "line", title: "Line" },
-      { id: "rect", title: "Rectangle" }
+      { id: "rect", title: "Rectangle" },
+      { id: "text", title: "Text" }
     ];
     tools.forEach(t => {
       const b = document.createElement("button");
@@ -266,8 +350,8 @@
 
   function setTool(t) {
     tool = t;
-    canvas?.classList.remove("tool-eraser");
-    if (t === "eraser") canvas?.classList.add("tool-eraser");
+    canvas?.classList.remove("tool-text");
+    if (t === "text") canvas?.classList.add("tool-text");
     toolbar?.querySelectorAll("[data-tool]").forEach(b => b.classList.toggle("active", b.dataset.tool === t));
   }
   function setColor(c) {
@@ -306,10 +390,11 @@
       if (!toolbar) buildToolbar();
       else toolbar.style.display = "flex";
       // Reflect tool class
-      canvas.classList.toggle("tool-eraser", tool === "eraser");
+      canvas.classList.toggle("tool-text", tool === "text");
     } else {
-      if (canvas) canvas.classList.remove("hl-draw-active", "tool-eraser");
+      if (canvas) canvas.classList.remove("hl-draw-active", "tool-text");
       if (toolbar) toolbar.style.display = "none";
+      if (textInput) { textInput.remove(); textInput = null; }
     }
     // Notify the overlay panel button if it exists
     const btn = document.querySelector("#hl-panel .hl-panel-draw");

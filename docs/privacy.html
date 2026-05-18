@@ -19,9 +19,9 @@
     </header>
 
     <h2 class="page-title">Privacy Policy</h2>
-    <p class="meta">Last updated: 16 May 2026</p>
+    <p class="meta">Last updated: 18 May 2026</p>
 
-    <p>This page describes how the <strong>Highlighter</strong> browser extension (the “Extension”) and the companion website at <a href="https://finnjclancy.github.io/highlighter/">finnjclancy.github.io/highlighter</a> (the “Gallery”) handle your information. The short version: nothing about you or your browsing leaves your device unless you explicitly choose to share a link.</p>
+    <p>This page describes how the <strong>Highlighter</strong> browser extension (the “Extension”), the companion website at <a href="https://finnjclancy.github.io/highlighter/">finnjclancy.github.io/highlighter</a> (the “Gallery”), and the share-link service at <code>highlighter-share.finnjclancy.workers.dev</code> handle your information. The short version: Highlighter stores your highlights locally by default, has no accounts, ads, analytics, or tracking, and sends data off your device only when you deliberately create a share link, copy/export content, or post a comment on a shared link.</p>
 
     <div class="section-lbl">What the extension stores</div>
     <p>The Extension stores the following data <strong>locally in your browser</strong> using the standard <code>chrome.storage</code> APIs:</p>
@@ -29,26 +29,31 @@
       <li>The text of any passages you choose to highlight, the page URL and title where you highlighted them, the colours, comments, and tags you assign, and the position of the highlight on the page.</li>
       <li>Free-hand drawings you make with the Draw tool, scoped to the URL on which you drew them.</li>
       <li>Your customised colour palette (synced via <code>chrome.storage.sync</code> across your signed-in Chrome profile if that feature is enabled in your browser).</li>
+      <li>Your local share history, including the share name, source URL/title, share URL, highlight count, and creation time.</li>
     </ul>
-    <p>This data never leaves your browser unless you take a deliberate action — either copying it (“Copy text”) or generating a share link (“Share live link”).</p>
+    <p>This local data leaves your browser only when you take a deliberate action: copying/exporting it, generating a share link, or posting a comment on a shared link.</p>
 
     <div class="section-lbl">What the extension does <em>not</em> do</div>
     <ul>
       <li>No analytics, telemetry, or usage tracking of any kind.</li>
       <li>No advertising identifiers or fingerprinting.</li>
-      <li>No remote servers receive the contents of pages you visit.</li>
+      <li>No remote servers receive the contents of pages you visit unless you explicitly create a share link or post a comment.</li>
       <li>No third-party scripts are loaded into the Extension.</li>
       <li>No accounts, no sign-up, no log-in.</li>
     </ul>
 
     <div class="section-lbl">When you share a link</div>
-    <p>When you click <em>Share live link</em>, the Extension builds a URL that contains your highlights for the current page, gzip-compressed and base64-encoded into the URL itself. The URL is placed on your clipboard for you to send to whomever you choose. You control where it goes.</p>
-    <p>If a recipient opens the share link, their browser fetches the static Gallery page at <code>finnjclancy.github.io/highlighter/v.html</code>. As with any web page request, GitHub (which hosts the Gallery) records standard server access logs — typically IP address, user-agent, and timestamp — under its own privacy policy: <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" rel="noopener">GitHub Privacy Statement</a>. The Gallery itself does not store, analyse, or transmit the highlights it renders; everything is decoded client-side in the recipient's browser from the URL.</p>
+    <p>When you click <em>Share live link</em>, the Extension builds a compressed payload containing the current page URL/title and the highlights you chose to create on that page, including highlight text, colours, comments, tags, and location hints used to reopen the highlights on the original page.</p>
+    <p>The Extension first sends that payload over HTTPS to the Highlighter share-link service at <code>highlighter-share.finnjclancy.workers.dev</code> to create a shorter link. The service stores the payload in Cloudflare Workers KV for about one year so the share URL can work and show link preview metadata. If the share service is unavailable, the Extension falls back to a long URL with the compressed payload embedded directly in the URL.</p>
+    <p>If a recipient opens a share link, their browser fetches the Gallery page and decodes the shared highlights client-side. GitHub Pages hosts the static Gallery files, and Cloudflare serves short share links. As with any web request, GitHub and Cloudflare may process standard server logs such as IP address, user-agent, timestamp, and requested URL under their own policies.</p>
+
+    <div class="section-lbl">Comments on shared links</div>
+    <p>Some shared links let viewers add comments. If a viewer posts a comment, the share service stores the optional author name, comment text, related highlight ID, and timestamp with that share for about one year. Do not put sensitive information in share-link comments.</p>
 
     <div class="section-lbl">Permissions, explained</div>
     <ul>
       <li><strong>storage</strong> — to save your highlights, drawings, and palette in your own browser.</li>
-      <li><strong>activeTab</strong>, <strong>scripting</strong> — to inject the highlighting/drawing scripts into pages you are actively viewing.</li>
+      <li><strong>activeTab</strong> — to read the current tab's URL/title after you click the Extension so it can show page counts and copy/share the highlights for that active page.</li>
       <li><strong>clipboardWrite</strong> — to copy share links and exported text/Markdown to your clipboard.</li>
       <li><strong>host permissions: <code>&lt;all_urls&gt;</code></strong> — so the Extension can apply highlights and drawings on any web page you choose to use it on. The Extension does not read or transmit page contents in the background.</li>
     </ul>
@@ -59,6 +64,10 @@
       <li>Open the Extension's library page and delete individual highlights or use Select All → Delete.</li>
       <li>Or remove the Extension via <code>chrome://extensions</code>, which clears all of its stored data.</li>
     </ul>
+    <p>Short share links and share-link comments are stored for about one year. There is not currently a self-service deletion control for already-created share links, so avoid sharing sensitive content.</p>
+
+    <div class="section-lbl">Limited use</div>
+    <p>Highlighter uses data obtained through Chrome extension permissions only to provide or improve its single purpose: highlighting, organising, exporting, drawing on, and sharing selected web content at your request. Highlighter does not use or transfer this data for personalised advertising, retargeting, sale of data, credit-worthiness, or unrelated purposes. The use of information received from Chrome APIs adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements.</p>
 
     <div class="section-lbl">Contact</div>
     <p>Questions, concerns, or requests? Open an issue at <a href="https://github.com/finnjclancy/highlighter/issues" rel="noopener">github.com/finnjclancy/highlighter/issues</a>.</p>

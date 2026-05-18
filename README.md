@@ -17,7 +17,7 @@ A clean browser extension for highlighting text on any web page with custom colo
 - **Library** — single dashboard for every highlight across every site. Filter by folder, site, or search.
 - **Design Studio** — drag-and-drop palette editor with presets, live preview, and per-swatch text/background pickers.
 - **Sharing** — generate a single link that works two ways: viewers without the extension see a clean reader-style gallery; viewers with the extension can jump straight to the source page with your highlights painted on it.
-- **Privacy-first** — no accounts, no servers, no tracking. Highlights live in your own browser storage; nothing leaves your device unless you explicitly share.
+- **Privacy-first** — no accounts and no tracking. Highlights live in your own browser storage unless you explicitly copy them or create a share link.
 
 ---
 
@@ -55,7 +55,7 @@ Toolbar icon → **🔗 Share live link**. Copies a URL like:
 https://finnjclancy.github.io/highlighter/v.html?d=zH4sI…
 ```
 
-The payload is your highlights, gzipped + base64url-encoded into the URL itself. No server stores the data. Recipients without the extension get a clean gallery of the quotes. Recipients with the extension can click **Open on original page →** to see them painted onto the live article.
+The payload is your highlights, gzipped + base64url-encoded. Highlighter tries to create a short link through the share worker; if that is unavailable, it falls back to a long URL with the payload embedded. Recipients without the extension get a clean gallery of the quotes. Recipients with the extension can click **Open on original page →** to see them painted onto the live article.
 
 ### Draw
 Toolbar icon → **✎ Draw on page**. Pen / line / rectangle tools with palette, three stroke widths, undo, and clear.
@@ -104,7 +104,7 @@ To regenerate icons or the promo tile, edit `scripts/make_icons.py` then re-run 
 
 ## Privacy
 
-All highlights, drawings, and palette settings live in the user's `chrome.storage.local`. The extension has no analytics, no third-party scripts, and never transmits page content. The only data that leaves the device is what the user explicitly puts in a share link or copies to their clipboard.
+Highlights, drawings, and share history live in the user's `chrome.storage.local`; palette settings use Chrome sync storage when available. The extension has no analytics or third-party scripts. Data leaves the device only when the user copies/export highlights, creates a share link, or posts a comment on a shared link.
 
 Full policy: [finnjclancy.github.io/highlighter/privacy.html](https://finnjclancy.github.io/highlighter/privacy.html)
 

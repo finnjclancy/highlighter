@@ -3,7 +3,7 @@
   "name": "Highlighter",
   "version": "1.0.1",
   "description": "Highlight any web page in custom colours. Organise quotes into folders, add comments, and share live links.",
-  "permissions": ["storage", "activeTab", "scripting", "clipboardWrite"],
+  "permissions": ["storage", "activeTab", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",

@@ -10,7 +10,31 @@
   pointer-events: auto;
   cursor: crosshair;
 }
-#hl-draw-canvas.hl-draw-active.tool-eraser { cursor: cell; }
+#hl-draw-canvas.hl-draw-active.tool-text { cursor: text; }
+
+/* Floating text-tool input that appears at the click point */
+#hl-draw-text-input {
+  position: absolute;
+  z-index: 2147483646;
+  background: rgba(20,20,23,0.96);
+  border: 2px solid #6366f1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  color: #fff;
+  outline: none;
+  min-width: 140px;
+  max-width: 480px;
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1.25;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 4px rgba(99,102,241,0.18);
+  caret-color: #6366f1;
+}
+#hl-draw-text-input::placeholder { color: rgba(255,255,255,0.4); font-weight: 500; }
 
 /* Toolbar */
 #hl-draw-toolbar {
