@@ -51,6 +51,90 @@
 }
 #hl-draw-text-input::placeholder { color: rgba(255,255,255,0.4); font-weight: 500; }
 
+/* Clear-all confirmation modal */
+#hl-draw-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: hl-dc-fade 0.15s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-feature-settings: "cv11", "ss01";
+  letter-spacing: -0.005em;
+  color: #fafafa;
+}
+@keyframes hl-dc-fade { from { opacity: 0; } to { opacity: 1; } }
+#hl-draw-confirm .hl-dc-panel {
+  background: #1d1d20;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  width: 380px;
+  max-width: 92vw;
+  padding: 24px 24px 18px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: hl-dc-rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes hl-dc-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+#hl-draw-confirm .hl-dc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+  margin-bottom: 12px;
+}
+#hl-draw-confirm .hl-dc-icon svg { width: 22px; height: 22px; }
+#hl-draw-confirm .hl-dc-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin-bottom: 6px;
+}
+#hl-draw-confirm .hl-dc-body {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(250, 250, 250, 0.6);
+  margin-bottom: 18px;
+}
+#hl-draw-confirm .hl-dc-actions {
+  display: flex;
+  gap: 8px;
+}
+#hl-draw-confirm .hl-dc-btn {
+  flex: 1;
+  background: #2c2c2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fafafa;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.06s;
+}
+#hl-draw-confirm .hl-dc-btn:hover { background: #38383b; }
+#hl-draw-confirm .hl-dc-btn:active { transform: scale(0.97); }
+#hl-draw-confirm .hl-dc-ok {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+}
+#hl-draw-confirm .hl-dc-ok:hover { background: #dc2626; border-color: #dc2626; }
+#hl-draw-confirm .hl-dc-ok:focus { outline: 2px solid rgba(239, 68, 68, 0.6); outline-offset: 2px; }
+
 /* Toolbar */
 #hl-draw-toolbar {
   position: fixed;

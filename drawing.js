@@ -12,7 +12,7 @@
   let toolbar = null;
   let active = false;
 
-  let tool = "pen";           // pen | line | rect | text
+  let tool = "pen";           // pen | line | arrow | rect | text
   let color = COLORS[0];
   let width = WIDTHS[1];
 
@@ -89,6 +89,40 @@
       el.setAttribute("width", w);
       el.setAttribute("height", h);
       el.setAttribute("fill", "none");
+    } else if (s.type === "arrow") {
+      // Group: a stroked line + a filled triangular arrowhead at (x2, y2)
+      const g = document.createElementNS(SVG_NS, "g");
+      g.dataset.id = s.id;
+      const line = document.createElementNS(SVG_NS, "line");
+      line.setAttribute("x1", s.x1);
+      line.setAttribute("y1", s.y1);
+      line.setAttribute("x2", s.x2);
+      line.setAttribute("y2", s.y2);
+      line.setAttribute("stroke", s.color);
+      line.setAttribute("stroke-width", s.width);
+      line.setAttribute("stroke-linecap", "round");
+      g.appendChild(line);
+      const dx = s.x2 - s.x1, dy = s.y2 - s.y1;
+      const len = Math.hypot(dx, dy);
+      if (len > 0.1) {
+        const headLen = Math.max(10, s.width * 4);
+        const headW   = Math.max(8,  s.width * 3);
+        const ux = dx / len, uy = dy / len;
+        const baseX = s.x2 - ux * headLen;
+        const baseY = s.y2 - uy * headLen;
+        const px = -uy, py = ux;
+        const ax = baseX + px * headW / 2, ay = baseY + py * headW / 2;
+        const bx = baseX - px * headW / 2, by = baseY - py * headW / 2;
+        const head = document.createElementNS(SVG_NS, "polygon");
+        head.setAttribute("points", `${s.x2},${s.y2} ${ax},${ay} ${bx},${by}`);
+        head.setAttribute("fill", s.color);
+        head.setAttribute("stroke", s.color);
+        head.setAttribute("stroke-width", "1");
+        head.setAttribute("stroke-linejoin", "round");
+        g.appendChild(head);
+      }
+      canvas.appendChild(g);
+      return g;
     } else if (s.type === "text") {
       el = document.createElementNS(SVG_NS, "text");
       el.setAttribute("x", s.x);
@@ -239,6 +273,8 @@
       drawingShape = { id, type: "pen", color, width, points: [startPt] };
     } else if (tool === "line") {
       drawingShape = { id, type: "line", color, width, x1: startPt.x, y1: startPt.y, x2: startPt.x, y2: startPt.y };
+    } else if (tool === "arrow") {
+      drawingShape = { id, type: "arrow", color, width, x1: startPt.x, y1: startPt.y, x2: startPt.x, y2: startPt.y };
     } else if (tool === "rect") {
       drawingShape = { id, type: "rect", color, width, x1: startPt.x, y1: startPt.y, x2: startPt.x, y2: startPt.y };
     }
@@ -270,6 +306,11 @@
       drawingShape.x2 = p.x; drawingShape.y2 = p.y;
       const el = canvas.querySelector(`[data-id="${drawingShape.id}"]`);
       if (el) { el.setAttribute("x2", p.x); el.setAttribute("y2", p.y); }
+    } else if (drawingShape.type === "arrow") {
+      drawingShape.x2 = p.x; drawingShape.y2 = p.y;
+      // Arrow is a <g> with two children; easiest to rebuild on each frame
+      const el = canvas.querySelector(`[data-id="${drawingShape.id}"]`);
+      if (el) { el.remove(); renderStroke(drawingShape); }
     } else if (drawingShape.type === "rect") {
       drawingShape.x2 = p.x; drawingShape.y2 = p.y;
       const el = canvas.querySelector(`[data-id="${drawingShape.id}"]`);
@@ -307,6 +348,7 @@
     const negligible =
       (drawingShape.type === "pen" && drawingShape.points.length < 2) ||
       (drawingShape.type === "line" && Math.hypot(drawingShape.x2 - drawingShape.x1, drawingShape.y2 - drawingShape.y1) < 3) ||
+      (drawingShape.type === "arrow" && Math.hypot(drawingShape.x2 - drawingShape.x1, drawingShape.y2 - drawingShape.y1) < 6) ||
       (drawingShape.type === "rect" && (Math.abs(drawingShape.x2 - drawingShape.x1) < 3 || Math.abs(drawingShape.y2 - drawingShape.y1) < 3));
     if (negligible) {
       const el = canvas.querySelector(`[data-id="${drawingShape.id}"]`);
@@ -377,6 +419,7 @@
     const icons = {
       pen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>`,
       line: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="19" x2="19" y2="5"/></svg>`,
+      arrow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="19" x2="17" y2="7"/><polyline points="9 6 17 6 17 14"/></svg>`,
       rect: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="1"/></svg>`,
       text: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`,
       eraser: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M15.5 3.5l5 5L9 20H4v-5z"/></svg>`,
@@ -394,6 +437,7 @@
     const tools = [
       { id: "pen", title: "Pen (free draw)" },
       { id: "line", title: "Line" },
+      { id: "arrow", title: "Arrow" },
       { id: "rect", title: "Rectangle" },
       { id: "text", title: "Text" }
     ];
@@ -490,10 +534,50 @@
   }
   function clearAll() {
     if (!strokes.length) return;
-    if (!confirm("Clear all drawings on this page?")) return;
-    strokes = [];
-    renderAll();
-    saveStrokes();
+    showClearConfirm(strokes.length, () => {
+      strokes = [];
+      renderAll();
+      saveStrokes();
+    });
+  }
+
+  function showClearConfirm(count, onConfirm) {
+    // Remove any existing prompt
+    document.querySelectorAll("#hl-draw-confirm").forEach(n => n.remove());
+
+    const bg = document.createElement("div");
+    bg.id = "hl-draw-confirm";
+    bg.innerHTML = `
+      <div class="hl-dc-panel">
+        <div class="hl-dc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+          </svg>
+        </div>
+        <div class="hl-dc-title">Clear all drawings?</div>
+        <div class="hl-dc-body">This removes ${count} ${count === 1 ? "drawing" : "drawings"} on this page. This cannot be undone.</div>
+        <div class="hl-dc-actions">
+          <button class="hl-dc-btn hl-dc-cancel">Cancel</button>
+          <button class="hl-dc-btn hl-dc-ok">Clear all</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(bg);
+
+    const close = () => bg.remove();
+    bg.querySelector(".hl-dc-cancel").addEventListener("click", close);
+    bg.querySelector(".hl-dc-ok").addEventListener("click", () => {
+      close();
+      onConfirm();
+    });
+    bg.addEventListener("click", (e) => { if (e.target === bg) close(); });
+    const escHandler = (e) => {
+      if (e.key === "Escape") { close(); document.removeEventListener("keydown", escHandler); }
+      else if (e.key === "Enter") { close(); document.removeEventListener("keydown", escHandler); onConfirm(); }
+    };
+    document.addEventListener("keydown", escHandler);
+    // Focus the destructive button so Enter confirms, Esc cancels
+    setTimeout(() => bg.querySelector(".hl-dc-ok").focus(), 30);
   }
 
   // ---------- toggle ----------
