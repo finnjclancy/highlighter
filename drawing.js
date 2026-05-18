@@ -422,15 +422,13 @@
     addDivider();
 
     const widthLabels = { 2: "S", 5: "M", 10: "L" };
+    const widthClass  = { 2: "wsz-s", 5: "wsz-m", 10: "wsz-l" };
     WIDTHS.forEach(w => {
       const b = document.createElement("button");
-      b.className = "hl-dt-width" + (width === w ? " active" : "");
+      b.className = "hl-dt-width " + (widthClass[w] || "") + (width === w ? " active" : "");
       b.dataset.width = w;
-      b.title = (widthLabels[w] || "") + " — " + w + "px";
-      const bar = document.createElement("span");
-      bar.className = "bar";
-      bar.style.height = w + "px";
-      b.appendChild(bar);
+      b.title = (widthLabels[w] || "") + " — width " + w + "px / font " + fontSizeForWidth(w) + "px";
+      b.textContent = widthLabels[w] || "";
       b.addEventListener("click", () => setWidth(w));
       toolbar.appendChild(b);
     });
