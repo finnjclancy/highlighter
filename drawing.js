@@ -494,28 +494,14 @@
     clearBtn.addEventListener("click", clearAll);
     toolbar.appendChild(clearBtn);
 
-    addDivider();
-
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "hl-dt-btn hl-dt-close";
-    closeBtn.title = "Exit drawing mode";
-    closeBtn.innerHTML = svgIcon("close");
-    closeBtn.addEventListener("click", () => setActive(false));
-    toolbar.appendChild(closeBtn);
-
-    // Always-visible toggle in the top-right corner — collapses the toolbar
-    // to just this 28x28 chip; click again to expand. The chip's screen
-    // position stays fixed (top-right) whether collapsed or expanded so the
-    // user always knows where to grab it.
+    // Always-visible toggle chip in the top-right corner. Clicking it is the
+    // single on/off control for drawing mode — when collapsed the chip is
+    // the only thing visible, when expanded the full toolbar is shown.
     const toggleBtn = document.createElement("button");
     toggleBtn.className = "hl-dt-toggle";
-    toggleBtn.title = "Collapse drawing toolbar";
-    toggleBtn.innerHTML = svgIcon("collapse");
-    toggleBtn.addEventListener("click", () => {
-      const collapsed = toolbar.classList.toggle("collapsed");
-      toggleBtn.innerHTML = svgIcon(collapsed ? "pen" : "collapse");
-      toggleBtn.title = collapsed ? "Expand drawing toolbar" : "Collapse drawing toolbar";
-    });
+    toggleBtn.title = "Open drawing toolbar";
+    toggleBtn.innerHTML = svgIcon("pen");
+    toggleBtn.addEventListener("click", () => setActive(!active));
     toolbar.appendChild(toggleBtn);
 
     document.body.appendChild(toolbar);
@@ -599,6 +585,7 @@
   // ---------- toggle ----------
   async function setActive(on) {
     active = !!on;
+    if (!toolbar) buildToolbar();
     if (active) {
       if (!canvas) {
         buildCanvas();
@@ -606,14 +593,19 @@
         renderAll();
       }
       canvas.classList.add("hl-draw-active");
-      if (!toolbar) buildToolbar();
-      else toolbar.style.display = "flex";
-      // Reflect tool class
+      toolbar.classList.remove("collapsed");
       canvas.classList.toggle("tool-text", tool === "text");
     } else {
       if (canvas) canvas.classList.remove("hl-draw-active", "tool-text");
-      if (toolbar) toolbar.style.display = "none";
+      toolbar.classList.add("collapsed");
       if (textInput) { textInput.remove(); textInput = null; }
+    }
+    // Sync the toggle chip's icon + tooltip to current state
+    const chip = toolbar.querySelector(".hl-dt-toggle");
+    if (chip) {
+      chip.innerHTML = svgIcon(active ? "collapse" : "pen");
+      chip.title = active ? "Hide drawing toolbar" : "Open drawing toolbar";
+      chip.classList.toggle("on", active);
     }
     // Notify the overlay panel button if it exists
     const btn = document.querySelector("#hl-panel .hl-panel-draw");
@@ -623,13 +615,18 @@
 
   function toggle() { setActive(!active); }
 
-  // Always render existing strokes on load (read-only mode), even before activating.
-  // This makes drawings visible immediately when revisiting.
+  // Always render existing strokes on load (read-only mode) and ALWAYS show
+  // the collapsed toolbar chip so the user can engage drawing at any time —
+  // mirroring how the highlights overlay burger is always visible bottom-left.
   async function initPassive() {
     await loadStrokes();
-    if (!strokes.length) return;
-    buildCanvas();
-    renderAll();
+    if (strokes.length) {
+      buildCanvas();
+      renderAll();
+    }
+    // Build the toolbar (in collapsed state) so the chip is always present
+    if (!toolbar) buildToolbar();
+    toolbar.classList.add("collapsed");
   }
 
   window.__hlDrawing = {
