@@ -1109,6 +1109,111 @@
       .recipients-grid { grid-template-columns: 1fr; }
     }
 
+    /* ─── Use-cases section ─── */
+    .use-cases {
+      max-width: 920px;
+      margin: 0 auto 80px;
+    }
+    .uc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .uc {
+      position: relative;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 22px 20px;
+      transition: border-color 0.2s, transform 0.2s;
+      overflow: hidden;
+    }
+    .uc:hover { transform: translateY(-2px); }
+    .uc .uc-icon {
+      width: 38px; height: 38px;
+      border-radius: 11px;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+      font-size: 18px;
+    }
+    .uc .uc-tag {
+      display: inline-block;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .uc h3 {
+      font-size: 18px; font-weight: 600;
+      letter-spacing: -0.015em;
+      margin: 0 0 8px;
+      line-height: 1.25;
+    }
+    .uc p {
+      margin: 0 0 14px;
+      color: var(--text-2);
+      font-size: 13.5px; line-height: 1.55;
+    }
+    .uc .uc-example {
+      padding: 9px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-2);
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .uc .uc-example::before {
+      content: ""; position: absolute;
+      top: 0; bottom: 0; left: 0; width: 3px;
+      border-radius: 3px 0 0 3px;
+    }
+    .uc .uc-example .ex-text {
+      padding: 1px 3px;
+      border-radius: 2px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    .uc .uc-example .ex-note {
+      display: block;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(255,255,255,0.08);
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    /* uc theme: students (yellow) */
+    .uc.uc-students { border-color: rgba(255,224,102,0.22); }
+    .uc.uc-students:hover { border-color: rgba(255,224,102,0.5); }
+    .uc.uc-students .uc-icon { background: rgba(255,224,102,0.14); border: 1px solid rgba(255,224,102,0.32); color: #ffe066; }
+    .uc.uc-students .uc-tag  { background: rgba(255,224,102,0.14); color: #ffe066; }
+    .uc.uc-students .uc-example::before { background: #fff59d; }
+    .uc.uc-students .ex-text { background: #fff59d; color: #1a1a1a; }
+
+    /* uc theme: research teams (green) */
+    .uc.uc-research { border-color: rgba(74,222,128,0.22); }
+    .uc.uc-research:hover { border-color: rgba(74,222,128,0.5); }
+    .uc.uc-research .uc-icon { background: rgba(74,222,128,0.14); border: 1px solid rgba(74,222,128,0.32); color: #86efac; }
+    .uc.uc-research .uc-tag  { background: rgba(74,222,128,0.14); color: #86efac; }
+    .uc.uc-research .uc-example::before { background: #b9f6ca; }
+    .uc.uc-research .ex-text { background: #b9f6ca; color: #0b3d1a; }
+
+    /* uc theme: solo (indigo) */
+    .uc.uc-solo { border-color: rgba(99,102,241,0.22); }
+    .uc.uc-solo:hover { border-color: rgba(99,102,241,0.5); }
+    .uc.uc-solo .uc-icon { background: rgba(99,102,241,0.14); border: 1px solid rgba(99,102,241,0.32); color: #c7caff; }
+    .uc.uc-solo .uc-tag  { background: rgba(99,102,241,0.14); color: #c7caff; }
+    .uc.uc-solo .uc-example::before { background: #b3e5fc; }
+    .uc.uc-solo .ex-text { background: #b3e5fc; color: #0b2a3d; }
+
+    @media (max-width: 720px) {
+      .uc-grid { grid-template-columns: 1fr; }
+    }
+
     /* ─── No-signup callout ─── */
     .no-signup {
       position: relative;
@@ -1501,6 +1606,50 @@
           <div class="promise">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             <span><b>Everyone</b><br>Zero tracking. Zero data collection. Your highlights stay yours.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Use cases — study, research, solo -->
+    <section class="use-cases">
+      <div class="section-h">
+        <div class="label">Who it's for</div>
+        <h2>Built for serious reading — together or solo</h2>
+        <p>From study groups working through a science article to research teams annotating a financial report. Or just you, building a personal knowledge garden one quote at a time.</p>
+      </div>
+
+      <div class="uc-grid">
+        <div class="uc uc-students">
+          <div class="uc-icon">🎓</div>
+          <span class="uc-tag">Study groups</span>
+          <h3>Learn fast together</h3>
+          <p>Share key passages from a Wikipedia article with your classmates. Comment on the tricky bits. One folder per course, one link per study session.</p>
+          <div class="uc-example">
+            Photosynthesis converts <span class="ex-text">light energy into chemical energy stored in glucose</span>.
+            <span class="ex-note">💬 sam · "this is the bit Prof. Riley said would be on the exam"</span>
+          </div>
+        </div>
+
+        <div class="uc uc-research">
+          <div class="uc-icon">🔬</div>
+          <span class="uc-tag">Research teams</span>
+          <h3>Annotate together</h3>
+          <p>Highlight financial reports, research papers, or news pieces with your team. Tag every quote by theme. Export folders as Markdown straight into your shared docs.</p>
+          <div class="uc-example">
+            Operating cash flow grew <span class="ex-text">14% YoY despite a 3-point margin compression</span> in Q3.
+            <span class="ex-note">#fy26-plan  #margin  💬 alex · "raise this in tomorrow's review"</span>
+          </div>
+        </div>
+
+        <div class="uc uc-solo">
+          <div class="uc-icon">📚</div>
+          <span class="uc-tag">Solo learning</span>
+          <h3>Your personal knowledge base</h3>
+          <p>Track everything you're reading on a topic. Folders by subject, comments so you remember why each quote mattered, export when you're ready to write something with it.</p>
+          <div class="uc-example">
+            Transformer attention scales as <span class="ex-text">O(n²) with sequence length</span>, which is why context windows are expensive.
+            <span class="ex-note">#ml-fundamentals  💬 "explains why long-context models cost so much"</span>
           </div>
         </div>
       </div>
