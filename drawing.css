@@ -130,7 +130,7 @@
 #hl-draw-toolbar .hl-dt-width .bar {
   display: block;
   width: 100%;
-  background: currentColor;
+  background: #ffffff;
   border-radius: 999px;
   min-height: 2px;
 }
