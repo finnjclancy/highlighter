@@ -922,6 +922,34 @@
     window.addEventListener("popstate", () => setTimeout(onUrlChange, 0));
   })();
 
+  // Belt-and-braces: poll the URL too. Some SPAs (Substack reader, certain
+  // React-router setups) cache a reference to history.pushState before we
+  // get to wrap it, so our hook never fires for their soft navigations.
+  // Polling location.href catches the URL change no matter how it happened.
+  let lastHref = location.href;
+  setInterval(() => {
+    if (location.href !== lastHref) {
+      lastHref = location.href;
+      onUrlChange();
+    }
+  }, 400);
+
+  // Also try the modern Navigation API where supported — fires synchronously
+  // before the URL is committed, so we use rAF to wait for location.href to
+  // catch up before reading it.
+  if (typeof navigation !== "undefined" && navigation.addEventListener) {
+    try {
+      navigation.addEventListener("navigate", () => {
+        requestAnimationFrame(() => {
+          if (location.href !== lastHref) {
+            lastHref = location.href;
+            onUrlChange();
+          }
+        });
+      });
+    } catch {}
+  }
+
   // ---------- re-apply highlights when the page mutates (SPA re-renders) ----------
   let reapplyTimer = null;
   let reapplyInFlight = false;
