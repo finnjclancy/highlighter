@@ -51,6 +51,72 @@
 }
 #hl-draw-text-input::placeholder { color: rgba(255,255,255,0.4); font-weight: 500; }
 
+/* Inline editor wrapper — used when EDITING an existing text. Contains the
+   colour / size control bar above the textarea. */
+#hl-draw-text-editor {
+  position: absolute;
+  z-index: 2147483646;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+#hl-draw-text-editor #hl-draw-text-input {
+  position: static;
+}
+#hl-draw-text-editor .hl-dt-ctrls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  margin-bottom: 6px;
+  background: rgba(20,20,23,0.96);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+#hl-draw-text-editor .hl-dt-csw {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s, border-color 0.12s;
+}
+#hl-draw-text-editor .hl-dt-csw:hover { transform: scale(1.12); }
+#hl-draw-text-editor .hl-dt-csw.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.18);
+}
+#hl-draw-text-editor .hl-dt-cdiv {
+  width: 1px; height: 16px;
+  background: rgba(255,255,255,0.12);
+  margin: 0 2px;
+}
+#hl-draw-text-editor .hl-dt-cpill {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s;
+}
+#hl-draw-text-editor .hl-dt-cpill.wsz-s { font-size: 10px; }
+#hl-draw-text-editor .hl-dt-cpill.wsz-m { font-size: 12px; }
+#hl-draw-text-editor .hl-dt-cpill.wsz-l { font-size: 14px; }
+#hl-draw-text-editor .hl-dt-cpill:hover { background: rgba(255,255,255,0.08); }
+#hl-draw-text-editor .hl-dt-cpill.active {
+  background: rgba(99,102,241,0.28);
+  border-color: rgba(99,102,241,0.65);
+}
+
 /* Clear-all confirmation modal */
 #hl-draw-confirm {
   position: fixed;

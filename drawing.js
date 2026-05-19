@@ -361,22 +361,85 @@
     startPt = null;
   }
 
+  // Holds the wrapper element so it can be cleaned up alongside the textarea
+  let textEditor = null;
+
   function editExistingText(stroke, element) {
     if (textInput) textInput.remove();
+    if (textEditor) { textEditor.remove(); textEditor = null; }
+
+    // Pending values; only applied to the stroke on commit so cancel can
+    // discard any colour/size tweaks the user made via the controls.
+    let pendingColor = stroke.color;
+    let pendingFontSize = stroke.fontSize || 22;
+
+    // Outer wrapper — positioned at the text location
+    const editor = document.createElement("div");
+    editor.id = "hl-draw-text-editor";
+    editor.style.left = stroke.x + "px";
+    editor.style.top  = stroke.y + "px";
+    textEditor = editor;
+
+    // Floating control bar above the textarea
+    const controls = document.createElement("div");
+    controls.className = "hl-dt-ctrls";
+
+    // Colour swatches
+    COLORS.forEach(c => {
+      const sw = document.createElement("button");
+      sw.className = "hl-dt-csw";
+      sw.style.background = c;
+      sw.title = c;
+      if (c === pendingColor) sw.classList.add("active");
+      sw.addEventListener("mousedown", ev => ev.preventDefault());  // keep textarea focused
+      sw.addEventListener("click", () => {
+        pendingColor = c;
+        input.style.color = c;
+        controls.querySelectorAll(".hl-dt-csw").forEach(x => x.classList.toggle("active", x === sw));
+      });
+      controls.appendChild(sw);
+    });
+
+    // Divider
+    const div = document.createElement("span");
+    div.className = "hl-dt-cdiv";
+    controls.appendChild(div);
+
+    // Size pills (S / M / L)
+    const sizeLabels = { 2: "S", 5: "M", 10: "L" };
+    WIDTHS.forEach(w => {
+      const fs = fontSizeForWidth(w);
+      const pill = document.createElement("button");
+      pill.className = "hl-dt-cpill " + (w === 2 ? "wsz-s" : w === 5 ? "wsz-m" : "wsz-l");
+      pill.textContent = sizeLabels[w] || "";
+      if (fs === pendingFontSize) pill.classList.add("active");
+      pill.addEventListener("mousedown", ev => ev.preventDefault());
+      pill.addEventListener("click", () => {
+        pendingFontSize = fs;
+        input.style.fontSize = fs + "px";
+        input.style.minWidth = Math.max(120, fs * 6) + "px";
+        controls.querySelectorAll(".hl-dt-cpill").forEach(x => x.classList.toggle("active", x === pill));
+      });
+      controls.appendChild(pill);
+    });
+
+    editor.appendChild(controls);
+
+    // The text input itself — uses the existing #hl-draw-text-input styles
     const input = document.createElement("textarea");
     textInput = input;
     input.id = "hl-draw-text-input";
     input.rows = 1;
     input.value = stroke.text || "";
     input.placeholder = "Type, then Enter — empty to delete";
-    input.style.left = stroke.x + "px";
-    input.style.top  = stroke.y + "px";
-    input.style.color = stroke.color;
-    input.style.fontSize = (stroke.fontSize || 22) + "px";
-    input.style.minWidth = Math.max(120, (stroke.fontSize || 22) * 6) + "px";
+    input.style.color = pendingColor;
+    input.style.fontSize = pendingFontSize + "px";
+    input.style.minWidth = Math.max(120, pendingFontSize * 6) + "px";
+
     // Hide the SVG text while editing so we don't see both
     element.style.visibility = "hidden";
-    document.body.appendChild(input);
+    editor.appendChild(input);
+    document.body.appendChild(editor);
     input.focus();
     input.select();
 
@@ -385,24 +448,30 @@
       if (committed) return;
       committed = true;
       const newText = input.value;
-      input.remove();
+      editor.remove();
       textInput = null;
+      textEditor = null;
       if (!newText.trim()) {
-        // Empty value → delete the text element
         strokes = strokes.filter(s => s.id !== stroke.id);
         element.remove();
         saveStrokes();
         return;
       }
+      // Apply pending colour/size changes
       stroke.text = newText;
+      stroke.color = pendingColor;
+      stroke.fontSize = pendingFontSize;
+      element.setAttribute("fill", stroke.color);
+      element.setAttribute("font-size", stroke.fontSize);
       element.textContent = newText;
       element.style.visibility = "";
       saveStrokes();
     };
     const cancel = () => {
       committed = true;
-      input.remove();
+      editor.remove();
       textInput = null;
+      textEditor = null;
       element.style.visibility = "";
     };
 
