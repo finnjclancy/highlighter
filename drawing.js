@@ -90,37 +90,59 @@
       el.setAttribute("height", h);
       el.setAttribute("fill", "none");
     } else if (s.type === "arrow") {
-      // Group: a stroked line + a filled triangular arrowhead at (x2, y2)
+      // Group: a stroked shaft + a filled triangular head at (x2, y2).
+      // The shaft stops *inside* the triangle so the join is seamless and
+      // the line doesn't visually poke through the arrowhead.
       const g = document.createElementNS(SVG_NS, "g");
       g.dataset.id = s.id;
+
+      const dx = s.x2 - s.x1, dy = s.y2 - s.y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) { canvas.appendChild(g); return g; }
+
+      const w = s.width || 5;
+      // Slightly chunkier than before — feels more like a proper arrow head
+      // than a needle. Length:width ≈ 1.15 (was 1.33).
+      const headLen = Math.max(14, w * 4.5);
+      const headW   = Math.max(12, w * 4);
+      const ux = dx / len, uy = dy / len;
+
+      // Shaft endpoint: just inside the back of the triangle so the join is
+      // hidden beneath the filled head — no visible "line into triangle".
+      const overlap = Math.max(1.5, w * 0.4);
+      const shaftEndX = s.x2 - ux * (headLen - overlap);
+      const shaftEndY = s.y2 - uy * (headLen - overlap);
+
+      // Triangle: tip at (x2, y2), base perpendicular to shaft, centred.
+      const baseX = s.x2 - ux * headLen;
+      const baseY = s.y2 - uy * headLen;
+      const px = -uy, py = ux;
+      const ax = baseX + px * (headW / 2);
+      const ay = baseY + py * (headW / 2);
+      const bx = baseX - px * (headW / 2);
+      const by = baseY - py * (headW / 2);
+
+      // Shaft
       const line = document.createElementNS(SVG_NS, "line");
       line.setAttribute("x1", s.x1);
       line.setAttribute("y1", s.y1);
-      line.setAttribute("x2", s.x2);
-      line.setAttribute("y2", s.y2);
+      line.setAttribute("x2", shaftEndX);
+      line.setAttribute("y2", shaftEndY);
       line.setAttribute("stroke", s.color);
-      line.setAttribute("stroke-width", s.width);
+      line.setAttribute("stroke-width", w);
       line.setAttribute("stroke-linecap", "round");
       g.appendChild(line);
-      const dx = s.x2 - s.x1, dy = s.y2 - s.y1;
-      const len = Math.hypot(dx, dy);
-      if (len > 0.1) {
-        const headLen = Math.max(10, s.width * 4);
-        const headW   = Math.max(8,  s.width * 3);
-        const ux = dx / len, uy = dy / len;
-        const baseX = s.x2 - ux * headLen;
-        const baseY = s.y2 - uy * headLen;
-        const px = -uy, py = ux;
-        const ax = baseX + px * headW / 2, ay = baseY + py * headW / 2;
-        const bx = baseX - px * headW / 2, by = baseY - py * headW / 2;
-        const head = document.createElementNS(SVG_NS, "polygon");
-        head.setAttribute("points", `${s.x2},${s.y2} ${ax},${ay} ${bx},${by}`);
-        head.setAttribute("fill", s.color);
-        head.setAttribute("stroke", s.color);
-        head.setAttribute("stroke-width", "1");
-        head.setAttribute("stroke-linejoin", "round");
-        g.appendChild(head);
-      }
+
+      // Arrowhead — rounded join so the wings don't look razor-sharp
+      const head = document.createElementNS(SVG_NS, "polygon");
+      head.setAttribute("points", `${s.x2},${s.y2} ${ax},${ay} ${bx},${by}`);
+      head.setAttribute("fill", s.color);
+      head.setAttribute("stroke", s.color);
+      head.setAttribute("stroke-width", Math.max(1, w * 0.6));
+      head.setAttribute("stroke-linejoin", "round");
+      head.setAttribute("stroke-linecap", "round");
+      g.appendChild(head);
+
       canvas.appendChild(g);
       return g;
     } else if (s.type === "text") {
