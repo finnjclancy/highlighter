@@ -56,12 +56,23 @@ async function decodePayload() {
 }
 
 function buildLiveLink(payload) {
-  // Append the original payload back to the source URL so people with the
-  // extension installed get the highlights painted on the real page.
+  // Append the encoded payload back to the source URL so the recipient's
+  // extension can decode it and paint highlights on the original page.
+  //
+  // The payload may live in either of two places depending on how the
+  // gallery was reached:
+  //   • Short link (/v/<id>): Worker injects window.__hlPayload  ← default
+  //   • Long inline link (?d=<payload>): the ?d= query param      ← legacy
   if (!payload.url) return null;
   try {
     const u = new URL(payload.url);
-    const enc = new URLSearchParams(location.search).get("d");
+    let enc = null;
+    if (typeof window !== "undefined" && window.__hlPayload) {
+      enc = window.__hlPayload;
+    } else {
+      const params = new URLSearchParams(location.search);
+      enc = params.get("d");
+    }
     if (enc) u.searchParams.set("hlshare", enc);
     return u.toString();
   } catch { return payload.url; }

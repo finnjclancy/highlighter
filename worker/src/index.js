@@ -266,7 +266,7 @@ function renderHtml(meta, enc, shareId) {
       Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlighter extension →</a>
     </footer>
   </div>
-  <script src="${STATIC_BASE}/v.js?v=11"></script>
+  <script src="${STATIC_BASE}/v.js?v=12"></script>
 </body>
 </html>`;
 
