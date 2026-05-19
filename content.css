@@ -227,6 +227,16 @@
 }
 #hl-panel .hl-panel-toggle:hover { background: rgba(255,255,255,0.06); color: #fff; }
 
+/* Dragging state — disables transitions and forces a grabbing cursor on
+   the burger and on any other drag-handle inside the head. */
+#hl-panel.hl-dragging {
+  transition: none !important;
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+#hl-panel.hl-dragging .hl-panel-toggle,
+#hl-panel.hl-dragging .hl-panel-head { cursor: grabbing !important; }
+
 #hl-panel .hl-panel-body {
   overflow-y: auto;
   padding: 4px;

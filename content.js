@@ -349,10 +349,7 @@
 
     const head = panel.querySelector(".hl-panel-head");
     const toggle = panel.querySelector(".hl-panel-toggle");
-    toggle.addEventListener("click", e => {
-      e.stopPropagation();
-      panel.classList.toggle("hl-collapsed");
-    });
+    toggle.title = "Click to toggle · drag to move";
 
     const drawBtn = panel.querySelector(".hl-panel-draw");
     drawBtn.addEventListener("click", e => {
@@ -363,24 +360,106 @@
       drawBtn.classList.toggle("active", !!e.detail?.active);
     });
 
-    // drag — switch from bottom-anchored to top/left-anchored on first drag
-    let dragging = false, dx = 0, dy = 0;
-    head.addEventListener("mousedown", e => {
-      if (e.target === toggle) return;
-      dragging = true;
+    // ---------- click-or-drag, mirroring the drawing chip ----------
+    // The burger (and any non-button area of the head when expanded) acts
+    // as both a click target (toggle collapse/expand) and a drag handle.
+    // A 5px threshold distinguishes a click from a drag.
+    const DRAG_THRESHOLD = 5;
+    let panelDrag = null;
+
+    function clampPanelPos(bottom, left) {
       const r = panel.getBoundingClientRect();
-      dx = e.clientX - r.left;
-      dy = e.clientY - r.top;
+      const w = r.width  || 32;
+      const h = r.height || 32;
+      return {
+        bottom: Math.max(0, Math.min(window.innerHeight - h, bottom)),
+        left:   Math.max(0, Math.min(window.innerWidth  - w, left))
+      };
+    }
+
+    function startPanelDrag(e, source) {
+      if (e.button !== 0) return;
+      const r = panel.getBoundingClientRect();
+      panelDrag = {
+        source,                          // "toggle" | "head"
+        startX: e.clientX,
+        startY: e.clientY,
+        origBottom: window.innerHeight - r.bottom,
+        origLeft:   r.left,
+        moved: false
+      };
       e.preventDefault();
+    }
+
+    toggle.addEventListener("mousedown", e => {
+      e.stopPropagation();
+      startPanelDrag(e, "toggle");
     });
+    head.addEventListener("mousedown", e => {
+      // Ignore clicks that originated from a button inside the head — those
+      // have their own handlers (toggle / draw).
+      if (e.target.closest(".hl-panel-toggle, .hl-panel-draw")) return;
+      startPanelDrag(e, "head");
+    });
+
     document.addEventListener("mousemove", e => {
-      if (!dragging) return;
-      panel.style.left = (e.clientX - dx) + "px";
-      panel.style.top = (e.clientY - dy) + "px";
-      panel.style.right = "auto";
-      panel.style.bottom = "auto";
+      if (!panelDrag) return;
+      const dx = e.clientX - panelDrag.startX;
+      const dy = e.clientY - panelDrag.startY;
+      if (!panelDrag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      panelDrag.moved = true;
+      const p = clampPanelPos(panelDrag.origBottom - dy, panelDrag.origLeft + dx);
+      // Anchor by bottom + left so the burger stays put when the panel
+      // expands upward.
+      panel.style.bottom = p.bottom + "px";
+      panel.style.left   = p.left + "px";
+      panel.style.top    = "auto";
+      panel.style.right  = "auto";
+      panel.classList.add("hl-dragging");
     });
-    document.addEventListener("mouseup", () => dragging = false);
+
+    document.addEventListener("mouseup", async () => {
+      if (!panelDrag) return;
+      const wasMoved = panelDrag.moved;
+      const src = panelDrag.source;
+      panelDrag = null;
+      panel.classList.remove("hl-dragging");
+      if (wasMoved) {
+        try {
+          const r = panel.getBoundingClientRect();
+          await chrome.storage.local.set({
+            hl_panel_pos: { bottom: window.innerHeight - r.bottom, left: r.left }
+          });
+        } catch {}
+      } else if (src === "toggle") {
+        // Click without drag → toggle collapse/expand
+        panel.classList.toggle("hl-collapsed");
+      }
+    });
+
+    // Restore any saved position from a previous drag
+    applySavedPanelPos();
+    // Keep the panel on-screen if the viewport size changes
+    window.addEventListener("resize", () => {
+      if (!panel) return;
+      const r = panel.getBoundingClientRect();
+      const p = clampPanelPos(window.innerHeight - r.bottom, r.left);
+      panel.style.bottom = p.bottom + "px";
+      panel.style.left   = p.left + "px";
+    });
+
+    async function applySavedPanelPos() {
+      try {
+        const data = await chrome.storage.local.get("hl_panel_pos");
+        const pos = data.hl_panel_pos;
+        if (!pos) return;
+        const p = clampPanelPos(pos.bottom, pos.left);
+        panel.style.bottom = p.bottom + "px";
+        panel.style.left   = p.left + "px";
+        panel.style.top    = "auto";
+        panel.style.right  = "auto";
+      } catch {}
+    }
   }
 
   function renderPanel() {
