@@ -54,12 +54,81 @@ async function getPageHighlights() {
     if (!/^https?:$/.test(u.protocol)) return { error: "Open a real web page first." };
     const key = computePageKey(u);
     const legacy = legacyPageKey(u);
-    const data = await chrome.storage.local.get(key !== legacy ? [key, legacy] : [key]);
-    const list = (data[key] && data[key].length) ? data[key] : (data[legacy] || []);
-    return { tab, list };
-  } catch {
+    const all = await chrome.storage.local.get(null);
+    let list = (all[key] && all[key].length) ? all[key] : (all[legacy] || []);
+    // Last-resort fallback: look for any hl_page_* entry on the same origin
+    // whose pathname matches when stripped of trailing slashes. Helps when a
+    // page's URL has shifted (canonicalisation, fragment changes, etc.) since
+    // the highlights were saved.
+    if (!list.length) {
+      const wantOrigin = u.origin;
+      const wantPath = normalisedPath(u);
+      for (const k of Object.keys(all)) {
+        if (!k.startsWith("hl_page_")) continue;
+        const rest = k.slice("hl_page_".length);
+        if (!rest.startsWith(wantOrigin)) continue;
+        let path = rest.slice(wantOrigin.length);
+        if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+        if (path === wantPath && Array.isArray(all[k]) && all[k].length) {
+          list = all[k];
+          break;
+        }
+      }
+    }
+    return { tab, list, _diag: { key, legacy, tabUrl: tab.url, found: list.length } };
+  } catch (e) {
     return { error: "Open a real web page first." };
   }
+}
+
+// When the popup can't find highlights for the current page, show a useful
+// diagnostic instead of a generic "no highlights" toast. Tells the user
+// what key the popup looked for and which pages on this host *do* have
+// saved highlights, so we can spot mismatches at a glance.
+async function showNoHighlightsDiagnostic(r) {
+  const tab = r.tab;
+  let hostName = "this host";
+  let wantPath = "";
+  try {
+    const u = new URL(tab.url);
+    hostName = u.host;
+    wantPath = normalisedPath(u);
+  } catch {}
+  const all = await chrome.storage.local.get(null);
+  const sameHost = [];
+  for (const k of Object.keys(all)) {
+    if (!k.startsWith("hl_page_")) continue;
+    const rest = k.slice("hl_page_".length);
+    try {
+      const u = new URL(rest);
+      if (u.host !== hostName) continue;
+      const list = all[k];
+      if (Array.isArray(list) && list.length) {
+        sameHost.push({ path: u.pathname, count: list.length });
+      }
+    } catch {}
+  }
+  const t = document.getElementById("toast");
+  t.innerHTML = "";
+  t.style.textAlign = "left";
+  t.style.whiteSpace = "normal";
+  t.style.display = "block";
+  const head = document.createElement("div");
+  head.style.fontWeight = "600";
+  head.style.marginBottom = "4px";
+  head.textContent = "No highlights found for this page.";
+  t.appendChild(head);
+  const det = document.createElement("div");
+  det.style.fontSize = "10px";
+  det.style.color = "rgba(255,255,255,0.6)";
+  det.innerHTML =
+    `Looking for path: <code>${wantPath || "/"}</code><br>` +
+    (sameHost.length
+      ? "Saved on this site:<br>" + sameHost
+          .map(s => `<code>${s.path}</code> · ${s.count}`)
+          .join("<br>")
+      : "Nothing saved on this site yet.");
+  t.appendChild(det);
 }
 
 function buildPlainText(tab, list) {
@@ -174,7 +243,10 @@ const shareCopy = document.getElementById("share-copy");
 document.getElementById("share-link").addEventListener("click", async () => {
   const r = await getPageHighlights();
   if (r.error) { toast(r.error); return; }
-  if (!r.list.length) { toast("No highlights on this page yet."); return; }
+  if (!r.list.length) {
+    await showNoHighlightsDiagnostic(r);
+    return;
+  }
   let enriched = r.list;
   try {
     const ctx = await chrome.tabs.sendMessage(r.tab.id, { type: "getContextForShare" });
@@ -234,7 +306,10 @@ shareNameInput.addEventListener("keydown", e => {
 document.getElementById("share-text").addEventListener("click", async () => {
   const r = await getPageHighlights();
   if (r.error) { toast(r.error); return; }
-  if (!r.list.length) { toast("No highlights on this page yet."); return; }
+  if (!r.list.length) {
+    await showNoHighlightsDiagnostic(r);
+    return;
+  }
   await copyToClipboard(buildPlainText(r.tab, r.list));
   toast(`✓ Copied (${r.list.length} ${r.list.length === 1 ? "quote" : "quotes"})`);
 });
