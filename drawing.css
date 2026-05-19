@@ -185,6 +185,9 @@
 }
 #hl-draw-toolbar .hl-dt-toggle:active { transform: scale(0.94); }
 #hl-draw-toolbar .hl-dt-toggle svg { width: 16px; height: 16px; display: block; }
+#hl-draw-toolbar.dragging { transition: none !important; cursor: grabbing !important; }
+#hl-draw-toolbar.dragging .hl-dt-toggle { cursor: grabbing !important; }
+#hl-draw-toolbar.dragging .hl-dt-toggle:active { transform: none; }
 
 /* Collapsed state: hide everything except the toggle; toolbar shrinks to 42x42 */
 #hl-draw-toolbar.collapsed {

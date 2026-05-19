@@ -494,18 +494,107 @@
     clearBtn.addEventListener("click", clearAll);
     toolbar.appendChild(clearBtn);
 
-    // Always-visible toggle chip in the top-right corner. Clicking it is the
-    // single on/off control for drawing mode — when collapsed the chip is
-    // the only thing visible, when expanded the full toolbar is shown.
+    // Always-visible toggle chip in the top-right corner. Click toggles
+    // drawing mode; click-and-drag moves the toolbar (position persists).
     const toggleBtn = document.createElement("button");
     toggleBtn.className = "hl-dt-toggle";
-    toggleBtn.title = "Open drawing toolbar";
+    toggleBtn.title = "Click to open · drag to move";
     toggleBtn.innerHTML = svgIcon("pen");
-    toggleBtn.addEventListener("click", () => setActive(!active));
+    toggleBtn.addEventListener("click", () => {
+      if (toolbarJustDragged) { toolbarJustDragged = false; return; }
+      setActive(!active);
+    });
+    toggleBtn.addEventListener("mousedown", startToolbarDrag);
     toolbar.appendChild(toggleBtn);
 
     document.body.appendChild(toolbar);
+    // Apply any saved position from a previous drag
+    applySavedToolbarPos();
   }
+
+  // ---------- toolbar drag (move the chip / toolbar around) ----------
+  const TOOLBAR_POS_KEY = "hl_draw_toolbar_pos";
+  const DRAG_PX_THRESHOLD = 5;
+  let toolbarDrag = null;
+  let toolbarJustDragged = false;
+
+  function startToolbarDrag(e) {
+    if (e.button !== 0) return;
+    const r = toolbar.getBoundingClientRect();
+    toolbarDrag = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origTop: r.top,
+      origRight: window.innerWidth - r.right,
+      moved: false
+    };
+  }
+
+  function clampToolbarPos(top, right) {
+    const rect = toolbar.getBoundingClientRect();
+    const tw = rect.width  || 42;
+    const th = rect.height || 42;
+    return {
+      top:   Math.max(0, Math.min(window.innerHeight - th, top)),
+      right: Math.max(0, Math.min(window.innerWidth  - tw, right))
+    };
+  }
+
+  function onToolbarMove(e) {
+    if (!toolbarDrag) return;
+    const dx = e.clientX - toolbarDrag.startX;
+    const dy = e.clientY - toolbarDrag.startY;
+    if (!toolbarDrag.moved && Math.hypot(dx, dy) < DRAG_PX_THRESHOLD) return;
+    toolbarDrag.moved = true;
+    const p = clampToolbarPos(toolbarDrag.origTop + dy, toolbarDrag.origRight - dx);
+    toolbar.style.top   = p.top + "px";
+    toolbar.style.right = p.right + "px";
+    toolbar.style.left  = "auto";
+    toolbar.style.bottom = "auto";
+    toolbar.classList.add("dragging");
+  }
+
+  async function onToolbarUp() {
+    if (!toolbarDrag) return;
+    const wasMoved = toolbarDrag.moved;
+    toolbarDrag = null;
+    toolbar.classList.remove("dragging");
+    if (wasMoved) {
+      toolbarJustDragged = true;
+      try {
+        const r = toolbar.getBoundingClientRect();
+        await chrome.storage.local.set({
+          [TOOLBAR_POS_KEY]: { top: r.top, right: window.innerWidth - r.right }
+        });
+      } catch {}
+    }
+  }
+
+  async function applySavedToolbarPos() {
+    if (!toolbar) return;
+    try {
+      const data = await chrome.storage.local.get(TOOLBAR_POS_KEY);
+      const pos = data[TOOLBAR_POS_KEY];
+      if (!pos) return;
+      const p = clampToolbarPos(pos.top, pos.right);
+      toolbar.style.top = p.top + "px";
+      toolbar.style.right = p.right + "px";
+      toolbar.style.left = "auto";
+      toolbar.style.bottom = "auto";
+    } catch {}
+  }
+
+  // Document-level drag listeners (added once)
+  document.addEventListener("mousemove", onToolbarMove);
+  document.addEventListener("mouseup",   onToolbarUp);
+  // Keep the toolbar on-screen when the viewport resizes
+  window.addEventListener("resize", () => {
+    if (!toolbar) return;
+    const r = toolbar.getBoundingClientRect();
+    const p = clampToolbarPos(r.top, window.innerWidth - r.right);
+    toolbar.style.top = p.top + "px";
+    toolbar.style.right = p.right + "px";
+  });
 
   function addDivider() {
     const d = document.createElement("div");
@@ -604,7 +693,7 @@
     const chip = toolbar.querySelector(".hl-dt-toggle");
     if (chip) {
       chip.innerHTML = svgIcon(active ? "collapse" : "pen");
-      chip.title = active ? "Hide drawing toolbar" : "Open drawing toolbar";
+      chip.title = (active ? "Hide drawing toolbar" : "Open drawing toolbar") + " · drag to move";
       chip.classList.toggle("on", active);
     }
     // Notify the overlay panel button if it exists
