@@ -149,13 +149,37 @@
     return true;
   }
 
+  // Like applyHighlight, but on failure falls back to text-quote search.
+  // Used by the MutationObserver re-apply path so SPA re-renders that
+  // invalidate the original XPath (e.g. CNBC swapping article DOM mid-load)
+  // can still recover the highlight by matching the saved text + context.
+  function applyHighlightSmart(h) {
+    // Try the cheap XPath path first
+    let range = h.range ? deserializeRange(h.range) : null;
+    if (!range || (h.text && range.toString().trim() !== h.text.trim())) {
+      // Fall back to text-quote search if we have prefix/suffix anchors
+      if (typeof findRangeByText === "function" && h.text) {
+        range = findRangeByText(h.text, h.prefix || "", h.suffix || "");
+      } else if (!range) {
+        return false;
+      }
+    }
+    if (!range) return false;
+    wrapRange(range, h.id, h.bg, h.fg);
+    return true;
+  }
+
   function applyAllHighlights() {
     document.querySelectorAll(".hl-mark").forEach(m => {
       const txt = document.createTextNode(m.textContent);
       m.parentNode.replaceChild(txt, m);
     });
     document.body.normalize();
-    highlights.forEach(applyHighlight);
+    highlights.forEach(applyHighlightSmart);
+    // Also re-apply any shared (pending) highlights from a ?hlshare= link.
+    if (pendingShared && pendingShared.length) {
+      pendingShared.forEach(applyHighlightSmart);
+    }
   }
 
   function removeHighlight(id) {
@@ -711,7 +735,9 @@
 
   // ---------- share: build & receive ----------
   function applyHighlightFromPayload(p) {
-    // Build a working highlight object with both XPath and text-quote info
+    // Build a working highlight object with both XPath and text-quote info.
+    // We keep prefix/suffix on the object so the MutationObserver re-apply
+    // path can fall back to text search if the XPath becomes stale.
     const h = {
       id: p.id, bg: p.bg, fg: p.fg,
       text: p.text,
@@ -725,6 +751,8 @@
         endXPath: p.r.ex,   endOffset: p.r.eo,
         text: p.text
       } : null,
+      prefix: p.p || "",
+      suffix: p.s || "",
       _shared: true
     };
 
@@ -871,13 +899,16 @@
   let reapplyInFlight = false;
   function scheduleReapply() {
     if (reapplyInFlight) return;
-    if (!highlights.length) return;
+    const have = highlights.length + (pendingShared ? pendingShared.length : 0);
+    if (!have) return;
     clearTimeout(reapplyTimer);
     reapplyTimer = setTimeout(() => {
-      // Detect if any highlight is missing from the DOM
-      const missing = highlights.some(h =>
-        !document.querySelector(`.hl-mark[data-hl-id="${h.id}"]`)
-      );
+      // Detect if any highlight (saved OR pending from a share link) is missing
+      const isMissing = (h) =>
+        !document.querySelector(`.hl-mark[data-hl-id="${h.id}"]`);
+      const missing =
+        highlights.some(isMissing) ||
+        (pendingShared && pendingShared.some(isMissing));
       if (!missing) return;
       reapplyInFlight = true;
       try { applyAllHighlights(); } catch {}
