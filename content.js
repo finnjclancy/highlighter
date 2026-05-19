@@ -2,7 +2,18 @@
   if (window.__highlighterLoaded) return;
   window.__highlighterLoaded = true;
 
-  let PAGE_KEY = "hl_page_" + location.origin + location.pathname;
+  // Normalise pathname so a trailing slash variant (common on Substack and
+  // other SPAs that canonicalise the URL post-load) doesn't split a single
+  // page into two storage entries.
+  function normalisedPath() {
+    let p = location.pathname;
+    if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+    return p;
+  }
+  function currentPageKey() {
+    return "hl_page_" + location.origin + normalisedPath();
+  }
+  let PAGE_KEY = currentPageKey();
   let palette = [];
   let highlights = [];
   let toolbar = null;
@@ -24,6 +35,22 @@
   async function loadHighlights() {
     const data = await chrome.storage.local.get(PAGE_KEY);
     highlights = data[PAGE_KEY] || [];
+    // Backward-compat: pre-normalisation we used pathname-as-is, which on
+    // SPAs that canonicalise trailing slashes orphaned the saved data.
+    // If the normalised key is empty but the legacy slashed variant has
+    // data, adopt it and migrate to the new key.
+    if (!highlights.length) {
+      const legacyKey = "hl_page_" + location.origin + location.pathname;
+      if (legacyKey !== PAGE_KEY) {
+        const legacy = await chrome.storage.local.get(legacyKey);
+        const legacyList = legacy[legacyKey];
+        if (legacyList && legacyList.length) {
+          highlights = legacyList;
+          await chrome.storage.local.set({ [PAGE_KEY]: highlights });
+          await chrome.storage.local.remove(legacyKey);
+        }
+      }
+    }
   }
   async function saveHighlights() {
     await chrome.storage.local.set({ [PAGE_KEY]: highlights });
@@ -867,11 +894,12 @@
 
 
   // ---------- SPA handling: watch URL changes (Twitter/X, etc.) ----------
-  let currentPath = location.pathname;
+  let currentPath = normalisedPath();
   async function onUrlChange() {
-    if (location.pathname === currentPath) return;
-    currentPath = location.pathname;
-    PAGE_KEY = "hl_page_" + location.origin + location.pathname;
+    const np = normalisedPath();
+    if (np === currentPath) return;
+    currentPath = np;
+    PAGE_KEY = currentPageKey();
     document.querySelectorAll(".hl-mark").forEach(m => {
       const txt = document.createTextNode(m.textContent);
       m.parentNode.replaceChild(txt, m);

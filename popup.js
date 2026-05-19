@@ -9,7 +9,15 @@ document.getElementById("toggle-panel").addEventListener("click", async () => {
   window.close();
 });
 
+function normalisedPath(u) {
+  let p = u.pathname;
+  if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+  return p;
+}
 function computePageKey(u) {
+  return "hl_page_" + u.origin + normalisedPath(u);
+}
+function legacyPageKey(u) {
   return "hl_page_" + u.origin + u.pathname;
 }
 
@@ -45,8 +53,9 @@ async function getPageHighlights() {
     const u = new URL(tab.url);
     if (!/^https?:$/.test(u.protocol)) return { error: "Open a real web page first." };
     const key = computePageKey(u);
-    const data = await chrome.storage.local.get(key);
-    const list = data[key] || [];
+    const legacy = legacyPageKey(u);
+    const data = await chrome.storage.local.get(key !== legacy ? [key, legacy] : [key]);
+    const list = (data[key] && data[key].length) ? data[key] : (data[legacy] || []);
     return { tab, list };
   } catch {
     return { error: "Open a real web page first." };
@@ -251,7 +260,8 @@ async function loadStats() {
     try {
       const u = new URL(tab.url);
       const key = computePageKey(u);
-      const list = all[key] || [];
+      const legacy = legacyPageKey(u);
+      const list = (all[key] && all[key].length) ? all[key] : (all[legacy] || []);
       document.getElementById("count-page").textContent = list.length;
     } catch {}
   }
