@@ -14,6 +14,7 @@
 
 const STATIC_BASE = "https://finnjclancy.github.io/highlighter";
 const PROMO_IMAGE = STATIC_BASE + "/og-image.png";
+const INSTALL_URL = "https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo";
 const ID_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"; // dropped o/l/1/0
 const ID_LENGTH = 8;
 const KV_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year
@@ -239,7 +240,7 @@ function renderHtml(meta, enc, shareId) {
         <strong>See these highlights painted onto the original page.</strong>
         <span>Install the Highlighter extension to highlight, comment on, and share any page yourself.</span>
       </div>
-      <a class="ib-cta" href="${STATIC_BASE}/" rel="noopener">Install Highlighter</a>
+      <a class="ib-cta" href="${INSTALL_URL}" target="_blank" rel="noopener">Install Highlighter</a>
       <button class="ib-close" aria-label="Dismiss">×</button>
     </div>
   </div>
@@ -265,7 +266,7 @@ function renderHtml(meta, enc, shareId) {
       Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlighter extension →</a>
     </footer>
   </div>
-  <script src="${STATIC_BASE}/v.js?v=10"></script>
+  <script src="${STATIC_BASE}/v.js?v=11"></script>
 </body>
 </html>`;
 

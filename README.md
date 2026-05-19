@@ -33,7 +33,7 @@ A clean browser extension for highlighting text on any web page with custom colo
 
 ### From the Chrome Web Store
 
-_(Pending submission — link will go here when published.)_
+**[chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo](https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo)** — one-click install for Chrome / Edge / Brave / Arc.
 
 ---
 

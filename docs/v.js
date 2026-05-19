@@ -138,7 +138,7 @@ async function init() {
   html += `
     <div class="install-hint">
       <strong>Want to see these on the real page?</strong>
-      Install the <a href="https://finnjclancy.github.io/highlighter/">Highlighter extension</a> and click "Open on original page" above — your highlights will appear in-context as you read.
+      Install the <a href="https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo" target="_blank" rel="noopener">Highlighter extension</a> and click "Open on original page" above — your highlights will appear in-context as you read.
     </div>`;
 
   root.innerHTML = html;
