@@ -70,29 +70,33 @@ async function getPageHighlights() {
     const u = new URL(tab.url);
     if (!/^https?:$/.test(u.protocol)) return { error: "Open a real web page first." };
     const key = computePageKey(u);
-    const legacy = legacyPageKey(u);
+    const disamb = keyDisambiguator(u);
     const all = await chrome.storage.local.get(null);
-    let list = (all[key] && all[key].length) ? all[key] : (all[legacy] || []);
-    // Last-resort fallback: look for any hl_page_* entry on the same origin
-    // whose pathname matches when stripped of trailing slashes. Helps when a
-    // page's URL has shifted (canonicalisation, fragment changes, etc.) since
-    // the highlights were saved.
-    if (!list.length) {
-      const wantOrigin = u.origin;
-      const wantPath = normalisedPath(u);
-      for (const k of Object.keys(all)) {
-        if (!k.startsWith("hl_page_")) continue;
-        const rest = k.slice("hl_page_".length);
-        if (!rest.startsWith(wantOrigin)) continue;
-        let path = rest.slice(wantOrigin.length);
-        if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
-        if (path === wantPath && Array.isArray(all[k]) && all[k].length) {
-          list = all[k];
-          break;
+    let list = (all[key] && all[key].length) ? all[key] : [];
+    // Legacy + path-only fallbacks only apply to sites where the path alone
+    // identifies the page. For YouTube and similar query-string-disambiguated
+    // sites, falling back to pathname-matching keys mixes highlights from
+    // different videos / items, which is exactly what we don't want.
+    if (!list.length && !disamb) {
+      const legacy = legacyPageKey(u);
+      if (legacy !== key) list = all[legacy] || [];
+      if (!list.length) {
+        const wantOrigin = u.origin;
+        const wantPath = normalisedPath(u);
+        for (const k of Object.keys(all)) {
+          if (!k.startsWith("hl_page_")) continue;
+          const rest = k.slice("hl_page_".length);
+          if (!rest.startsWith(wantOrigin)) continue;
+          let path = rest.slice(wantOrigin.length);
+          if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+          if (path === wantPath && Array.isArray(all[k]) && all[k].length) {
+            list = all[k];
+            break;
+          }
         }
       }
     }
-    return { tab, list, _diag: { key, legacy, tabUrl: tab.url, found: list.length } };
+    return { tab, list, _diag: { key, tabUrl: tab.url, found: list.length } };
   } catch (e) {
     return { error: "Open a real web page first." };
   }
@@ -352,8 +356,13 @@ async function loadStats() {
     try {
       const u = new URL(tab.url);
       const key = computePageKey(u);
-      const legacy = legacyPageKey(u);
-      const list = (all[key] && all[key].length) ? all[key] : (all[legacy] || []);
+      let list = (all[key] && all[key].length) ? all[key] : [];
+      // Only fall back to the pre-disambiguator legacy key when path alone
+      // identifies the page (not YouTube etc.).
+      if (!list.length && !keyDisambiguator(u)) {
+        const legacy = legacyPageKey(u);
+        list = all[legacy] || [];
+      }
       document.getElementById("count-page").textContent = list.length;
     } catch {}
   }

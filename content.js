@@ -77,9 +77,11 @@
     try {
       const data = await chrome.storage.local.get(PAGE_KEY);
       highlights = data[PAGE_KEY] || [];
-      // Backward-compat: pre-normalisation we used pathname-as-is, which on
-      // SPAs that canonicalise trailing slashes orphaned the saved data.
-      if (!highlights.length) {
+      // Only do trailing-slash legacy migration when this site uses
+      // pathname-only routing. For disambiguator sites like YouTube the
+      // legacy /watch bucket mixed data from every video — there's no safe
+      // way to attribute it to a specific video, so leave it untouched.
+      if (!highlights.length && !pageKeyDisambiguator()) {
         const legacyKey = "hl_page_" + location.origin + location.pathname;
         if (legacyKey !== PAGE_KEY) {
           const legacy = await chrome.storage.local.get(legacyKey);
