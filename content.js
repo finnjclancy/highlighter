@@ -2,6 +2,25 @@
   if (window.__highlighterLoaded) return;
   window.__highlighterLoaded = true;
 
+  // True until the extension is reloaded out from under this content script.
+  // After reload, this script is "orphaned" — chrome.* APIs throw
+  // "Extension context invalidated" on every call. We detect that, set the
+  // flag, and silently no-op so the console doesn't fill with errors.
+  let extensionAlive = true;
+  function checkAlive() {
+    try { return extensionAlive && !!(chrome && chrome.runtime && chrome.runtime.id); }
+    catch { extensionAlive = false; return false; }
+  }
+  // Swallow the specific "Extension context invalidated" rejection so it
+  // doesn't surface as an uncaught error in pages we don't control.
+  window.addEventListener("unhandledrejection", (e) => {
+    const msg = (e.reason && (e.reason.message || String(e.reason))) || "";
+    if (msg.includes("Extension context invalidated")) {
+      extensionAlive = false;
+      e.preventDefault();
+    }
+  });
+
   // Normalise pathname so a trailing slash variant (common on Substack and
   // other SPAs that canonicalise the URL post-load) doesn't split a single
   // page into two storage entries.
@@ -29,31 +48,37 @@
 
   // ---------- storage ----------
   async function loadPalette() {
-    const { palette: p } = await chrome.storage.sync.get("palette");
-    palette = p || [];
+    if (!checkAlive()) return;
+    try {
+      const { palette: p } = await chrome.storage.sync.get("palette");
+      palette = p || [];
+    } catch { extensionAlive = false; }
   }
   async function loadHighlights() {
-    const data = await chrome.storage.local.get(PAGE_KEY);
-    highlights = data[PAGE_KEY] || [];
-    // Backward-compat: pre-normalisation we used pathname-as-is, which on
-    // SPAs that canonicalise trailing slashes orphaned the saved data.
-    // If the normalised key is empty but the legacy slashed variant has
-    // data, adopt it and migrate to the new key.
-    if (!highlights.length) {
-      const legacyKey = "hl_page_" + location.origin + location.pathname;
-      if (legacyKey !== PAGE_KEY) {
-        const legacy = await chrome.storage.local.get(legacyKey);
-        const legacyList = legacy[legacyKey];
-        if (legacyList && legacyList.length) {
-          highlights = legacyList;
-          await chrome.storage.local.set({ [PAGE_KEY]: highlights });
-          await chrome.storage.local.remove(legacyKey);
+    if (!checkAlive()) return;
+    try {
+      const data = await chrome.storage.local.get(PAGE_KEY);
+      highlights = data[PAGE_KEY] || [];
+      // Backward-compat: pre-normalisation we used pathname-as-is, which on
+      // SPAs that canonicalise trailing slashes orphaned the saved data.
+      if (!highlights.length) {
+        const legacyKey = "hl_page_" + location.origin + location.pathname;
+        if (legacyKey !== PAGE_KEY) {
+          const legacy = await chrome.storage.local.get(legacyKey);
+          const legacyList = legacy[legacyKey];
+          if (legacyList && legacyList.length) {
+            highlights = legacyList;
+            await chrome.storage.local.set({ [PAGE_KEY]: highlights });
+            await chrome.storage.local.remove(legacyKey);
+          }
         }
       }
-    }
+    } catch { extensionAlive = false; }
   }
   async function saveHighlights() {
-    await chrome.storage.local.set({ [PAGE_KEY]: highlights });
+    if (!checkAlive()) return;
+    try { await chrome.storage.local.set({ [PAGE_KEY]: highlights }); }
+    catch { extensionAlive = false; }
   }
 
   // ---------- range serialization (XPath + offsets) ----------

@@ -21,13 +21,35 @@
   let startPt = null;
   let resizeObs = null;
 
+  // Once chrome.* APIs start throwing 'Extension context invalidated' (the
+  // user reloaded the unpacked extension while this tab was open), this
+  // content script becomes a zombie. Flip a flag so we silently no-op
+  // instead of spamming the page console with promise rejections.
+  let extensionAlive = true;
+  function checkAlive() {
+    try { return extensionAlive && !!(chrome && chrome.runtime && chrome.runtime.id); }
+    catch { extensionAlive = false; return false; }
+  }
+  window.addEventListener("unhandledrejection", (e) => {
+    const msg = (e.reason && (e.reason.message || String(e.reason))) || "";
+    if (msg.includes("Extension context invalidated")) {
+      extensionAlive = false;
+      e.preventDefault();
+    }
+  });
+
   // ---------- storage ----------
   async function loadStrokes() {
-    const data = await chrome.storage.local.get(STORE_KEY);
-    strokes = data[STORE_KEY] || [];
+    if (!checkAlive()) return;
+    try {
+      const data = await chrome.storage.local.get(STORE_KEY);
+      strokes = data[STORE_KEY] || [];
+    } catch { extensionAlive = false; }
   }
   async function saveStrokes() {
-    await chrome.storage.local.set({ [STORE_KEY]: strokes });
+    if (!checkAlive()) return;
+    try { await chrome.storage.local.set({ [STORE_KEY]: strokes }); }
+    catch { extensionAlive = false; }
   }
 
   // ---------- canvas ----------
