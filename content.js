@@ -29,8 +29,26 @@
     if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
     return p;
   }
+  // On some sites the content identity lives in the query string, not the
+  // pathname (every YouTube video is /watch?v=<id>). Without including the
+  // disambiguator, every video on YouTube would share one storage bucket
+  // and a share-link would carry highlights from all of them.
+  function pageKeyDisambiguator() {
+    try {
+      const host = location.hostname.replace(/^(www|m|music)\./, "");
+      const qp = new URLSearchParams(location.search);
+      if (host === "youtube.com" || host === "youtu.be") {
+        const v = qp.get("v");    if (v)    return "?v=" + v;
+        const list = qp.get("list"); if (list) return "?list=" + list;
+      }
+      if (host === "news.ycombinator.com") {
+        const id = qp.get("id");  if (id)   return "?id=" + id;
+      }
+    } catch {}
+    return "";
+  }
   function currentPageKey() {
-    return "hl_page_" + location.origin + normalisedPath();
+    return "hl_page_" + location.origin + normalisedPath() + pageKeyDisambiguator();
   }
   let PAGE_KEY = currentPageKey();
   let palette = [];
@@ -887,13 +905,18 @@
       _shared: true
     };
 
+    // Always track shared highlights in pendingShared, even if the initial
+    // apply fails. This lets the MutationObserver re-apply path catch them
+    // once the page finishes hydrating (e.g. YouTube descriptions, lazy-
+    // loaded article bodies, late-arriving paragraphs).
+    pendingShared.push(h);
+
     // Try XPath restore first
     let range = h.range ? deserializeRange(h.range) : null;
     if (!range || range.toString().trim() !== p.text.trim()) {
       // Fallback: text-quote search
       range = findRangeByText(p.text, p.p || "", p.s || "");
       if (range) {
-        // Update serialized form to reflect the actual found location
         h.range = {
           startXPath: getXPath(range.startContainer),
           startOffset: range.startOffset,
@@ -903,9 +926,8 @@
         };
       }
     }
-    if (!range) return false;
+    if (!range) return false;       // failure: the re-apply observer will retry
     wrapRange(range, h.id, h.bg, h.fg);
-    pendingShared.push(h);
     return true;
   }
 
@@ -998,12 +1020,14 @@
 
 
   // ---------- SPA handling: watch URL changes (Twitter/X, etc.) ----------
-  let currentPath = normalisedPath();
+  // Compare the full PAGE_KEY (origin + pathname + disambiguator), not just
+  // pathname — YouTube's video navigation only changes the query string.
+  let currentKey = currentPageKey();
   async function onUrlChange() {
-    const np = normalisedPath();
-    if (np === currentPath) return;
-    currentPath = np;
-    PAGE_KEY = currentPageKey();
+    const newKey = currentPageKey();
+    if (newKey === currentKey) return;
+    currentKey = newKey;
+    PAGE_KEY = newKey;
     document.querySelectorAll(".hl-mark").forEach(m => {
       const txt = document.createTextNode(m.textContent);
       m.parentNode.replaceChild(txt, m);
