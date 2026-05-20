@@ -806,20 +806,37 @@
 
   // ---------- text-quote selectors (for resilient share/restore) ----------
   function buildTextSegments() {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-      acceptNode(n) {
-        if (!n.nodeValue.length) return NodeFilter.FILTER_REJECT;
-        if (n.parentElement && n.parentElement.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
+    // Recurse into open shadow DOMs too. YouTube's comments / description
+    // and many other sites that use Polymer/Lit components render their
+    // text inside element.shadowRoot rather than light DOM. Without this
+    // traversal the text-quote fallback never finds those passages and
+    // shared highlights silently fail to re-apply.
     const segs = [];
     let cursor = 0;
-    let node;
-    while ((node = walker.nextNode())) {
-      segs.push({ node, start: cursor, end: cursor + node.nodeValue.length });
-      cursor += node.nodeValue.length;
+    const visited = new WeakSet();
+    function walkRoot(root) {
+      if (!root || visited.has(root)) return;
+      visited.add(root);
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(n) {
+          if (!n.nodeValue.length) return NodeFilter.FILTER_REJECT;
+          if (n.parentElement && n.parentElement.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let node;
+      while ((node = walker.nextNode())) {
+        segs.push({ node, start: cursor, end: cursor + node.nodeValue.length });
+        cursor += node.nodeValue.length;
+      }
+      // Descend into every open shadow root under this subtree
+      if (root.querySelectorAll) {
+        root.querySelectorAll("*").forEach(el => {
+          if (el.shadowRoot) walkRoot(el.shadowRoot);
+        });
+      }
     }
+    walkRoot(document.body);
     return { segs, fullText: segs.map(s => s.node.nodeValue).join("") };
   }
 
