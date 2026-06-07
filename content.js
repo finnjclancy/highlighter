@@ -29,18 +29,13 @@
     if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
     return p;
   }
-  // On some sites the content identity lives in the query string, not the
-  // pathname (every YouTube video is /watch?v=<id>). Without including the
-  // disambiguator, every video on YouTube would share one storage bucket
-  // and a share-link would carry highlights from all of them.
+  // On some sites the content identity lives in the query string, not
+  // the pathname (e.g. HN items are /item?id=<id>). Bake the relevant
+  // param into the storage key so each item has its own bucket.
   function pageKeyDisambiguator() {
     try {
       const host = location.hostname.replace(/^(www|m|music)\./, "");
       const qp = new URLSearchParams(location.search);
-      if (host === "youtube.com" || host === "youtu.be") {
-        const v = qp.get("v");    if (v)    return "?v=" + v;
-        const list = qp.get("list"); if (list) return "?list=" + list;
-      }
       if (host === "news.ycombinator.com") {
         const id = qp.get("id");  if (id)   return "?id=" + id;
       }

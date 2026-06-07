@@ -14,17 +14,12 @@ function normalisedPath(u) {
   if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
   return p;
 }
-// Sites where the content identity lives in the query string (YouTube
-// videos: /watch?v=<id>, HN items: /item?id=<id>) need the query baked
-// into the key — otherwise every video on YouTube shares one bucket and
-// share-links carry highlights from all of them.
+// Some sites put the content identity in the query string (e.g. HN
+// items: /item?id=<id>) — bake those into the key so each item has
+// its own bucket.
 function keyDisambiguator(u) {
   try {
     const host = u.hostname.replace(/^(www|m|music)\./, "");
-    if (host === "youtube.com" || host === "youtu.be") {
-      const v = u.searchParams.get("v");    if (v)    return "?v=" + v;
-      const list = u.searchParams.get("list"); if (list) return "?list=" + list;
-    }
     if (host === "news.ycombinator.com") {
       const id = u.searchParams.get("id");  if (id)   return "?id=" + id;
     }

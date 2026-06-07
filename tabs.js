@@ -1,4 +1,4 @@
-const TAB_NAMES = ["quotes", "shares", "design"];
+const TAB_NAMES = ["quotes", "shares", "design", "settings"];
 
 function setTab(name) {
   if (!TAB_NAMES.includes(name)) name = "quotes";

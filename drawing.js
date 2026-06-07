@@ -287,6 +287,17 @@
     if (!active) return;
     e.preventDefault();
 
+    if (tool === "eraser") {
+      const hitEl = e.target.closest("[data-id]");
+      if (hitEl) {
+        const id = hitEl.dataset.id;
+        strokes = strokes.filter(s => s.id !== id);
+        hitEl.remove();
+        saveStrokes();
+      }
+      return;
+    }
+
     // 1) Always check if the user is grabbing an existing text element first —
     //    this works regardless of which tool is selected.
     const hit = findTextHit(e.target);
@@ -536,12 +547,52 @@
       rect: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="1"/></svg>`,
       text: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`,
       eraser: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M15.5 3.5l5 5L9 20H4v-5z"/></svg>`,
+      screenshot: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
       undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/></svg>`,
       clear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>`,
       close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
       collapse: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>`
     };
     return icons[name] || "";
+  }
+
+  async function captureScreen() {
+    document.body.classList.add("hl-screenshot-hidden");
+    
+    // Slight delay to ensure the DOM updates and transitions are hidden
+    setTimeout(async () => {
+      try {
+        if (!checkAlive()) {
+          alert("Extension context invalidated. Please reload the page to take a screenshot.");
+          document.body.classList.remove("hl-screenshot-hidden");
+          return;
+        }
+
+        chrome.runtime.sendMessage({ type: "captureTab" }, (response) => {
+          document.body.classList.remove("hl-screenshot-hidden");
+          
+          if (chrome.runtime.lastError) {
+            alert("Failed to capture screen: " + chrome.runtime.lastError.message);
+            return;
+          }
+          
+          if (response && response.dataUrl) {
+            const a = document.createElement("a");
+            a.href = response.dataUrl;
+            const cleanTitle = document.title.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "") || "screenshot";
+            a.download = `highlighter-screenshot-${cleanTitle}-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          } else {
+            alert("Failed to capture screen: no image data returned.");
+          }
+        });
+      } catch (err) {
+        document.body.classList.remove("hl-screenshot-hidden");
+        alert("Failed to capture screen: " + err.message);
+      }
+    }, 150);
   }
 
   function buildToolbar() {
@@ -553,7 +604,8 @@
       { id: "line", title: "Line" },
       { id: "arrow", title: "Arrow" },
       { id: "rect", title: "Rectangle" },
-      { id: "text", title: "Text" }
+      { id: "text", title: "Text" },
+      { id: "eraser", title: "Eraser (click shape to delete)" }
     ];
     tools.forEach(t => {
       const b = document.createElement("button");
@@ -606,6 +658,13 @@
     clearBtn.innerHTML = svgIcon("clear");
     clearBtn.addEventListener("click", clearAll);
     toolbar.appendChild(clearBtn);
+
+    const captureBtn = document.createElement("button");
+    captureBtn.className = "hl-dt-btn";
+    captureBtn.title = "Capture annotated screen";
+    captureBtn.innerHTML = svgIcon("screenshot");
+    captureBtn.addEventListener("click", captureScreen);
+    toolbar.appendChild(captureBtn);
 
     // Always-visible toggle chip in the top-right corner. Click toggles
     // drawing mode; click-and-drag moves the toolbar (position persists).
@@ -717,8 +776,9 @@
 
   function setTool(t) {
     tool = t;
-    canvas?.classList.remove("tool-text");
+    canvas?.classList.remove("tool-text", "tool-eraser");
     if (t === "text") canvas?.classList.add("tool-text");
+    if (t === "eraser") canvas?.classList.add("tool-eraser");
     toolbar?.querySelectorAll("[data-tool]").forEach(b => b.classList.toggle("active", b.dataset.tool === t));
   }
   function setColor(c) {
@@ -797,8 +857,9 @@
       canvas.classList.add("hl-draw-active");
       toolbar.classList.remove("collapsed");
       canvas.classList.toggle("tool-text", tool === "text");
+      canvas.classList.toggle("tool-eraser", tool === "eraser");
     } else {
-      if (canvas) canvas.classList.remove("hl-draw-active", "tool-text");
+      if (canvas) canvas.classList.remove("hl-draw-active", "tool-text", "tool-eraser");
       toolbar.classList.add("collapsed");
       if (textInput) { textInput.remove(); textInput = null; }
     }

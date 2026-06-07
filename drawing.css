@@ -362,3 +362,40 @@
   border-color: rgba(99,102,241,0.6);
   color: #fff;
 }
+
+/* Eraser Tool Styling */
+#hl-draw-canvas.hl-draw-active.tool-eraser {
+  cursor: pointer;
+}
+#hl-draw-canvas.hl-draw-active.tool-eraser path,
+#hl-draw-canvas.hl-draw-active.tool-eraser line,
+#hl-draw-canvas.hl-draw-active.tool-eraser rect,
+#hl-draw-canvas.hl-draw-active.tool-eraser polygon,
+#hl-draw-canvas.hl-draw-active.tool-eraser g,
+#hl-draw-canvas.hl-draw-active.tool-eraser text {
+  pointer-events: visiblePainted !important;
+  cursor: pointer !important;
+}
+#hl-draw-canvas.hl-draw-active.tool-eraser path:hover,
+#hl-draw-canvas.hl-draw-active.tool-eraser line:hover,
+#hl-draw-canvas.hl-draw-active.tool-eraser rect:hover,
+#hl-draw-canvas.hl-draw-active.tool-eraser polygon:hover,
+#hl-draw-canvas.hl-draw-active.tool-eraser g:hover,
+#hl-draw-canvas.hl-draw-active.tool-eraser text:hover {
+  opacity: 0.5 !important;
+  filter: drop-shadow(0 0 4px #ef4444) !important;
+}
+
+/* Hide all Highlighter UI components during screen capture */
+body.hl-screenshot-hidden #hl-draw-toolbar,
+body.hl-screenshot-hidden #hl-panel,
+body.hl-screenshot-hidden #hl-popover,
+body.hl-screenshot-hidden #hl-toolbar,
+body.hl-screenshot-hidden #hl-hover-toolbar,
+body.hl-screenshot-hidden #hl-draw-text-input,
+body.hl-screenshot-hidden #hl-draw-text-editor {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+

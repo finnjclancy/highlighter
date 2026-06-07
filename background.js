@@ -23,6 +23,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "openUrl") {
     chrome.tabs.create({ url: msg.url });
     sendResponse({ ok: true });
+  } else if (msg.type === "captureTab") {
+    chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
+      sendResponse({ dataUrl });
+    });
+    return true; // asynchronous response
   }
   return true;
 });
