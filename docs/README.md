@@ -2,7 +2,8 @@
 
 This folder is the public-facing site for the Highlighter extension. Deployed via GitHub Pages straight from `main` → `/docs`.
 
-- `index.html` — landing page (what the extension is, link to GitHub)
+- `index.html` — landing page covering web/PDF highlighting, optional AI, sharing, and privacy disclosures
+- `privacy.html` — privacy policy for local storage, sharing, comments, and optional AI processing
 - `v.html` + `v.js` — the **gallery viewer**: opens shared `?d=<payload>` links and renders highlights as a clean card list with a "Open on original page" button that triggers the live extension overlay for users who have it installed.
 - `styles.css` — shared design tokens, mirrors the extension's UI.
 

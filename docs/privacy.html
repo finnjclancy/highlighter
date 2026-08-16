@@ -19,9 +19,9 @@
     </header>
 
     <h2 class="page-title">Privacy Policy</h2>
-    <p class="meta">Last updated: 18 May 2026</p>
+    <p class="meta">Last updated: 16 August 2026</p>
 
-    <p>This page describes how the <strong>Highlighter</strong> browser extension (the “Extension”), the companion website at <a href="https://finnjclancy.github.io/highlighter/">finnjclancy.github.io/highlighter</a> (the “Gallery”), and the share-link service at <code>highlighter-share.finnjclancy.workers.dev</code> handle your information. The short version: Highlighter stores your highlights locally by default, has no accounts, ads, analytics, or tracking, and sends data off your device only when you deliberately create a share link, copy/export content, or post a comment on a shared link.</p>
+    <p>This page describes how the <strong>Highlighter</strong> browser extension (the “Extension”), the companion website at <a href="https://finnjclancy.github.io/highlighter/">finnjclancy.github.io/highlighter</a> (the “Gallery”), and the share/AI service at <code>highlighter-share.finnjclancy.workers.dev</code> handle your information. The short version: Highlighter stores your highlights locally by default, has no accounts, ads, analytics, or tracking, and sends data off your device only when you deliberately use AI highlights, create a share link, copy/export content, or post a comment on a shared link.</p>
 
     <div class="section-lbl">What the extension stores</div>
     <p>The Extension stores the following data <strong>locally in your browser</strong> using the standard <code>chrome.storage</code> APIs:</p>
@@ -30,14 +30,19 @@
       <li>Free-hand drawings you make with the Draw tool, scoped to the URL on which you drew them.</li>
       <li>Your customised colour palette (synced via <code>chrome.storage.sync</code> across your signed-in Chrome profile if that feature is enabled in your browser).</li>
       <li>Your local share history, including the share name, source URL/title, share URL, highlight count, and creation time.</li>
+      <li>Whether you accepted the AI-highlighting disclosure, whether you enabled automatic AI highlighting, and any optional Deep Read instruction you save.</li>
     </ul>
-    <p>This local data leaves your browser only when you take a deliberate action: copying/exporting it, generating a share link, or posting a comment on a shared link.</p>
+    <p>This local data leaves your browser only when you take a deliberate action: invoking AI highlights, copying/exporting content, generating a share link, or posting a comment on a shared link.</p>
+
+    <div class="section-lbl">When you use AI highlights</div>
+    <p>AI highlights is optional and disabled until you accept an in-product disclosure. When you invoke it—or enable the clearly labelled Auto setting—the Extension extracts selectable text from the open PDF and sends that text, the PDF title, source URL, temporary text-span identifiers, and any optional reader instruction over HTTPS to the Highlighter Worker. Explicit literal keyword and phrase instructions can be matched by the Worker itself. For open-ended or semantic instructions, the Worker forwards the request to the Google Gemini API so Gemini can select passages.</p>
+    <p>The Gemini API key is stored as an encrypted Cloudflare Worker secret and is not included in the Extension. Highlighter does not store the extracted source PDF text. To reduce repeated processing, the Worker may store selected span identifiers, categories, and short explanations in Cloudflare Workers KV for up to 30 days. Google states that content submitted through its free Gemini API tier may be used to improve its products. Do not use AI highlights on confidential or sensitive PDFs.</p>
 
     <div class="section-lbl">What the extension does <em>not</em> do</div>
     <ul>
       <li>No analytics, telemetry, or usage tracking of any kind.</li>
       <li>No advertising identifiers or fingerprinting.</li>
-      <li>No remote servers receive the contents of pages you visit unless you explicitly create a share link or post a comment.</li>
+      <li>No remote servers receive page or PDF contents unless you explicitly use AI highlights, create a share link, or post a comment.</li>
       <li>No third-party scripts are loaded into the Extension.</li>
       <li>No accounts, no sign-up, no log-in.</li>
     </ul>
@@ -67,7 +72,7 @@
     <p>Short share links and share-link comments are stored for about one year. There is not currently a self-service deletion control for already-created share links, so avoid sharing sensitive content.</p>
 
     <div class="section-lbl">Limited use</div>
-    <p>Highlighter uses data obtained through Chrome extension permissions only to provide or improve its single purpose: highlighting, organising, exporting, drawing on, and sharing selected web content at your request. Highlighter does not use or transfer this data for personalised advertising, retargeting, sale of data, credit-worthiness, or unrelated purposes. The use of information received from Chrome APIs adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements.</p>
+    <p>Highlighter uses data obtained through Chrome extension permissions only to provide or improve its single purpose: highlighting, organising, understanding (including optional AI assistance), exporting, drawing on, and sharing selected web and PDF content at your request. Highlighter does not use or transfer this data for personalised advertising, retargeting, sale of data, credit-worthiness, or unrelated purposes. The use of information received from Chrome APIs adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements.</p>
 
     <div class="section-lbl">Contact</div>
     <p>Questions, concerns, or requests? Open an issue at <a href="https://github.com/finnjclancy/highlighter/issues" rel="noopener">github.com/finnjclancy/highlighter/issues</a>.</p>
