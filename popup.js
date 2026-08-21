@@ -9,6 +9,122 @@ document.getElementById("toggle-panel").addEventListener("click", async () => {
   window.close();
 });
 
+let agentConnectionEnabled = false;
+let currentAgentMcpUrl = "";
+let agentFeedbackTimer = null;
+const agentToggle = document.getElementById("agent-toggle");
+const agentDot = document.getElementById("agent-dot");
+const agentLabel = document.getElementById("agent-label");
+const agentDisconnect = document.getElementById("agent-disconnect");
+const agentHelp = document.getElementById("agent-help");
+const agentHelpScreen = document.getElementById("agent-help-screen");
+const agentHelpClose = document.getElementById("agent-help-close");
+const agentHelpCopy = document.getElementById("agent-help-copy");
+
+function renderAgentStatus(status) {
+  if (agentFeedbackTimer) {
+    clearTimeout(agentFeedbackTimer);
+    agentFeedbackTimer = null;
+  }
+  agentConnectionEnabled = status?.enabled === true;
+  currentAgentMcpUrl = status?.mcpUrl || "";
+  agentDot.classList.toggle("connected", status?.connected === true);
+  agentLabel.textContent = !agentConnectionEnabled
+    ? "Connect agent & copy link"
+    : status?.connected ? "Connected · Copy link" : "Connecting… · Copy link";
+  agentToggle.title = agentConnectionEnabled ? "Copy private MCP link" : "Connect agent and copy private MCP link";
+  agentDisconnect.classList.toggle("visible", agentConnectionEnabled);
+  agentDisconnect.disabled = !agentConnectionEnabled;
+}
+
+function showAgentFeedback(message) {
+  if (agentFeedbackTimer) clearTimeout(agentFeedbackTimer);
+  agentLabel.textContent = message;
+  agentFeedbackTimer = setTimeout(() => {
+    agentFeedbackTimer = null;
+    void refreshAgentStatus();
+  }, 1100);
+}
+
+async function refreshAgentStatus() {
+  try {
+    const status = await chrome.runtime.sendMessage({ type: "getAgentConnectionStatus" });
+    renderAgentStatus(status);
+  } catch {
+    renderAgentStatus({ enabled: false, connected: false });
+  }
+}
+
+async function connectAndCopyAgentLink() {
+  let mcpUrl = currentAgentMcpUrl;
+  if (!agentConnectionEnabled) {
+    const status = await chrome.runtime.sendMessage({
+      type: "setAgentConnectionEnabled",
+      enabled: true
+    });
+    renderAgentStatus(status);
+    mcpUrl = status.mcpUrl || "";
+  }
+  if (!mcpUrl) throw new Error("The MCP link is not available.");
+  await copyToClipboard(mcpUrl);
+}
+
+agentToggle.addEventListener("click", async () => {
+  try {
+    await connectAndCopyAgentLink();
+    showAgentFeedback("✓ MCP link copied");
+  } catch {
+    toast("Could not change the agent connection.");
+  }
+});
+
+function setAgentHelpOpen(open) {
+  agentHelpScreen.hidden = !open;
+  if (open) agentHelpClose.focus();
+  else agentHelp.focus();
+}
+
+agentHelp.addEventListener("click", () => setAgentHelpOpen(true));
+agentHelpClose.addEventListener("click", () => setAgentHelpOpen(false));
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && !agentHelpScreen.hidden) setAgentHelpOpen(false);
+});
+
+agentHelpCopy.addEventListener("click", async () => {
+  try {
+    await connectAndCopyAgentLink();
+    agentHelpCopy.textContent = "✓ Private link copied";
+    setTimeout(() => { agentHelpCopy.textContent = "Copy private MCP link"; }, 1300);
+  } catch {
+    agentHelpCopy.textContent = "Could not copy — try again";
+  }
+});
+
+document.getElementById("agent-help-chatgpt").addEventListener("click", () => {
+  chrome.tabs.create({ url: "https://chatgpt.com/plugins" });
+  window.close();
+});
+
+document.getElementById("agent-help-docs").addEventListener("click", () => {
+  chrome.tabs.create({ url: "https://developers.openai.com/plugins/deploy/connect-chatgpt" });
+  window.close();
+});
+
+agentDisconnect.addEventListener("click", async () => {
+  try {
+    const status = await chrome.runtime.sendMessage({
+      type: "setAgentConnectionEnabled",
+      enabled: false
+    });
+    renderAgentStatus(status);
+    showAgentFeedback("Agent disconnected");
+  } catch {
+    toast("Could not disconnect the agent.");
+  }
+});
+
+void refreshAgentStatus();
+
 function normalisedPath(u) {
   let p = u.pathname;
   if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
@@ -23,8 +139,45 @@ function keyDisambiguator(u) {
     if (host === "news.ycombinator.com") {
       const id = u.searchParams.get("id");  if (id)   return "?id=" + id;
     }
+    if (host === "openreview.net" && (u.pathname === "/pdf" || u.pathname === "/attachment")) {
+      const id = u.searchParams.get("id");  if (id)   return "?id=" + id;
+    }
   } catch {}
   return "";
+}
+
+function canonicalPageUrl(rawUrl) {
+  try {
+    const u = new URL(rawUrl);
+    const extensionOrigin = new URL(chrome.runtime.getURL("/")).origin;
+    if (u.origin === extensionOrigin && u.pathname.endsWith("/pdf-reader.html")) {
+      const source = u.searchParams.get("url");
+      if (source) {
+        const parsed = new URL(source);
+        if (/^https?:$/.test(parsed.protocol)) return parsed.href;
+      }
+    }
+  } catch {}
+  return rawUrl;
+}
+
+function looksLikePdf(tab) {
+  try {
+    const u = new URL(canonicalPageUrl(tab.url));
+    if (!/^https?:$/.test(u.protocol)) return false;
+    if (/\.pdf$/i.test(u.pathname)) return true;
+    const host = u.hostname.replace(/^www\./, "");
+    if ((host === "arxiv.org" || host === "export.arxiv.org") && /^\/pdf\/[^/]+/i.test(u.pathname)) {
+      return true;
+    }
+    if (host === "openreview.net" &&
+        (u.pathname === "/pdf" || (u.pathname === "/attachment" && u.searchParams.get("name") === "pdf"))) {
+      return true;
+    }
+    return /\.pdf(?:\s|$)/i.test(tab.title || "");
+  } catch {
+    return false;
+  }
 }
 function computePageKey(u) {
   return "hl_page_" + u.origin + normalisedPath(u) + keyDisambiguator(u);
@@ -62,7 +215,8 @@ async function getPageHighlights() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) return { error: "Open a real web page first." };
   try {
-    const u = new URL(tab.url);
+    const pageUrl = canonicalPageUrl(tab.url);
+    const u = new URL(pageUrl);
     if (!/^https?:$/.test(u.protocol)) return { error: "Open a real web page first." };
     const key = computePageKey(u);
     const disamb = keyDisambiguator(u);
@@ -91,7 +245,7 @@ async function getPageHighlights() {
         }
       }
     }
-    return { tab, list, _diag: { key, tabUrl: tab.url, found: list.length } };
+    return { tab: { ...tab, url: pageUrl }, list, _diag: { key, tabUrl: pageUrl, found: list.length } };
   } catch (e) {
     return { error: "Open a real web page first." };
   }
@@ -227,7 +381,7 @@ async function shortenViaWorker(enc) {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data && data.url ? data.url : null;
+    return data && data.url ? data : null;
   } catch {
     return null;
   }
@@ -236,7 +390,9 @@ async function shortenViaWorker(enc) {
 async function buildGalleryUrl(pageUrl, pageTitle, list, shareName) {
   const enc = await buildEncodedPayload(pageUrl, pageTitle, list, shareName);
   const short = await shortenViaWorker(enc);
-  return { url: short || (GALLERY_BASE + "?d=" + enc), shortened: !!short };
+  return short
+    ? { ...short, shortened: true }
+    : { url: GALLERY_BASE + "?d=" + enc, shortened: false, manageToken: "", expiresAt: 0 };
 }
 
 const SHARES_KEY = "hl_shares";
@@ -285,7 +441,7 @@ async function doShareCopy() {
   if (!pendingShare) return;
   const { tab, enriched } = pendingShare;
   const name = shareNameInput.value.trim();
-  const { url, shortened } = await buildGalleryUrl(tab.url, tab.title, enriched, name);
+  const { url, shortened, manageToken, expiresAt, passwordProtected, visibility } = await buildGalleryUrl(tab.url, tab.title, enriched, name);
   await copyToClipboard(url);
   const n = enriched.length;
   shareForm.style.display = "none";
@@ -293,13 +449,17 @@ async function doShareCopy() {
   // Persist a history entry so the user can see / re-copy this link later
   await recordShare({
     id: extractShareId(url),
+    manageToken: manageToken || "",
     name,
     url,
     shortened,
     sourceUrl: tab.url,
     sourceTitle: tab.title || "",
     count: n,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    expiresAt: expiresAt || 0,
+    passwordProtected: passwordProtected === true,
+    visibility: visibility || "unlisted"
   });
   toast(`✓ Link copied (${n} ${n === 1 ? "highlight" : "highlights"})`);
 }
@@ -349,7 +509,7 @@ async function loadStats() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.url) {
     try {
-      const u = new URL(tab.url);
+      const u = new URL(canonicalPageUrl(tab.url));
       const key = computePageKey(u);
       let list = (all[key] && all[key].length) ? all[key] : [];
       // Only fall back to the pre-disambiguator legacy key when path alone
@@ -363,3 +523,33 @@ async function loadStats() {
   }
 }
 loadStats();
+
+async function loadPdfAction() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const button = document.getElementById("open-pdf-reader");
+  if (!tab?.id || !tab.url || !looksLikePdf(tab)) return;
+
+  const current = new URL(tab.url);
+  const extensionOrigin = new URL(chrome.runtime.getURL("/")).origin;
+  if (current.origin === extensionOrigin && current.pathname.endsWith("/pdf-reader.html")) return;
+
+  const openReader = async () => {
+    const source = canonicalPageUrl(tab.url);
+    const readerUrl = chrome.runtime.getURL(`pdf-reader.html?url=${encodeURIComponent(source)}`);
+    await chrome.tabs.update(tab.id, { url: readerUrl });
+    window.close();
+  };
+
+  // Clicking the extension icon is the user's intent: take them straight to
+  // the PDF reader instead of requiring a second click inside this popup.
+  button.style.display = "flex"; // visible fallback if navigation is rejected
+  button.lastChild.textContent = " Opening PDF reader…";
+  try {
+    await openReader();
+  } catch {
+    button.lastChild.textContent = " Open in PDF reader";
+    button.addEventListener("click", openReader);
+    toast("Could not open automatically. Try the PDF reader button.");
+  }
+}
+loadPdfAction();

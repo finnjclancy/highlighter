@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Highlighter",
-  "version": "1.1.0",
-  "description": "Highlight any web page in custom colours. Organise quotes into folders, add comments, and share live links.",
-  "permissions": ["storage", "activeTab", "clipboardWrite"],
+  "version": "1.7.0",
+  "description": "Highlight web pages and PDFs manually, with AI, or connected agents. Organise quotes, add comments, and share live links.",
+  "permissions": ["storage", "activeTab", "clipboardWrite", "alarms", "contextMenus"],
+  "minimum_chrome_version": "116",
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
@@ -27,6 +28,15 @@
   },
   "background": {
     "service_worker": "background.js"
+  },
+  "commands": {
+    "highlight-selection": {
+      "suggested_key": {
+        "default": "Alt+Shift+H",
+        "mac": "MacCtrl+Shift+H"
+      },
+      "description": "Highlight the current selection"
+    }
   },
   "content_scripts": [
     {

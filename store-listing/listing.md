@@ -16,7 +16,7 @@ Name:
 
 Short description:
 
-`Highlight any web page in custom colours. Organise quotes into folders, add comments, and share live links.`
+`Highlight web pages and PDFs manually, with AI, or connected agents. Organise quotes, add comments, and share live links.`
 
 Category:
 
@@ -43,10 +43,12 @@ Key features:
 - Export selected highlights as plain text or Markdown
 - Draw on pages with pen, line, and rectangle tools
 - Create share links for a page's highlights
+- Optionally connect ChatGPT or another MCP-compatible agent so it can search and organize the full library, make reversible edits, compare sources, export research, and create or manage protected live links
+- Highlight the current browser selection from the context menu or a keyboard shortcut
 - Let recipients read shared highlights in a clean gallery, or reopen them on the original page with Highlighter installed
 - Customize highlight colours in Design Studio
 
-Highlighter is local-first: your highlights, drawings, folders, comments, palette, and share history are stored in your browser by default. There are no accounts, no ads, and no tracking. Data leaves your browser only when you explicitly copy/export it, create a share link, or post a comment on a shared link.
+Highlighter is local-first: your highlights, drawings, folders, comments, palette, and share history are stored in your browser by default. There are no accounts, no ads, and no tracking. Data leaves your browser only when you explicitly use optional AI or agent features, copy/export content, create a share link, or post a comment on a shared link.
 
 Good for research, studying, writing, product work, collecting quotes, reviewing long articles, and sending source-backed notes to other people.
 ```
@@ -109,7 +111,7 @@ Highlighter lets users highlight selected text, draw on pages, organize saved qu
 
 Recommended data disclosure:
 
-- Website content: Yes. User-created highlights, selected text, notes/comments, folders/tags, drawings, highlight colours, and shared-link comments.
+- Website content: Yes. User-created or agent-requested highlights, selected text, notes/comments, folders/tags, drawings, highlight colours, and shared-link comments.
 - Web history: Yes, conservatively. Highlighter stores source page URLs and titles only for pages where the user creates highlights, drawings, exports, or share links.
 - Personally identifiable information: No account/profile data is collected by the extension. If the dashboard treats optional share-gallery author names as PII, disclose that optional author name can be submitted by viewers when they post comments on shared links.
 - User activity: No analytics, tracking, browsing activity monitoring, ad measurement, or background profiling.
@@ -117,13 +119,13 @@ Recommended data disclosure:
 Data use:
 
 ```text
-Data is used only to provide Highlighter's core functionality: saving highlights/drawings, organizing and exporting quotes, customizing colours, and creating or displaying share links requested by the user. Data is not sold, used for advertising, used for credit-worthiness, or transferred for unrelated purposes.
+Data is used only to provide Highlighter's core functionality: saving highlights/drawings, organizing and exporting quotes, customizing colours, optionally applying, searching, updating, restoring, summarizing, or comparing highlights through a user-connected agent, and creating, managing, or displaying share links requested by the user. Data is not sold, used for advertising, used for credit-worthiness, or transferred for unrelated purposes.
 ```
 
 Remote storage:
 
 ```text
-Most data is stored locally in the user's browser. When a user creates a share link, the selected highlights for that page are sent over HTTPS to Highlighter's share service and stored for about one year so the link can work. Viewer comments on shared links are also stored with the share for about one year.
+Most data is stored locally in the user's browser. When a user or their connected agent creates a share link, the selected highlights for that page are sent over HTTPS to Highlighter's share service and stored for the selected expiry period of 1–365 days. Optional gallery passwords and management credentials are stored only as cryptographic hashes by the service. Viewer comments, reactions, optional author names, and related highlight IDs are stored with the share until it expires. If the user enables the optional agent connection, active-page details, exact highlight requests, saved highlighted text, library searches, exports, snapshots, and requested changes are relayed through the Highlighter Worker in memory and are not intentionally stored by the agent bridge.
 ```
 
 Permission justifications:
@@ -131,12 +133,14 @@ Permission justifications:
 - `storage`: Saves highlights, drawings, folders, comments, colour palette, and share history in the user's browser.
 - `activeTab`: Reads the active tab URL/title after the user opens the extension, so Highlighter can show page counts and copy/share highlights for the current page.
 - `clipboardWrite`: Copies exported text, Markdown, and share links to the clipboard when the user chooses those actions.
+- `alarms`: Restores the optional live agent connection after Chrome restarts or suspends the extension service worker.
+- `contextMenus`: Adds right-click actions for highlighting selected text, choosing a colour, and opening tag/note editing.
 - Host permission `<all_urls>`: Lets Highlighter apply and restore highlights and drawings on any web page the user chooses to use it on.
 
 ## Final pre-submit checks
 
 - Publish the updated `docs/privacy.html` and `docs/index.html` before submitting, so the live privacy URL matches the extension's current share-link behaviour.
-- Confirm the uploaded ZIP is the rebuilt `dist/highlighter-1.0.1.zip`.
+- Confirm the uploaded ZIP is the rebuilt `dist/highlighter-1.7.0.zip`.
 - Upload no more than five screenshots.
 - Mature content: `No`, unless future user-facing content changes require it.
 - Region distribution: use all regions unless you have a specific launch restriction.

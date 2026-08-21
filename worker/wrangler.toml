@@ -4,7 +4,8 @@
 
 name = "highlighter-share"
 main = "src/index.js"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-08-20"
+compatibility_flags = ["nodejs_compat"]
 
 # Optional: pin to a workers.dev subdomain for free hosting at
 #   https://highlighter-share.<account>.workers.dev
@@ -17,3 +18,22 @@ workers_dev = true
 [[kv_namespaces]]
 binding = "HIGHLIGHTS"
 id = "561bdc02f8784f9d8b252ef30e2304ca"
+
+[[durable_objects.bindings]]
+name = "AGENT_BRIDGE"
+class_name = "AgentBridge"
+
+[[migrations]]
+tag = "v1-agent-bridge"
+new_sqlite_classes = ["AgentBridge"]
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.05

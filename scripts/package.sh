@@ -34,6 +34,10 @@ INCLUDE=(
   drawing.css
   popup.html
   popup.js
+  pdf-reader.html
+  pdf-reader.js
+  pdf-reader.css
+  vendor
   library.html
   library.js
   options.js

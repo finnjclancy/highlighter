@@ -162,33 +162,44 @@ async function init() {
 }
 
 const COMMENT_API = "https://highlighter-share.finnjclancy.workers.dev/api/c/";
+const REACTION_API = "https://highlighter-share.finnjclancy.workers.dev/api/r/";
 
 function escForAttr(s) { return String(s).replace(/"/g, "&quot;"); }
 
 async function initComments(shareId) {
   // Render the comment shell for every highlight card (empty state)
   document.querySelectorAll(".comments-wrap").forEach(el => {
-    renderCommentSection(el, [], shareId);
+    renderCommentSection(el, [], [], shareId);
   });
   // Then fetch any existing comments and re-render with them
   try {
-    const res = await fetch(COMMENT_API + encodeURIComponent(shareId));
-    if (!res.ok) return;
-    const data = await res.json();
+    const [commentRes, reactionRes] = await Promise.all([
+      fetch(COMMENT_API + encodeURIComponent(shareId)),
+      fetch(REACTION_API + encodeURIComponent(shareId))
+    ]);
+    if (!commentRes.ok) return;
+    const data = await commentRes.json();
+    const reactionData = reactionRes.ok ? await reactionRes.json() : { reactions: [] };
     const byHl = new Map();
+    const reactionsByHl = new Map();
     (data.comments || []).forEach(c => {
       const key = c.highlightId || "";
       if (!byHl.has(key)) byHl.set(key, []);
       byHl.get(key).push(c);
     });
+    (reactionData.reactions || []).forEach(reaction => {
+      const key = reaction.highlightId || "";
+      if (!reactionsByHl.has(key)) reactionsByHl.set(key, []);
+      reactionsByHl.get(key).push(reaction);
+    });
     document.querySelectorAll(".comments-wrap").forEach(el => {
       const hid = el.dataset.hid;
-      renderCommentSection(el, byHl.get(hid) || [], shareId);
+      renderCommentSection(el, byHl.get(hid) || [], reactionsByHl.get(hid) || [], shareId);
     });
   } catch {}
 }
 
-function renderCommentSection(wrap, comments, shareId) {
+function renderCommentSection(wrap, comments, reactions, shareId) {
   const hid = wrap.dataset.hid;
   const savedAuthor = (function () {
     try { return localStorage.getItem("hl_author") || ""; } catch { return ""; }
@@ -224,6 +235,30 @@ function renderCommentSection(wrap, comments, shareId) {
   `;
   wrap.appendChild(form);
 
+  const reactionBar = document.createElement("div");
+  reactionBar.className = "reaction-bar";
+  ["👍", "❤️", "💡", "❓", "✅"].forEach(symbol => {
+    const count = reactions.filter(item => item.reaction === symbol).length;
+    const button = document.createElement("button");
+    button.className = "reaction-btn";
+    button.textContent = `${symbol}${count ? ` ${count}` : ""}`;
+    button.title = `React with ${symbol}`;
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        const res = await fetch(REACTION_API + encodeURIComponent(shareId), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ reaction: symbol, author: savedAuthor || "Anonymous", highlightId: hid })
+        });
+        if (!res.ok) throw new Error("reaction failed");
+        await initComments(shareId);
+      } catch { button.disabled = false; }
+    });
+    reactionBar.appendChild(button);
+  });
+  wrap.appendChild(reactionBar);
+
   toggle.addEventListener("click", () => {
     const showing = form.style.display !== "none";
     form.style.display = showing ? "none" : "block";
@@ -246,11 +281,9 @@ function renderCommentSection(wrap, comments, shareId) {
         body: JSON.stringify({ text, author, highlightId: hid })
       });
       if (!res.ok) throw new Error("post failed");
-      const data = await res.json();
+      await res.json();
       try { if (author) localStorage.setItem("hl_author", author); } catch {}
-      // Re-render this card's comments with the updated list filtered to this highlight
-      const all = (data.comments || []).filter(c => (c.highlightId || "") === hid);
-      renderCommentSection(wrap, all, shareId);
+      await initComments(shareId);
     } catch (e) {
       postBtn.disabled = false;
       postBtn.textContent = "Try again";

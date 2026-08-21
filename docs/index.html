@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Highlighter — Highlight web pages and PDFs</title>
-  <meta name="description" content="Highlight web pages and PDFs manually or with optional AI. Organise quotes, add comments, draw, and share live links.">
+  <title>Highlighter — Browser highlighting for people and AI agents</title>
+  <meta name="description" content="Highlight web pages and PDFs by hand or with an AI agent. Connect 20 MCP tools to capture, organise, compare, export, and share research from your browser.">
 
   <meta property="og:title" content="Highlighter">
-  <meta property="og:description" content="Highlight web pages and PDFs manually or with optional AI, organise quotes, and share live links.">
+  <meta property="og:description" content="20 MCP tools turn your browser into an agent-powered research workspace: capture, organise, compare, export, and share what matters.">
   <meta property="og:image" content="https://finnjclancy.github.io/highlighter/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
 
@@ -526,6 +526,35 @@
     .pdf-mock .pdf-line:nth-child(4) { width: 72%; }
     .pdf-mock .pdf-line:nth-child(5) { width: 84%; background: rgba(255,245,157,0.72); }
 
+    /* Feature 6 — agent tools (purple, full width) */
+    .feat.f-agent {
+      grid-column: 1 / 3; grid-row: 4 / 5;
+      min-height: 176px;
+      background:
+        radial-gradient(58% 130% at 100% 40%, rgba(168,85,247,0.17), transparent 70%),
+        radial-gradient(45% 120% at 0% 100%, rgba(99,102,241,0.12), transparent 70%),
+        var(--bg-2);
+      border-color: rgba(168,85,247,0.25);
+    }
+    .feat.f-agent:hover { border-color: rgba(168,85,247,0.52); }
+    .feat.f-agent .feat-text { max-width: 55ch; }
+    .feat.f-agent .feat-tag { background: rgba(168,85,247,0.14); color: #dfb6ff; }
+    .feat.f-agent .art {
+      right: 26px; top: 28px; width: 285px;
+      display: grid; gap: 8px;
+      font: 10px/1.35 ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    .agent-prompt, .agent-result {
+      padding: 10px 12px;
+      border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(10,10,14,0.82);
+      color: var(--text-2);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+    }
+    .agent-result { margin-left: 26px; color: #e9d5ff; border-color: rgba(168,85,247,0.28); }
+    .agent-result b { color: #c4b5fd; font-weight: 600; }
+
     .ai-disclosure {
       display: flex;
       align-items: flex-start;
@@ -556,15 +585,16 @@
       .feat.f-folders,
       .feat.f-draw,
       .feat.f-share,
-      .feat.f-pdf { grid-column: auto; grid-row: auto; }
-      .feat .art { display: none; }
+      .feat.f-pdf,
+      .feat.f-agent { grid-column: auto; grid-row: auto; }
+      .feat .art, .feat.f-agent .art, .feat.f-pdf .art { display: none; }
       .feat .feat-text { max-width: 100%; }
-      .feat.f-pdf { min-height: auto; }
+      .feat.f-pdf, .feat.f-agent { min-height: auto; }
       .ai-disclosure { padding: 15px; }
     }
     @media (min-width: 641px) and (max-width: 820px) {
-      .feat.f-pdf .art { display: none; }
-      .feat.f-pdf .feat-text { max-width: 100%; }
+      .feat.f-pdf .art, .feat.f-agent .art { display: none; }
+      .feat.f-pdf .feat-text, .feat.f-agent .feat-text { max-width: 100%; }
     }
 
     /* ─── Steps ─── */
@@ -622,6 +652,323 @@
       height: 3px;
       background: linear-gradient(90deg, #6366f1, transparent);
       border-radius: 0 0 16px 16px;
+    }
+    #mcp-setup .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 18px; }
+    #mcp-setup { margin-bottom: 80px; scroll-margin-top: 24px; }
+    .setup-before {
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 22px 24px;
+      border: 1px solid rgba(99,102,241,0.24);
+      border-radius: 16px;
+      background:
+        radial-gradient(75% 120% at 0% 100%, rgba(99,102,241,0.12), transparent 68%),
+        var(--bg-2);
+    }
+    .setup-before h3 { margin: 0 0 5px; font-size: 19px; letter-spacing: -0.015em; }
+    .setup-before p { margin: 0; color: var(--text-2); font-size: 12.5px; line-height: 1.5; }
+    .setup-checks {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .setup-check {
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.24);
+      color: var(--text-2);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .setup-check b { display: block; margin-bottom: 2px; color: var(--text); font-size: 11.5px; }
+    .setup-check b::before { content: "✓ "; color: #4ade80; }
+    .setup-finish {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .setup-test, .setup-help {
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+    .setup-test { border-color: rgba(74,222,128,0.22); }
+    .setup-help { border-color: rgba(168,85,247,0.20); }
+    .setup-finish .mini-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-3);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .setup-finish h3 { margin: 0 0 7px; font-size: 17px; letter-spacing: -0.012em; }
+    .setup-finish p { margin: 0; color: var(--text-2); font-size: 12.5px; line-height: 1.55; }
+    .setup-prompt {
+      margin-top: 12px;
+      padding: 11px 12px;
+      border-radius: 9px;
+      border: 1px solid rgba(74,222,128,0.18);
+      background: rgba(5,18,10,0.42);
+      color: #dcfce7;
+      font: 11.5px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    .setup-help a { font-weight: 600; }
+    @media (max-width: 640px) {
+      #mcp-setup .steps { grid-template-columns: 1fr; }
+      .setup-before, .setup-finish { grid-template-columns: 1fr; }
+      .setup-checks { grid-template-columns: 1fr; }
+    }
+
+    /* ─── MCP tools + agent workflows ─── */
+    .mcp-capabilities {
+      margin: 0 0 88px;
+      scroll-margin-top: 24px;
+    }
+    .agent-loop {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: stretch;
+      gap: 10px;
+      margin: 0 0 22px;
+    }
+    .loop-node {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--bg-2);
+      position: relative;
+      overflow: hidden;
+    }
+    .loop-node::after {
+      content: "";
+      position: absolute;
+      inset: auto -20% -60% 20%;
+      height: 120px;
+      background: radial-gradient(circle, rgba(99,102,241,0.18), transparent 68%);
+      pointer-events: none;
+    }
+    .loop-node.browser::after { background: radial-gradient(circle, rgba(168,85,247,0.2), transparent 68%); }
+    .loop-node.library::after { background: radial-gradient(circle, rgba(74,222,128,0.16), transparent 68%); }
+    .loop-kicker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: var(--text-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .loop-icon {
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      background: rgba(99,102,241,0.13);
+      border: 1px solid rgba(99,102,241,0.24);
+      color: #c7caff;
+      font-size: 13px;
+    }
+    .loop-node h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: -0.015em;
+    }
+    .loop-node p {
+      margin: 0;
+      color: var(--text-2);
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+    .loop-arrow {
+      align-self: center;
+      color: #a5b4fc;
+      font: 16px ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    .mcp-trust-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 auto 42px;
+      color: var(--text-3);
+      font-size: 12px;
+      text-align: center;
+    }
+    .mcp-trust-line .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 9px rgba(74,222,128,0.55);
+      flex: 0 0 auto;
+    }
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 46px;
+    }
+    .workflow-card {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(145deg, rgba(99,102,241,0.07), transparent 56%), var(--bg-2);
+    }
+    .workflow-card:nth-child(2) { background: linear-gradient(145deg, rgba(168,85,247,0.08), transparent 56%), var(--bg-2); }
+    .workflow-card:nth-child(3) { background: linear-gradient(145deg, rgba(74,222,128,0.07), transparent 56%), var(--bg-2); }
+    .workflow-card .workflow-num {
+      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      margin-bottom: 14px;
+      background: rgba(99,102,241,0.15);
+      color: #c7caff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .workflow-card h3 {
+      margin: 0 0 7px;
+      font-size: 18px;
+      letter-spacing: -0.015em;
+    }
+    .workflow-card > p {
+      min-height: 60px;
+      margin: 0 0 16px;
+      color: var(--text-2);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .workflow-prompt {
+      margin: 0 0 14px;
+      padding: 11px 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      background: rgba(7,7,10,0.62);
+      color: #ececf5;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .workflow-prompt::before {
+      content: "Ask your agent";
+      display: block;
+      margin-bottom: 5px;
+      color: #a5b4fc;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .tool-chain {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-4);
+      font-size: 10px;
+    }
+    .tool-chain code, .tool-name {
+      font: 10px/1.35 ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    .tool-chain code {
+      padding: 3px 6px;
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 6px;
+      background: rgba(99,102,241,0.09);
+      color: #c7caff;
+    }
+    .tool-directory {
+      padding: 28px;
+      border: 1px solid rgba(168,85,247,0.23);
+      border-radius: 18px;
+      background:
+        radial-gradient(70% 80% at 100% 0%, rgba(168,85,247,0.10), transparent 68%),
+        var(--bg-2);
+    }
+    .directory-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .directory-head h3 {
+      margin: 0 0 5px;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+    .directory-head p {
+      margin: 0;
+      color: var(--text-2);
+      font-size: 13px;
+    }
+    .tool-count {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(168,85,247,0.28);
+      background: rgba(168,85,247,0.10);
+      color: #dfb6ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .tool-groups {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px 28px;
+    }
+    .tool-group:last-child { grid-column: 1 / 3; }
+    .tool-group h4 {
+      margin: 0 0 10px;
+      color: var(--text-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .tool-list {
+      display: grid;
+      gap: 7px;
+    }
+    .tool-item {
+      display: grid;
+      grid-template-columns: minmax(145px, auto) 1fr;
+      gap: 10px;
+      align-items: baseline;
+      padding-bottom: 7px;
+      border-bottom: 1px solid rgba(255,255,255,0.045);
+    }
+    .tool-name { color: #d8b4fe; overflow-wrap: anywhere; }
+    .tool-desc { color: var(--text-2); font-size: 11.5px; line-height: 1.45; }
+    @media (max-width: 820px) {
+      .agent-loop { grid-template-columns: 1fr; }
+      .loop-arrow { transform: rotate(90deg); justify-self: center; }
+      .workflow-grid { grid-template-columns: 1fr; }
+      .workflow-card > p { min-height: 0; }
+      .tool-groups { grid-template-columns: 1fr; }
+      .tool-group:last-child { grid-column: auto; }
+    }
+    @media (max-width: 560px) {
+      .tool-directory { padding: 21px 18px; }
+      .directory-head { align-items: flex-start; flex-direction: column; }
+      .tool-item { grid-template-columns: 1fr; gap: 2px; }
     }
 
     /* ─── Privacy callout ─── */
@@ -1436,6 +1783,7 @@
       .demo-body { padding: 22px 22px; }
       .demo-body h3 { font-size: 17px; }
       nav.topnav .links { gap: 12px; }
+      nav.topnav .links .mcp-nav { display: none; }
       .section-h h2 { font-size: 22px; }
       .cta-xl { font-size: 14px; padding: 11px 20px; }
     }
@@ -1451,6 +1799,8 @@
         <span>Highlighter</span>
       </div>
       <div class="links">
+        <a class="mcp-nav" href="#mcp-tools">MCP tools</a>
+        <a class="mcp-nav" href="#mcp-setup">Setup</a>
         <a href="privacy.html">Privacy</a>
         <a href="https://github.com/finnjclancy/highlighter" target="_blank" rel="noopener">GitHub</a>
         <a href="https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo" class="primary" target="_blank" rel="noopener">Install</a>
@@ -1462,8 +1812,8 @@
         <span class="dot"></span>
         Live for Chrome &amp; Edge
       </div>
-      <h1>Highlight web pages &amp; PDFs.<br><span class="accent">Share what matters.</span></h1>
-      <p class="hero-sub">Save passages manually, draw directly on the page, or let optional AI find important sections in a PDF—with your consent.</p>
+      <h1>Your browser, now readable<br><span class="accent">by you and your AI agent.</span></h1>
+      <p class="hero-sub">Highlight web pages and PDFs by hand—or connect 20 MCP tools so an agent can capture, organise, compare, export, and share your research in the browser.</p>
     </section>
 
     <section id="features" class="features-hero">
@@ -1552,6 +1902,17 @@
             </div>
           </div>
         </div>
+        <div class="feat f-agent">
+          <div class="feat-text">
+            <span class="feat-tag">Agent tools · MCP</span>
+            <h3>Turn reading into a research workspace</h3>
+            <p>Connect ChatGPT or another MCP-compatible agent with a private URL. It can search every saved page, update and restore highlights, compare sources, export research, and create protected collaborative galleries.</p>
+          </div>
+          <div class="art" aria-hidden="true">
+            <div class="agent-prompt">Make a live link for these highlights.</div>
+            <div class="agent-result"><b>create_live_link</b><br>✓ highlighter-share…/v/8f2kq3ms</div>
+          </div>
+        </div>
       </div>
 
       <div class="ai-disclosure">
@@ -1567,6 +1928,196 @@
           <span class="cta-arrow">→</span>
         </a>
         <span class="cta-note">No sign-up · works in Chrome &amp; Edge</span>
+      </div>
+    </section>
+
+    <section id="mcp-tools" class="mcp-capabilities">
+      <div class="section-h">
+        <div class="label">Highlighter MCP server</div>
+        <h2>20 tools. One browser research loop.</h2>
+        <p>The agent does more than read a page. It can work with your current tab, your private highlight library, and the live links you deliberately publish.</p>
+      </div>
+
+      <div class="agent-loop" aria-label="How the Highlighter MCP connection works">
+        <div class="loop-node agent">
+          <div class="loop-kicker"><span class="loop-icon">✦</span> AI agent</div>
+          <h3>You describe the outcome</h3>
+          <p>Ask in natural language: collect evidence, compare sources, tidy tags, export notes, or prepare a gallery.</p>
+        </div>
+        <div class="loop-arrow" aria-hidden="true">→</div>
+        <div class="loop-node browser">
+          <div class="loop-kicker"><span class="loop-icon">↗</span> Private MCP bridge</div>
+          <h3>The right tool is called</h3>
+          <p>Your private connection carries a structured request to the paired Highlighter extension in Chrome.</p>
+        </div>
+        <div class="loop-arrow" aria-hidden="true">→</div>
+        <div class="loop-node library">
+          <div class="loop-kicker"><span class="loop-icon">▤</span> Browser + library</div>
+          <h3>The work stays inspectable</h3>
+          <p>See the highlight on the source page, find it in your local library, undo changes, or publish only what you choose.</p>
+        </div>
+      </div>
+      <p class="mcp-trust-line"><span class="status-dot"></span> Chrome stays in the loop, mutations are reversible, and the agent uses stable highlight IDs for precise edits.</p>
+
+      <div class="section-h">
+        <div class="label">Example workflows</div>
+        <h2>From open tab to useful output</h2>
+        <p>Give the agent a goal. Highlighter provides the browser actions, saved context, and reversible operations needed to complete it.</p>
+      </div>
+      <div class="workflow-grid">
+        <article class="workflow-card">
+          <span class="workflow-num">01</span>
+          <h3>Research while you browse</h3>
+          <p>Turn an open article into structured evidence without manually copying passages between tools.</p>
+          <blockquote class="workflow-prompt">“Highlight the claims about adoption, tag them ‘evidence’, and add a short page summary.”</blockquote>
+          <div class="tool-chain"><code>get_active_page</code><span>→</span><code>highlight_passages</code><span>→</span><code>add_page_note</code></div>
+        </article>
+        <article class="workflow-card">
+          <span class="workflow-num">02</span>
+          <h3>Synthesise across sources</h3>
+          <p>Search your saved research, compare selected pages, preserve context, and export a clean source-backed brief.</p>
+          <blockquote class="workflow-prompt">“Compare my highlights on AI browsers, flag disagreements, and export the result as Markdown.”</blockquote>
+          <div class="tool-chain"><code>search_highlights</code><span>→</span><code>compare_pages</code><span>→</span><code>export_highlights</code></div>
+        </article>
+        <article class="workflow-card">
+          <span class="workflow-num">03</span>
+          <h3>Publish a review loop</h3>
+          <p>Package selected highlights into a controlled gallery, invite reactions, then refresh or revoke the link.</p>
+          <blockquote class="workflow-prompt">“Create a private live link called ‘Launch research’ and show me new comments.”</blockquote>
+          <div class="tool-chain"><code>create_live_link</code><span>→</span><code>collaborate_on_live_link</code><span>→</span><code>manage_live_links</code></div>
+        </article>
+      </div>
+
+      <div class="tool-directory">
+        <div class="directory-head">
+          <div>
+            <h3>The complete MCP toolset</h3>
+            <p>Human-readable capabilities with the exact tool names agents discover.</p>
+          </div>
+          <span class="tool-count">20 tools</span>
+        </div>
+        <div class="tool-groups">
+          <div class="tool-group">
+            <h4>Read &amp; locate</h4>
+            <div class="tool-list">
+              <div class="tool-item"><code class="tool-name">get_active_page</code><span class="tool-desc">Read the active tab, selection, title, URL, and highlight count.</span></div>
+              <div class="tool-item"><code class="tool-name">get_highlighted_text</code><span class="tool-desc">Retrieve saved quotes, notes, and tags from an open page.</span></div>
+              <div class="tool-item"><code class="tool-name">get_highlight_context</code><span class="tool-desc">Read the live text surrounding one saved highlight.</span></div>
+              <div class="tool-item"><code class="tool-name">search_highlights</code><span class="tool-desc">Search quotes, notes, tags, titles, URLs, domains, and dates.</span></div>
+              <div class="tool-item"><code class="tool-name">list_highlighted_pages</code><span class="tool-desc">Browse the private library with counts, tags, notes, and dates.</span></div>
+              <div class="tool-item"><code class="tool-name">open_highlight</code><span class="tool-desc">Open a source page and scroll back to a saved passage.</span></div>
+            </div>
+          </div>
+          <div class="tool-group">
+            <h4>Create &amp; preserve</h4>
+            <div class="tool-list">
+              <div class="tool-item"><code class="tool-name">highlight_selection</code><span class="tool-desc">Save the text currently selected in Chrome.</span></div>
+              <div class="tool-item"><code class="tool-name">highlight_passages</code><span class="tool-desc">Mark exact quoted passages with colour, tags, and notes.</span></div>
+              <div class="tool-item"><code class="tool-name">capture_snapshot</code><span class="tool-desc">Freeze a quote and its surrounding context for later.</span></div>
+              <div class="tool-item"><code class="tool-name">add_page_note</code><span class="tool-desc">Attach an overall note or summary to a saved page.</span></div>
+            </div>
+          </div>
+          <div class="tool-group">
+            <h4>Organise &amp; edit</h4>
+            <div class="tool-list">
+              <div class="tool-item"><code class="tool-name">update_highlight</code><span class="tool-desc">Change colour, notes, or tags using stable IDs.</span></div>
+              <div class="tool-item"><code class="tool-name">bulk_tag_highlights</code><span class="tool-desc">Add or remove tags across several highlights at once.</span></div>
+              <div class="tool-item"><code class="tool-name">remove_highlights</code><span class="tool-desc">Explicitly remove selected highlights in a reversible operation.</span></div>
+              <div class="tool-item"><code class="tool-name">restore_highlights</code><span class="tool-desc">Undo a create, edit, removal, tag, snapshot, or page-note change.</span></div>
+            </div>
+          </div>
+          <div class="tool-group">
+            <h4>Synthesise &amp; export</h4>
+            <div class="tool-list">
+              <div class="tool-item"><code class="tool-name">summarize_highlights</code><span class="tool-desc">Retrieve matched source passages for a linked synthesis.</span></div>
+              <div class="tool-item"><code class="tool-name">compare_pages</code><span class="tool-desc">Bring highlights from multiple pages together for comparison.</span></div>
+              <div class="tool-item"><code class="tool-name">export_highlights</code><span class="tool-desc">Export Markdown, JSON, CSV, BibTeX, RIS, Obsidian, or Notion.</span></div>
+            </div>
+          </div>
+          <div class="tool-group">
+            <h4>Share &amp; collaborate</h4>
+            <div class="tool-list">
+              <div class="tool-item"><code class="tool-name">create_live_link</code><span class="tool-desc">Publish an unlisted or private gallery with optional password and expiry.</span></div>
+              <div class="tool-item"><code class="tool-name">manage_live_links</code><span class="tool-desc">List, refresh, rename, protect, expire, or revoke galleries.</span></div>
+              <div class="tool-item"><code class="tool-name">collaborate_on_live_link</code><span class="tool-desc">Read discussion or add an attributed comment or reaction.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="mcp-setup">
+      <div class="section-h">
+        <div class="label">Set up in a few minutes</div>
+        <h2>Connect the MCP server to ChatGPT</h2>
+        <p>Highlighter creates and copies the complete private MCP URL for you. Add that connection once, select it in a conversation, and the agent can use all 20 browser tools.</p>
+      </div>
+      <div class="setup-before">
+        <div>
+          <h3>Before you start</h3>
+          <p>No terminal, API key, or server configuration is required. Highlighter handles the browser connection and endpoint.</p>
+        </div>
+        <div class="setup-checks">
+          <div class="setup-check"><b>Install Highlighter</b>Chrome or Edge</div>
+          <div class="setup-check"><b>Open ChatGPT</b>Developer mode access</div>
+          <div class="setup-check"><b>Keep Chrome open</b>While the agent works</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="num-wrap"><div class="num">1</div><div class="tag">Highlighter</div></div>
+          <h3>Connect and copy the link</h3>
+          <p>Open the extension and select <b>Connect agent &amp; copy link</b>. You can also press <b>?</b> and choose <b>Copy private MCP link</b>.</p>
+          <div class="stripe"></div>
+        </div>
+        <div class="step">
+          <div class="num-wrap"><div class="num">2</div><div class="tag">ChatGPT settings</div></div>
+          <h3>Enable developer mode</h3>
+          <p>In ChatGPT, open <b>Settings → Security and login</b>, then turn on <b>Developer mode</b>. Availability can depend on your account or workspace policy.</p>
+          <div class="stripe"></div>
+        </div>
+        <div class="step">
+          <div class="num-wrap"><div class="num">3</div><div class="tag">ChatGPT Plugins</div></div>
+          <h3>Create the connection</h3>
+          <p>Open <a href="https://chatgpt.com/plugins" target="_blank" rel="noopener">ChatGPT Plugins</a>, press <b>+</b>, and enter <b>Highlighter</b> as the user-facing name. Add a short description if requested.</p>
+          <div class="stripe"></div>
+        </div>
+        <div class="step">
+          <div class="num-wrap"><div class="num">4</div><div class="tag">Connection</div></div>
+          <h3>Paste the private MCP URL</h3>
+          <p>Choose the public URL / <b>Streamable HTTP</b> connection, paste the complete link, create it, and review the 20 tools ChatGPT discovers.</p>
+          <div class="stripe"></div>
+        </div>
+        <div class="step">
+          <div class="num-wrap"><div class="num">5</div><div class="tag">New conversation</div></div>
+          <h3>Select Highlighter</h3>
+          <p>Start a new conversation, open the <b>tools</b> menu, and add the Highlighter connection so the agent can choose its MCP tools.</p>
+          <div class="stripe"></div>
+        </div>
+        <div class="step">
+          <div class="num-wrap"><div class="num">6</div><div class="tag">Browser ready</div></div>
+          <h3>Open a page and test it</h3>
+          <p>Keep Chrome and Highlighter running, open a normal web page, then give the agent a browser task. Highlights appear directly on that page.</p>
+          <div class="stripe"></div>
+        </div>
+      </div>
+      <div class="ai-disclosure">
+        <span class="ai-mark" aria-hidden="true">🔒</span>
+        <span><b>Your MCP URL is a password.</b> Do not paste it into a post, screenshot, or message. Anyone who has it can use your connected Highlighter while Chrome is open. Select <b>×</b> beside the agent row to disconnect and discard the local token.</span>
+      </div>
+      <div class="setup-finish">
+        <div class="setup-test">
+          <span class="mini-label">First test</span>
+          <h3>Confirm the browser connection</h3>
+          <p>Open an ordinary HTTP(S) article in Chrome and send this prompt:</p>
+          <div class="setup-prompt">What page is open in Chrome? List any saved highlights, then suggest one passage worth highlighting. Ask before changing the page.</div>
+        </div>
+        <div class="setup-help">
+          <span class="mini-label">If it does not connect</span>
+          <h3>Check these three things</h3>
+          <p>Confirm Developer mode is enabled, paste the entire private URL, and keep the paired Chrome extension connected. The connection does not work on internal pages such as <b>chrome://extensions</b>.</p>
+          <p style="margin-top:10px"><a href="https://developers.openai.com/plugins/deploy/connect-chatgpt" target="_blank" rel="noopener">Read the official OpenAI setup guide →</a></p>
+        </div>
       </div>
     </section>
 

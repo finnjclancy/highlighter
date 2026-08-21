@@ -337,12 +337,15 @@ async function saveHighlight(h, opts = {}) {
 }
 
 async function removeHighlight(h) {
+  await chrome.runtime.sendMessage({
+    type: "recordHighlightRemoval", pageUrl: h.url, highlights: [{ ...h, pageKey: undefined }]
+  }).catch(() => {});
   const list = (allData[h.pageKey] || []).filter(x => x.id !== h.id);
   allData[h.pageKey] = list;
   if (list.length) await chrome.storage.local.set({ [h.pageKey]: list });
   else await chrome.storage.local.remove(h.pageKey);
   flat = flat.filter(x => x.id !== h.id);
-  notifyTabs(h.pageKey, { type: "removeHighlight", id: h.id });
+  notifyTabs(h.pageKey, { type: "removeHighlight", id: h.id, recordOperation: false });
   buildNav(); render();
 }
 
@@ -380,12 +383,19 @@ async function removeManyHighlights(items) {
   const toSet = {};
   for (const [pageKey, ids] of byPage) {
     const idSet = new Set(ids);
+    const removed = (allData[pageKey] || []).filter(item => idSet.has(item.id));
+    const pageUrl = removed[0]?.url || "";
+    if (pageUrl && removed.length) {
+      await chrome.runtime.sendMessage({
+        type: "recordHighlightRemoval", pageUrl, highlights: removed.map(item => ({ ...item }))
+      }).catch(() => {});
+    }
     const remaining = (allData[pageKey] || []).filter(x => !idSet.has(x.id));
     allData[pageKey] = remaining;
     if (remaining.length) toSet[pageKey] = remaining;
     else toRemoveKeys.push(pageKey);
     // Notify any open tabs to clean up each highlight in turn
-    ids.forEach(id => notifyTabs(pageKey, { type: "removeHighlight", id }));
+    ids.forEach(id => notifyTabs(pageKey, { type: "removeHighlight", id, recordOperation: false }));
   }
   if (Object.keys(toSet).length) await chrome.storage.local.set(toSet);
   if (toRemoveKeys.length) await chrome.storage.local.remove(toRemoveKeys);
@@ -507,6 +517,24 @@ document.getElementById("select-all").addEventListener("click", () => {
   }
   render();
   renderSelectionBar();
+});
+
+document.getElementById("delete-view").addEventListener("click", () => {
+  const items = filterFlat();
+  if (!items.length) return;
+  const scope = filter.type === "all" && !search
+    ? "all highlights in your library"
+    : `all ${items.length} highlights in this view`;
+  openConfirm({
+    title: `Delete ${scope}?`,
+    body: `<div class="cf-lead">This will permanently delete ${items.length} ${items.length === 1 ? "highlight" : "highlights"}. This action cannot be undone.</div>`,
+    confirmText: "Delete all",
+    onConfirm: async () => {
+      await removeManyHighlights(items);
+      selected.clear();
+      renderSelectionBar();
+    }
+  });
 });
 
 // ---------- selection bar ----------
@@ -700,7 +728,9 @@ function renderShareCard(s) {
   const meta = document.createElement("div");
   meta.className = "share-meta";
   const when = s.createdAt ? new Date(s.createdAt).toLocaleString() : "";
-  meta.innerHTML = `<span>${s.count || 0} ${s.count === 1 ? "highlight" : "highlights"}</span><span class="dot">·</span><span>${escape(when)}</span>`;
+  const expiry = s.expiresAt ? new Date(s.expiresAt).toLocaleDateString() : "";
+  const state = s.revokedAt ? "Revoked" : [s.passwordProtected ? "🔒 Protected" : "Unlisted", expiry ? `expires ${expiry}` : ""].filter(Boolean).join(" · ");
+  meta.innerHTML = `<span>${s.count || 0} ${s.count === 1 ? "highlight" : "highlights"}</span><span class="dot">·</span><span>${escape(when)}</span>${state ? `<span class="dot">·</span><span>${escape(state)}</span>` : ""}`;
   info.appendChild(name);
   info.appendChild(source);
   info.appendChild(meta);
@@ -711,7 +741,8 @@ function renderShareCard(s) {
   const openBtn = document.createElement("button");
   openBtn.textContent = "Open";
   openBtn.title = "Open the share gallery in a new tab";
-  openBtn.addEventListener("click", () => chrome.tabs.create({ url: s.url }));
+  openBtn.disabled = Boolean(s.revokedAt);
+  openBtn.addEventListener("click", () => { if (!s.revokedAt) chrome.tabs.create({ url: s.url }); });
   const copyBtn = document.createElement("button");
   copyBtn.className = "copy";
   copyBtn.textContent = "Copy";

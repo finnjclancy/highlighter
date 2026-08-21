@@ -19,9 +19,9 @@
     </header>
 
     <h2 class="page-title">Privacy Policy</h2>
-    <p class="meta">Last updated: 16 August 2026</p>
+    <p class="meta">Last updated: 20 August 2026</p>
 
-    <p>This page describes how the <strong>Highlighter</strong> browser extension (the “Extension”), the companion website at <a href="https://finnjclancy.github.io/highlighter/">finnjclancy.github.io/highlighter</a> (the “Gallery”), and the share/AI service at <code>highlighter-share.finnjclancy.workers.dev</code> handle your information. The short version: Highlighter stores your highlights locally by default, has no accounts, ads, analytics, or tracking, and sends data off your device only when you deliberately use AI highlights, create a share link, copy/export content, or post a comment on a shared link.</p>
+    <p>This page describes how the <strong>Highlighter</strong> browser extension (the “Extension”), the companion website at <a href="https://finnjclancy.github.io/highlighter/">finnjclancy.github.io/highlighter</a> (the “Gallery”), and the share/AI/agent service at <code>highlighter-share.finnjclancy.workers.dev</code> handle your information. The short version: Highlighter stores your highlights locally by default, has no accounts, ads, analytics, or tracking, and sends data off your device only when you deliberately use AI highlights, connect an agent, create a share link, copy/export content, or post a comment on a shared link.</p>
 
     <div class="section-lbl">What the extension stores</div>
     <p>The Extension stores the following data <strong>locally in your browser</strong> using the standard <code>chrome.storage</code> APIs:</p>
@@ -31,8 +31,14 @@
       <li>Your customised colour palette (synced via <code>chrome.storage.sync</code> across your signed-in Chrome profile if that feature is enabled in your browser).</li>
       <li>Your local share history, including the share name, source URL/title, share URL, highlight count, and creation time.</li>
       <li>Whether you accepted the AI-highlighting disclosure, whether you enabled automatic AI highlighting, and any optional Deep Read instruction you save.</li>
+      <li>Whether you enabled the optional agent connection and its randomly generated private connection token.</li>
+      <li>Optional page notes, captured highlight snapshots, reversible operation history, and local-only credentials used to manage live links you created.</li>
     </ul>
-    <p>This local data leaves your browser only when you take a deliberate action: invoking AI highlights, copying/exporting content, generating a share link, or posting a comment on a shared link.</p>
+    <p>This local data leaves your browser only when you take a deliberate action: invoking AI highlights, enabling an agent connection, copying/exporting content, generating a share link, or posting a comment on a shared link.</p>
+
+    <div class="section-lbl">When you connect an agent</div>
+    <p>The optional agent connection is off by default. If you enable it, the Extension creates a random private token and opens an encrypted WebSocket connection to the Highlighter Worker. You copy a private MCP URL into ChatGPT or another compatible agent. Treat that URL like a password.</p>
+    <p>A connected agent can request the active page and selection; add, edit, remove, restore, search, tag, export, summarize, compare, snapshot, or open saved highlights; add page notes; and create or manage live links and their discussion. Library searches, operation history, page notes, exports, and snapshots remain in your browser unless a tool returns them to the connected agent or you explicitly publish a live link. Tool requests and responses are relayed through the Worker in memory and are not intentionally stored by the agent bridge. Published highlight payloads and discussion are stored by the share service until their selected expiry. Cloudflare may process standard request logs under its own policies. Disconnecting closes the browser connection and discards the local connection token.</p>
 
     <div class="section-lbl">When you use AI highlights</div>
     <p>AI highlights is optional and disabled until you accept an in-product disclosure. When you invoke it—or enable the clearly labelled Auto setting—the Extension extracts selectable text from the open PDF and sends that text, the PDF title, source URL, temporary text-span identifiers, and any optional reader instruction over HTTPS to the Highlighter Worker. Explicit literal keyword and phrase instructions can be matched by the Worker itself. For open-ended or semantic instructions, the Worker forwards the request to the Google Gemini API so Gemini can select passages.</p>
@@ -42,25 +48,27 @@
     <ul>
       <li>No analytics, telemetry, or usage tracking of any kind.</li>
       <li>No advertising identifiers or fingerprinting.</li>
-      <li>No remote servers receive page or PDF contents unless you explicitly use AI highlights, create a share link, or post a comment.</li>
+      <li>No remote servers receive page or PDF contents unless you explicitly use AI highlights, connect an agent, create a share link, or post a comment.</li>
       <li>No third-party scripts are loaded into the Extension.</li>
       <li>No accounts, no sign-up, no log-in.</li>
     </ul>
 
     <div class="section-lbl">When you share a link</div>
     <p>When you click <em>Share live link</em>, the Extension builds a compressed payload containing the current page URL/title and the highlights you chose to create on that page, including highlight text, colours, comments, tags, and location hints used to reopen the highlights on the original page.</p>
-    <p>The Extension first sends that payload over HTTPS to the Highlighter share-link service at <code>highlighter-share.finnjclancy.workers.dev</code> to create a shorter link. The service stores the payload in Cloudflare Workers KV for about one year so the share URL can work and show link preview metadata. If the share service is unavailable, the Extension falls back to a long URL with the compressed payload embedded directly in the URL.</p>
+    <p>The Extension first sends that payload over HTTPS to the Highlighter share-link service at <code>highlighter-share.finnjclancy.workers.dev</code> to create a shorter link. The service stores the payload in Cloudflare Workers KV for the selected expiry (between 1 and 365 days) so the share URL can work and show link preview metadata. A random management credential is stored only in your browser; the service stores its cryptographic hash. Optional gallery passwords are also stored only as hashes. If the share service is unavailable, the Extension falls back to a long URL with the compressed payload embedded directly in the URL.</p>
     <p>If a recipient opens a share link, their browser fetches the Gallery page and decodes the shared highlights client-side. GitHub Pages hosts the static Gallery files, and Cloudflare serves short share links. As with any web request, GitHub and Cloudflare may process standard server logs such as IP address, user-agent, timestamp, and requested URL under their own policies.</p>
 
-    <div class="section-lbl">Comments on shared links</div>
-    <p>Some shared links let viewers add comments. If a viewer posts a comment, the share service stores the optional author name, comment text, related highlight ID, and timestamp with that share for about one year. Do not put sensitive information in share-link comments.</p>
+    <div class="section-lbl">Comments and reactions on shared links</div>
+    <p>Shared links let viewers add attributed comments and reactions. The share service stores the optional author name, comment or reaction, related highlight ID, and timestamp with that share until it expires. Password-protected galleries require the password before their gallery discussion can be read or changed. Do not put sensitive information in share-link discussion.</p>
 
     <div class="section-lbl">Permissions, explained</div>
     <ul>
       <li><strong>storage</strong> — to save your highlights, drawings, and palette in your own browser.</li>
       <li><strong>activeTab</strong> — to read the current tab's URL/title after you click the Extension so it can show page counts and copy/share the highlights for that active page.</li>
       <li><strong>clipboardWrite</strong> — to copy share links and exported text/Markdown to your clipboard.</li>
-      <li><strong>host permissions: <code>&lt;all_urls&gt;</code></strong> — so the Extension can apply highlights and drawings on any web page you choose to use it on. The Extension does not read or transmit page contents in the background.</li>
+      <li><strong>alarms</strong> — to check and restore the optional agent connection after Chrome restarts or suspends the Extension's background worker.</li>
+      <li><strong>contextMenus</strong> — to offer a fast “Highlight selection” action when you right-click selected text.</li>
+      <li><strong>host permissions: <code>&lt;all_urls&gt;</code></strong> — so the Extension can apply highlights and drawings on any web page you choose to use it on. Page details or selected passages are transmitted only when you deliberately invoke AI, sharing, or the optional connected-agent feature described above.</li>
     </ul>
 
     <div class="section-lbl">Data retention and deletion</div>

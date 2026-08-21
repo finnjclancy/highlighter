@@ -162,6 +162,8 @@
     .topbar .export-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
     .topbar .export-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
     .topbar .export-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .topbar .export-btn.danger { color: #fca5a5; }
+    .topbar .export-btn.danger:hover { background: rgba(239,68,68,0.1); border-color: rgba(248,113,113,0.3); color: #fecaca; }
 
     /* Multi-select */
     .row .rcheck {
@@ -665,6 +667,7 @@
               <option value="site">By site</option>
             </select>
             <button class="export-btn" id="select-all" title="Select every quote in the current view">☑ Select all</button>
+            <button class="export-btn danger" id="delete-view" title="Delete all quotes in the current view">Delete all</button>
             <button class="export-btn" id="export-view" title="Export the current view as Markdown">⬇ Export</button>
           </div>
           <div id="results"></div>

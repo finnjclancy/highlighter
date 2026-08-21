@@ -299,6 +299,13 @@ h2.page-title {
 }
 .comment-form .cf-actions .cf-post:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .comment-form .cf-actions .cf-post:disabled { opacity: 0.6; cursor: default; }
+.reaction-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.reaction-btn {
+  border: 1px solid var(--border); background: rgba(255,255,255,0.025); color: var(--text-2);
+  border-radius: 999px; padding: 4px 8px; cursor: pointer; font: inherit; font-size: 12px; line-height: 1.2;
+}
+.reaction-btn:hover { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.35); color: var(--text); }
+.reaction-btn:disabled { opacity: 0.55; cursor: default; }
 
 .section-lbl {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;

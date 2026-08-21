@@ -88,6 +88,93 @@
       opacity: 0.85;
     }
     button.primary .ico { opacity: 1; }
+    .agent-row { display: flex; gap: 4px; }
+    .agent-row #agent-toggle { flex: 1; min-width: 0; }
+    .agent-row #agent-label {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .agent-disconnect {
+      flex: 0 0 34px;
+      width: 34px;
+      padding: 8px 0;
+      justify-content: center;
+      color: #fca5a5;
+      display: none;
+    }
+    .agent-disconnect.visible { display: flex; }
+    .agent-help-button {
+      flex: 0 0 34px;
+      width: 34px;
+      padding: 8px 0;
+      justify-content: center;
+      color: #c4b5fd;
+      font-weight: 700;
+    }
+    .agent-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #71717a; }
+    .agent-dot.connected { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.1); }
+    .agent-help-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      padding: 14px;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+    .agent-help-screen[hidden] { display: none; }
+    .agent-help-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .agent-help-title { display: flex; align-items: center; gap: 9px; }
+    .agent-help-title .logo {
+      width: 24px; height: 24px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 12px;
+    }
+    .agent-help-title h2 { margin: 0; font-size: 14px; font-weight: 650; }
+    .agent-help-close { width: 30px; height: 30px; padding: 0; justify-content: center; }
+    .agent-help-intro { margin: 0 0 12px; color: var(--text-2); font-size: 11.5px; }
+    .agent-help-steps { display: flex; flex-direction: column; gap: 7px; }
+    .agent-help-step {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .agent-help-num {
+      width: 22px; height: 22px;
+      border-radius: 7px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(99,102,241,0.2);
+      color: #c7d2fe;
+      font-size: 10px; font-weight: 700;
+    }
+    .agent-help-step b { display: block; margin-bottom: 2px; font-size: 11.5px; }
+    .agent-help-step span { color: var(--text-2); font-size: 10.5px; line-height: 1.45; }
+    .agent-help-warning {
+      margin: 9px 0;
+      padding: 8px 9px;
+      border-radius: 8px;
+      border: 1px solid rgba(245,158,11,0.25);
+      background: rgba(245,158,11,0.08);
+      color: #fcd34d;
+      font-size: 10.5px;
+      line-height: 1.4;
+    }
+    .agent-help-actions { display: flex; flex-direction: column; gap: 5px; }
+    .agent-help-actions button { justify-content: center; text-align: center; }
+    .agent-help-link { color: #a5b4fc; background: transparent; }
   </style>
 </head>
 <body>
@@ -101,6 +188,7 @@
   </div>
   <div class="actions">
     <button class="primary" id="open-library"><span class="ico">📚</span> Open library / design</button>
+    <button class="primary" id="open-pdf-reader" style="display:none"><span class="ico">▤</span> Open in PDF reader</button>
     <button id="toggle-draw"><span class="ico">✎</span> Draw on page</button>
     <button id="share-text"><span class="ico">📋</span> Copy text</button>
     <button id="share-link"><span class="ico">🔗</span> Share live link</button>
@@ -113,8 +201,35 @@
       </div>
     </div>
     <button id="toggle-panel"><span class="ico">⇆</span> Toggle overlay</button>
+    <div class="agent-row">
+      <button id="agent-toggle"><span id="agent-dot" class="agent-dot"></span><span id="agent-label">Connect agent &amp; copy link</span></button>
+      <button id="agent-help" class="agent-help-button" title="How to connect an agent" aria-label="How to connect an agent">?</button>
+      <button id="agent-disconnect" class="agent-disconnect" title="Disconnect agent" aria-label="Disconnect agent">×</button>
+    </div>
     <div id="toast" style="display:none;margin:6px 10px 0;padding:6px 10px;border-radius:6px;background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.4);font-size:11px;color:#cfd2ff;text-align:center;letter-spacing:-0.005em;"></div>
   </div>
+  <section id="agent-help-screen" class="agent-help-screen" role="dialog" aria-modal="true" aria-labelledby="agent-help-heading" hidden>
+    <div class="agent-help-head">
+      <div class="agent-help-title">
+        <span class="logo">?</span>
+        <h2 id="agent-help-heading">Connect Highlighter to ChatGPT</h2>
+      </div>
+      <button id="agent-help-close" class="agent-help-close" aria-label="Close setup guide">×</button>
+    </div>
+    <p class="agent-help-intro">This gives ChatGPT 20 tools for highlighting, library search, reversible edits, exports, source comparison, and managed live links.</p>
+    <div class="agent-help-steps">
+      <div class="agent-help-step"><span class="agent-help-num">1</span><div><b>Copy your private link</b><span>Use the button below. Highlighter connects and copies the full MCP URL for you.</span></div></div>
+      <div class="agent-help-step"><span class="agent-help-num">2</span><div><b>Enable ChatGPT developer mode</b><span>Open Settings → Security and login → turn on Developer mode.</span></div></div>
+      <div class="agent-help-step"><span class="agent-help-num">3</span><div><b>Add a plugin connection</b><span>Open ChatGPT Plugins, press +, and name it “Highlighter”.</span></div></div>
+      <div class="agent-help-step"><span class="agent-help-num">4</span><div><b>Paste and create</b><span>Choose the public URL / Streamable HTTP option, paste the full link, then review the 20 discovered tools.</span></div></div>
+    </div>
+    <div class="agent-help-warning">🔒 Treat the copied URL like a password. Anyone who has it can use your connected Highlighter while Chrome is open.</div>
+    <div class="agent-help-actions">
+      <button id="agent-help-copy" class="primary">Copy private MCP link</button>
+      <button id="agent-help-chatgpt">Open ChatGPT Plugins ↗</button>
+      <button id="agent-help-docs" class="agent-help-link">Open the official setup guide ↗</button>
+    </div>
+  </section>
   <script src="popup.js"></script>
 </body>
 </html>

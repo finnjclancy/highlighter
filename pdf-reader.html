@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF Reader - Highlighter</title>
+  <link rel="stylesheet" href="content.css">
+  <link rel="stylesheet" href="pdf-reader.css">
+</head>
+<body class="pdf-rendering">
+  <header id="pdf-appbar">
+    <div class="pdf-brand">
+      <span class="pdf-logo" aria-hidden="true">✦</span>
+      <div class="pdf-title-wrap">
+        <strong id="pdf-title">PDF Reader</strong>
+        <span id="pdf-host"></span>
+      </div>
+    </div>
+
+    <div class="pdf-progress" aria-live="polite">
+      <span id="pdf-progress-text">Preparing document…</span>
+      <span class="pdf-progress-track"><span id="pdf-progress-bar"></span></span>
+    </div>
+
+    <div class="pdf-controls">
+      <div class="pdf-ai-controls">
+        <div class="pdf-ai-split">
+          <button id="ai-highlight" class="pdf-ai-button" type="button" disabled>
+            <span class="pdf-ai-spark" aria-hidden="true">✦</span>
+            <span id="ai-highlight-label">Deep highlight</span>
+          </button>
+          <button id="ai-options-toggle" class="pdf-ai-options-toggle" type="button" title="Tell Deep Read exactly what to highlight" aria-label="Customize AI highlight instruction" aria-expanded="false">
+            <svg aria-hidden="true" viewBox="0 0 12 8" width="12" height="8"><path d="M1.5 1.5 6 6l4.5-4.5"/></svg>
+          </button>
+        </div>
+        <label class="pdf-ai-auto" title="Automatically create AI highlights when a PDF opens">
+          <input id="ai-auto" type="checkbox">
+          <span class="pdf-ai-auto-track" aria-hidden="true"><span></span></span>
+          <span>Auto</span>
+        </label>
+      </div>
+      <button id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+      <span id="zoom-value" aria-live="polite">125%</span>
+      <button id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+      <a id="open-original" href="#" target="_blank" rel="noopener">Open original ↗</a>
+    </div>
+  </header>
+
+  <section id="ai-options-panel" class="pdf-ai-options-panel" aria-labelledby="ai-options-title" hidden>
+    <div class="pdf-ai-options-head">
+      <div>
+        <strong id="ai-options-title">Deep Read instruction</strong>
+        <span>Your instruction is followed directly · no highlight quota</span>
+      </div>
+      <button id="ai-options-close" type="button" aria-label="Close AI options">×</button>
+    </div>
+    <label for="ai-focus">What should Deep Read highlight?</label>
+    <textarea id="ai-focus" rows="4" maxlength="1000" placeholder="Optional — e.g. Highlight every sentence containing the phrase “world model”, or prioritize evidence that supports the paper’s central claim."></textarea>
+    <div class="pdf-ai-presets" aria-label="Focus presets">
+      <button type="button" data-ai-preset="Explain the paper's central argument and indispensable concepts for a reader who is new to the topic.">Core ideas</button>
+      <button type="button" data-ai-preset="Prioritize the methodology, experimental design, strongest evidence, and whether the conclusions are supported.">Methods & evidence</button>
+      <button type="button" data-ai-preset="Read critically. Prioritize assumptions, limitations, unsupported leaps, counterarguments, and threats to validity.">Critical review</button>
+      <button type="button" data-ai-preset="Prioritize precise definitions and passages that explain difficult concepts clearly.">Key concepts</button>
+    </div>
+    <div class="pdf-ai-options-actions">
+      <button id="ai-focus-clear" type="button">Clear focus</button>
+      <button id="ai-focus-run" class="primary" type="button">Follow this instruction</button>
+    </div>
+  </section>
+
+  <main id="pdf-main">
+    <section id="pdf-status" aria-live="polite">
+      <span class="pdf-spinner" aria-hidden="true"></span>
+      <div>
+        <strong>Loading PDF</strong>
+        <p id="pdf-status-detail">Fetching the document and building its selectable text layer.</p>
+      </div>
+    </section>
+    <div id="pdf-viewer" aria-label="PDF document"></div>
+  </main>
+
+  <div id="ai-toast" class="pdf-ai-toast" role="status" aria-live="polite" hidden></div>
+
+  <div id="ai-consent" class="pdf-ai-modal" role="dialog" aria-modal="true" aria-labelledby="ai-consent-title" hidden>
+    <div class="pdf-ai-card">
+      <div class="pdf-ai-card-icon" aria-hidden="true">✦</div>
+      <div>
+        <h2 id="ai-consent-title">Turn on AI highlights?</h2>
+        <p>Highlighter sends the PDF’s extracted text and any instruction you enter to its Cloudflare Worker. Exact keyword requests are matched there; other instructions are sent to Google Gemini’s free API. Google may use free-tier content to improve its products.</p>
+        <p>Your Gemini key stays in the Highlighter Cloudflare Worker and is never included in this extension.</p>
+      </div>
+      <div class="pdf-ai-card-actions">
+        <button id="ai-consent-cancel" type="button">Not now</button>
+        <button id="ai-consent-accept" class="primary" type="button">Continue with Deep Read</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="pdf-reader.js"></script>
+  <script src="content.js"></script>
+</body>
+</html>
