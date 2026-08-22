@@ -60,6 +60,15 @@ function buildNav() {
   Object.entries(siteCounts).sort((a,b) => b[1] - a[1]).forEach(([host, n]) => {
     navSites.appendChild(navItem("site", host, host, n));
   });
+
+  const folders = new Set();
+  flat.forEach(h => (h.tags || []).forEach(t => folders.add(t)));
+  const statHighlights = document.getElementById("stat-highlights");
+  const statSources = document.getElementById("stat-sources");
+  const statFolders = document.getElementById("stat-folders");
+  if (statHighlights) statHighlights.textContent = flat.length.toLocaleString();
+  if (statSources) statSources.textContent = Object.keys(allData).length.toLocaleString();
+  if (statFolders) statFolders.textContent = folders.size.toLocaleString();
 }
 
 function navItem(type, value, label, count, icon) {
@@ -197,6 +206,32 @@ function renderRow(h) {
   const text = document.createElement("div");
   text.className = "rtext";
   text.textContent = h.text;
+
+  const content = document.createElement("div");
+  content.className = "rcontent";
+  content.appendChild(text);
+
+  const meta = document.createElement("div");
+  meta.className = "rmeta";
+
+  const site = document.createElement("span");
+  site.className = "rsite";
+  try { site.textContent = new URL(h.url).hostname.replace(/^www\./, ""); } catch {}
+  if (site.textContent) meta.appendChild(site);
+
+  if (h.createdAt) {
+    if (site.textContent) {
+      const sep = document.createElement("span");
+      sep.className = "rsep";
+      sep.textContent = "·";
+      meta.appendChild(sep);
+    }
+    const date = document.createElement("span");
+    date.className = "rdate";
+    date.textContent = new Date(h.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+    meta.appendChild(date);
+  }
+
   const tags = document.createElement("div");
   tags.className = "rtags";
   (h.tags || []).slice(0, 3).forEach(t => {
@@ -205,18 +240,25 @@ function renderRow(h) {
     c.textContent = "#" + t;
     tags.appendChild(c);
   });
-  const icons = document.createElement("div");
+  if (tags.childElementCount) meta.appendChild(tags);
+
+  const icons = document.createElement("span");
   icons.className = "ricons";
-  if (h.note) icons.textContent = "💬";
-  const site = document.createElement("div");
-  site.className = "rsite";
-  try { site.textContent = new URL(h.url).hostname; } catch {}
+  if (h.note) {
+    icons.textContent = "Note";
+    meta.appendChild(icons);
+  }
+  content.appendChild(meta);
+
+  const arrow = document.createElement("span");
+  arrow.className = "rarrow";
+  arrow.textContent = "→";
+  arrow.setAttribute("aria-hidden", "true");
+
   row.appendChild(check);
   row.appendChild(swatch);
-  row.appendChild(text);
-  row.appendChild(tags);
-  row.appendChild(icons);
-  row.appendChild(site);
+  row.appendChild(content);
+  row.appendChild(arrow);
   row.addEventListener("click", e => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) {
       applySelectionToggle(h, e, row);

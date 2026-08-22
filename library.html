@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Highlighter</title>
+  <title>Highlighter Library</title>
   <style>
     :root {
       --bg: #0c0c0e;
@@ -629,6 +629,315 @@
       color: var(--text-2); font-weight: 500;
       font-size: 14px; margin: 0 0 4px;
     }
+
+    /* ---------- LIBRARY REFINEMENT ---------- */
+    body {
+      background:
+        radial-gradient(760px circle at 18% -8%, rgba(99,102,241,0.10), transparent 52%),
+        radial-gradient(640px circle at 92% 2%, rgba(236,72,153,0.055), transparent 48%),
+        var(--bg);
+    }
+    .topnav { border-bottom-color: rgba(255,255,255,0.07); }
+    .topnav-inner {
+      max-width: 1240px;
+      min-height: 62px;
+      padding: 13px 32px;
+    }
+    .brand { gap: 11px; font-size: 15px; }
+    .brand .logo { width: 30px; height: 30px; border-radius: 9px; font-size: 14px; }
+    .tabs { margin-left: auto; gap: 18px; }
+    .tab {
+      position: relative;
+      padding: 8px 2px;
+      border-radius: 0;
+      font-size: 12px;
+    }
+    .tab:hover, .tab.active { background: transparent; }
+    .tab.active::after {
+      content: "";
+      position: absolute;
+      right: 0; bottom: 1px; left: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #818cf8, #c084fc);
+    }
+    .page { max-width: 1240px; padding: 38px 32px 80px; }
+
+    .library-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 48px;
+      margin-bottom: 34px;
+      padding: 8px 0 31px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+    .library-kicker {
+      margin-bottom: 9px;
+      color: var(--text-3);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .library-hero h1 {
+      margin: 0;
+      font-size: clamp(32px, 4.2vw, 48px);
+      font-weight: 620;
+      line-height: 1.02;
+      letter-spacing: -0.045em;
+    }
+    .library-hero h1 em {
+      color: #c4b5fd;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+    .library-hero p {
+      max-width: 580px;
+      margin: 14px 0 0;
+      color: var(--text-2);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .library-stats { display: flex; align-items: flex-end; }
+    .library-stat {
+      min-width: 88px;
+      padding: 0 22px;
+      border-left: 1px solid rgba(255,255,255,0.10);
+    }
+    .library-stat:first-child { padding-left: 0; border-left: 0; }
+    .library-stat:last-child { padding-right: 0; }
+    .library-stat strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--text);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      font-feature-settings: "tnum";
+    }
+    .library-stat span {
+      color: var(--text-4);
+      font-size: 9px;
+      font-weight: 650;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .quotes-app { grid-template-columns: 230px minmax(0, 1fr); gap: 34px; }
+    .quotes-app aside {
+      top: 80px;
+      padding: 10px 10px 14px;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      background: rgba(19,19,22,0.70);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+    }
+    .quotes-app aside h2 { margin: 17px 9px 7px; letter-spacing: 0.11em; }
+    .quotes-app aside h2:first-child { margin-top: 4px; }
+    .nav-item { padding: 8px 9px; border-radius: 8px; }
+    .nav-item.active {
+      background: rgba(99,102,241,0.14);
+      box-shadow: inset 0 0 0 1px rgba(129,140,248,0.12);
+    }
+    .nav-item .badge {
+      min-width: 22px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.035);
+      text-align: center;
+    }
+
+    .quotes-app .topbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      gap: 14px 18px;
+      margin-bottom: 21px;
+      padding: 1px 0 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .view-heading { min-width: 0; }
+    .view-heading .view-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-4);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .view-title-line { display: flex; align-items: baseline; gap: 9px; }
+    .quotes-app .topbar h2 { font-size: 24px; }
+    .view-tools { display: flex; align-items: center; gap: 8px; }
+    .quotes-app .topbar input[type=search] {
+      width: min(320px, 28vw);
+      max-width: none;
+      margin-left: 0;
+      padding: 9px 12px 9px 34px;
+      border-color: rgba(255,255,255,0.08);
+      background:
+        linear-gradient(var(--surface), var(--surface)) padding-box;
+    }
+    .search-wrap { position: relative; }
+    .search-wrap::before {
+      content: "⌕";
+      position: absolute;
+      z-index: 1;
+      top: 50%; left: 12px;
+      color: var(--text-4);
+      font-size: 16px;
+      transform: translateY(-52%);
+      pointer-events: none;
+    }
+    .quotes-app .topbar select { padding: 9px 28px 9px 10px; border-color: rgba(255,255,255,0.08); }
+    .view-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .view-actions::before {
+      content: "Actions";
+      margin-right: 2px;
+      color: var(--text-4);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .view-actions .export-btn { background: transparent; }
+    .view-actions #export-view { margin-left: auto; background: var(--surface); }
+
+    .list {
+      display: grid;
+      gap: 8px;
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+    .row {
+      align-items: stretch;
+      gap: 13px;
+      min-height: 82px;
+      padding: 14px 15px;
+      border: 1px solid rgba(255,255,255,0.065) !important;
+      border-radius: 12px;
+      background: rgba(19,19,22,0.72);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .row:hover {
+      transform: translateY(-1px);
+      border-color: rgba(129,140,248,0.24) !important;
+      background: rgba(26,26,31,0.9);
+    }
+    .row.selected { border-color: rgba(129,140,248,0.32) !important; background: rgba(99,102,241,0.09); }
+    .row .rcheck { align-self: center; }
+    .row .swatch {
+      width: 4px;
+      height: auto;
+      min-height: 48px;
+      border-radius: 99px;
+      opacity: 0.9;
+    }
+    .row .rcontent { flex: 1; min-width: 0; }
+    .row .rtext {
+      display: -webkit-box;
+      overflow: hidden;
+      color: rgba(250,250,250,0.88);
+      font-size: 14px;
+      font-weight: 450;
+      line-height: 1.46;
+      white-space: normal;
+      text-overflow: ellipsis;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+    .row .rmeta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      margin-top: 9px;
+      color: var(--text-4);
+      font-size: 10.5px;
+    }
+    .row .rsite { max-width: 180px; color: var(--text-3); font-size: 10.5px; }
+    .row .rdate { flex-shrink: 0; }
+    .row .rsep { color: rgba(255,255,255,0.14); }
+    .row .rtags { gap: 4px; margin-left: 2px; }
+    .row .rtag { padding: 2px 6px; background: rgba(99,102,241,0.09); color: #b8b9fa; }
+    .row .ricons {
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-3);
+      font-size: 10px;
+    }
+    .row .rarrow {
+      align-self: center;
+      color: var(--text-4);
+      font-size: 15px;
+      transition: color 0.15s, transform 0.15s;
+    }
+    .row:hover .rarrow { color: #a5b4fc; transform: translateX(2px); }
+
+    .group { margin-bottom: 25px; }
+    .group-head { padding: 5px 4px 10px; }
+    .group-head .gtitle { font-size: 13px; }
+    .empty, .shares-empty {
+      margin-top: 8px;
+      padding: 72px 24px;
+      border: 1px dashed rgba(255,255,255,0.10);
+      border-radius: 14px;
+      background: rgba(19,19,22,0.45);
+    }
+    .empty .em-ico {
+      width: 42px; height: 42px;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 13px;
+      border: 1px solid rgba(129,140,248,0.20);
+      border-radius: 12px;
+      background: rgba(99,102,241,0.09);
+      color: #a5b4fc;
+      font-size: 17px;
+      opacity: 1;
+    }
+
+    .modal { border-color: rgba(255,255,255,0.12); border-radius: 16px; }
+    .modal-head { padding: 16px 18px; }
+    .modal-body { padding: 18px; }
+    .modal-foot { padding: 14px 18px; }
+    .m-text { padding: 14px 15px; border-radius: 9px; line-height: 1.65; }
+
+    @media (max-width: 900px) {
+      .library-hero { grid-template-columns: 1fr; gap: 24px; }
+      .library-stats { justify-content: flex-start; }
+      .quotes-app { grid-template-columns: 1fr; }
+      .quotes-app aside { position: static; max-height: 245px; }
+    }
+    @media (max-width: 680px) {
+      .topnav-inner { padding: 12px 18px; gap: 16px; }
+      .brand { font-size: 0; }
+      .brand .logo { margin-right: 0; }
+      .tabs { gap: 12px; overflow-x: auto; }
+      .page { padding: 28px 18px 64px; }
+      .library-hero h1 { font-size: 36px; }
+      .library-hero p { font-size: 13px; }
+      .library-stat { min-width: 74px; padding: 0 14px; }
+      .quotes-app .topbar { grid-template-columns: 1fr; }
+      .view-tools { width: 100%; }
+      .search-wrap { flex: 1; }
+      .quotes-app .topbar input[type=search] { width: 100%; }
+      .view-actions { grid-column: 1; overflow-x: auto; padding-bottom: 3px; }
+      .view-actions::before { display: none; }
+      .view-actions #export-view { margin-left: 0; }
+      .row { padding: 13px 12px; }
+      .row .rcheck { opacity: 1; }
+      .row .rmeta { flex-wrap: wrap; }
+      .row .rdate, .row .rsep { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -647,6 +956,18 @@
   <div class="page">
     <!-- Quotes panel -->
     <div class="panel active" id="panel-quotes">
+      <header class="library-hero">
+        <div>
+          <div class="library-kicker">Personal research archive</div>
+          <h1>Your reading, <em>remembered.</em></h1>
+          <p>A private, searchable record of the passages you noticed—ready to revisit, organise, export, or share.</p>
+        </div>
+        <div class="library-stats" aria-label="Library overview">
+          <div class="library-stat"><strong id="stat-highlights">0</strong><span>Highlights</span></div>
+          <div class="library-stat"><strong id="stat-sources">0</strong><span>Sources</span></div>
+          <div class="library-stat"><strong id="stat-folders">0</strong><span>Folders</span></div>
+        </div>
+      </header>
       <div class="quotes-app">
         <aside>
           <h2>Library</h2>
@@ -658,17 +979,23 @@
         </aside>
         <main>
           <div class="topbar">
-            <h2 id="view-title">All quotes</h2>
-            <span class="count" id="view-count"></span>
-            <input type="search" id="search" placeholder="Search quotes, notes, tags…">
-            <select id="sort">
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="site">By site</option>
-            </select>
-            <button class="export-btn" id="select-all" title="Select every quote in the current view">☑ Select all</button>
-            <button class="export-btn danger" id="delete-view" title="Delete all quotes in the current view">Delete all</button>
-            <button class="export-btn" id="export-view" title="Export the current view as Markdown">⬇ Export</button>
+            <div class="view-heading">
+              <span class="view-label">Current view</span>
+              <div class="view-title-line"><h2 id="view-title">All quotes</h2><span class="count" id="view-count"></span></div>
+            </div>
+            <div class="view-tools">
+              <div class="search-wrap"><input type="search" id="search" placeholder="Search quotes, notes, tags…" aria-label="Search library"></div>
+              <select id="sort" aria-label="Sort highlights">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="site">By site</option>
+              </select>
+            </div>
+            <div class="view-actions">
+              <button class="export-btn" id="select-all" title="Select every quote in the current view">Select all</button>
+              <button class="export-btn danger" id="delete-view" title="Delete all quotes in the current view">Delete all</button>
+              <button class="export-btn" id="export-view" title="Export the current view as Markdown">Export Markdown ↗</button>
+            </div>
           </div>
           <div id="results"></div>
         </main>
