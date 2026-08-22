@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Highlighter",
-  "version": "1.8.0",
-  "description": "Highlight web pages and PDFs manually, with AI, or connected agents. Organise quotes, add comments, and share live links.",
+  "version": "1.9.0",
+  "description": "Highlight web pages and PDFs manually, with AI, or securely paired agents. Organise quotes, add comments, and share live links.",
   "permissions": ["storage", "activeTab", "clipboardWrite", "alarms", "contextMenus"],
   "minimum_chrome_version": "116",
   "host_permissions": ["<all_urls>"],

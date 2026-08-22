@@ -75,12 +75,12 @@ The first use shows a disclosure and requires consent. Extracted PDF text and an
 ### Agent connection
 Toolbar icon → press the **?** beside the agent connection for the built-in setup guide. The short version:
 
-1. Press **Copy private MCP link** in Highlighter.
-2. In ChatGPT, open **Settings → Security and login** and enable **Developer mode**.
-3. Open [ChatGPT Plugins](https://chatgpt.com/plugins), press **+**, and name the connection **Highlighter**.
-4. Choose the public URL / Streamable HTTP connection, paste the complete private MCP URL, create the connection, and review the discovered tools.
+1. Add the public Highlighter plugin, or add `https://highlighter-share.finnjclancy.workers.dev/mcp` as a Streamable HTTP MCP server in ChatGPT.
+2. When ChatGPT opens the Highlighter connection page, open the extension, press **?**, then **Pair ChatGPT**.
+3. Paste the one-time code into the connection page and approve it.
+4. Keep Chrome open while the agent works, then select Highlighter from ChatGPT's tools menu or mention `@Highlighter` once the public plugin is installed.
 
-Treat the copied URL like a password. Press the connected-agent row to copy it again, or use × to disconnect and discard the local token. Developer mode availability can depend on the ChatGPT account and workspace policy; see the [official OpenAI setup guide](https://developers.openai.com/plugins/deploy/connect-chatgpt) for current details.
+The code expires after 10 minutes and works once; the browser's private token is never entered into ChatGPT. **Copy private MCP link** remains under the setup guide as a developer-only fallback and must be treated like a password. Use × to disconnect and discard the local token. See the [public MCP setup page](https://finnjclancy.github.io/highlighter/mcp.html) and the [official OpenAI setup guide](https://developers.openai.com/plugins/deploy/connect-chatgpt) for current details.
 
 The connection exposes 24 focused tools. Alongside active-page reading, page-ranged PDF reading, exact highlighting, quote retrieval, reversible removal, and live-link creation, an agent can load the exact highlights staged from the Library, inspect and reorganize folders, update notes/tags/colours, search the entire local library, list highlighted pages, undo operations, highlight the current browser selection, export Markdown/JSON/CSV/BibTeX/RIS, prepare source-linked summaries and cross-page comparisons, add page notes, capture snapshots, manage or revoke protected live links, collaborate with attributed comments/reactions, retrieve surrounding context, and open a saved passage in Chrome. In the PDF Reader, **Copy for ChatGPT extension** keeps the PDF active for the browser extension; **Open ChatGPT web** is a separate web-tab handoff. Chrome does not let one extension programmatically open another extension's toolbar popup.
 
@@ -109,7 +109,9 @@ Toolbar icon → **📋 Copy text**. Drops every highlight on the current page o
 docs/              GitHub Pages site (gallery viewer + landing + privacy)
   index.html       landing page
   v.html / v.js    shared-highlights gallery viewer (decodes ?d=<payload>)
+  mcp.html         public Highlighter MCP setup guide
   privacy.html     privacy policy
+  terms.html       hosted service terms
   styles.css       shared site styles
 
 scripts/

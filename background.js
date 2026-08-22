@@ -1096,6 +1096,33 @@ async function setAgentConnectionEnabled(enabled) {
   };
 }
 
+async function createAgentPairingCode() {
+  let config = await getAgentConnection();
+  if (!config.enabled || !/^[A-Za-z0-9_-]{43}$/.test(config.token)) {
+    await setAgentConnectionEnabled(true);
+    config = await getAgentConnection();
+  }
+  if (!config.token) return { ok: false, error: "The agent connection could not be enabled." };
+  try {
+    const response = await fetch(`${AGENT_WORKER_BASE}/api/agent/pairing-code`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${config.token}` }
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result?.code) {
+      return { ok: false, error: result?.error_description || result?.error || "A pairing code could not be created." };
+    }
+    return {
+      ok: true,
+      code: result.code,
+      expiresInSeconds: Number(result.expiresInSeconds) || 600,
+      mcpUrl: result.mcpUrl || `${AGENT_WORKER_BASE}/mcp`
+    };
+  } catch {
+    return { ok: false, error: "Highlighter could not reach the pairing service." };
+  }
+}
+
 function isPdfSourceUrl(url) {
   try {
     const u = new URL(url);
@@ -1231,6 +1258,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   } else if (msg.type === "setAgentConnectionEnabled") {
     setAgentConnectionEnabled(msg.enabled === true).then(sendResponse);
+    return true;
+  } else if (msg.type === "createAgentPairingCode") {
+    createAgentPairingCode().then(sendResponse);
     return true;
   } else if (msg.type === "openChatGptWithHighlighterPrompt") {
     openChatGptWithHighlighterPrompt(msg.prompt).then(sendResponse);

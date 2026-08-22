@@ -4,7 +4,7 @@
 
 name = "highlighter-share"
 main = "src/index.js"
-compatibility_date = "2026-08-20"
+compatibility_date = "2026-08-22"
 compatibility_flags = ["nodejs_compat"]
 
 # Optional: pin to a workers.dev subdomain for free hosting at
@@ -23,9 +23,17 @@ id = "561bdc02f8784f9d8b252ef30e2304ca"
 name = "AGENT_BRIDGE"
 class_name = "AgentBridge"
 
+[[durable_objects.bindings]]
+name = "OAUTH_SESSION"
+class_name = "OAuthSession"
+
 [[migrations]]
 tag = "v1-agent-bridge"
 new_sqlite_classes = ["AgentBridge"]
+
+[[migrations]]
+tag = "v2-oauth-session"
+new_sqlite_classes = ["OAuthSession"]
 
 [observability]
 enabled = true

@@ -33,11 +33,18 @@ const AI_PROMPT_VERSION = 3;
 const AI_THINKING_LEVEL = "high";
 const AGENT_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const AGENT_COMMAND_TIMEOUT_MS = 20_000;
+const OAUTH_SCOPE = "highlighter:control";
+const OAUTH_ACCESS_TTL_SECONDS = 60 * 60;
+const OAUTH_REFRESH_TTL_SECONDS = 60 * 60 * 24 * 30;
+const OAUTH_CODE_TTL_SECONDS = 5 * 60;
+const OAUTH_PAIRING_TTL_SECONDS = 10 * 60;
+const OAUTH_PAIRING_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const OAUTH_SECURITY_SCHEMES = [{ type: "oauth2", scopes: [OAUTH_SCOPE] }];
 
 const CORS_HEADERS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "POST, GET, OPTIONS",
-  "access-control-allow-headers": "content-type"
+  "access-control-allow-headers": "content-type, authorization"
 };
 
 export class AgentBridge extends DurableObject {
@@ -118,13 +125,43 @@ export class AgentBridge extends DurableObject {
   }
 }
 
+// One object per consumable OAuth credential gives pairing codes,
+// authorization codes, and refresh tokens strongly consistent one-time use.
+export class OAuthSession extends DurableObject {
+  async store(record, ttlSeconds) {
+    const expiresAt = Date.now() + Math.max(1, Number(ttlSeconds) || 1) * 1000;
+    await this.ctx.storage.put("record", { ...record, expiresAt });
+    await this.ctx.storage.setAlarm(expiresAt);
+  }
+
+  async consume() {
+    const record = await this.ctx.storage.get("record");
+    await this.ctx.storage.deleteAll();
+    if (!record || Number(record.expiresAt || 0) <= Date.now()) return null;
+    const { expiresAt, ...value } = record;
+    return value;
+  }
+
+  async alarm() {
+    await this.ctx.storage.deleteAll();
+  }
+}
+
+function oauthSession(env, key) {
+  return env.OAUTH_SESSION.getByName(key);
+}
+
 function validAgentToken(value) {
   return typeof value === "string" && AGENT_TOKEN_PATTERN.test(value);
 }
 
 async function agentBridgeForToken(env, token) {
   const tokenHash = await sha256Hex(token);
-  return env.AGENT_BRIDGE.getByName(tokenHash);
+  return agentBridgeForKey(env, tokenHash);
+}
+
+function agentBridgeForKey(env, bridgeKey) {
+  return env.AGENT_BRIDGE.getByName(bridgeKey);
 }
 
 function toolResult(result, successText, structuredResult = value => value) {
@@ -140,13 +177,25 @@ function toolResult(result, successText, structuredResult = value => value) {
   };
 }
 
-export function createHighlighterMcpServer(env, token) {
+export function createHighlighterMcpServer(env, bridgeKey) {
   const server = new McpServer(
-    { name: "highlighter", version: "2.2.0" },
+    { name: "highlighter", version: "2.3.0" },
     {
       instructions: "Use get_active_page when the target is uncertain. For a PDF open in Highlighter's reader, use get_pdf_document to read page-numbered source text before choosing exact quotations for highlight_passages. Then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged from the Library for ChatGPT web or a browser agent. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
     }
   );
+
+  // OpenAI reads securitySchemes from each tool. The current Worker-native MCP
+  // server exposes extension metadata through `_meta`; the HTTP wrapper below
+  // mirrors it onto the top-level tool definition for public plugin scans.
+  const registerTool = server.registerTool.bind(server);
+  server.registerTool = (name, config, callback) => registerTool(name, {
+    ...config,
+    _meta: {
+      ...(config?._meta || {}),
+      securitySchemes: OAUTH_SECURITY_SCHEMES
+    }
+  }, callback);
 
   server.registerTool(
     "get_active_page",
@@ -162,7 +211,7 @@ export function createHighlighterMcpServer(env, token) {
       }
     },
     async () => {
-      const bridge = await agentBridgeForToken(env, token);
+      const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand({ type: "get_active_page" });
       return toolResult(result, value => JSON.stringify({
         url: value.url,
@@ -192,7 +241,7 @@ export function createHighlighterMcpServer(env, token) {
       }
     },
     async ({ url, startPage, pageCount, maxChars }) => {
-      const bridge = await agentBridgeForToken(env, token);
+      const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand({
         type: "get_pdf_document",
         ...(url ? { url } : {}),
@@ -241,7 +290,7 @@ export function createHighlighterMcpServer(env, token) {
       }
     },
     async ({ url, passages }) => {
-      const bridge = await agentBridgeForToken(env, token);
+      const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand({ type: "highlight_passages", url, passages });
       return toolResult(result, value => {
         const added = Number(value.added || 0);
@@ -269,7 +318,7 @@ export function createHighlighterMcpServer(env, token) {
       }
     },
     async ({ url }) => {
-      const bridge = await agentBridgeForToken(env, token);
+      const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand({ type: "get_highlighted_text", ...(url ? { url } : {}) });
       return toolResult(result, value => value.text + (value.truncated
         ? "\n[Highlighter truncated this response because the saved text exceeded the tool limit.]"
@@ -302,7 +351,7 @@ export function createHighlighterMcpServer(env, token) {
       }
     },
     async ({ ids, url }) => {
-      const bridge = await agentBridgeForToken(env, token);
+      const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand({
         type: "remove_highlights",
         ids,
@@ -338,7 +387,7 @@ export function createHighlighterMcpServer(env, token) {
       }
     },
     async ({ url, name, expiresInDays, password, visibility }) => {
-      const bridge = await agentBridgeForToken(env, token);
+      const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand({
         type: "create_live_link",
         ...(url ? { url } : {}),
@@ -360,7 +409,7 @@ export function createHighlighterMcpServer(env, token) {
   const mutating = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
   const registerBridgeTool = (name, config, commandForInput, successText) => {
     server.registerTool(name, config, async input => {
-      const bridge = await agentBridgeForToken(env, token);
+      const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand(commandForInput(input || {}));
       return toolResult(result, successText, value => value);
     });
@@ -516,31 +565,465 @@ export function createHighlighterMcpServer(env, token) {
   return server;
 }
 
-function unauthorizedAgentResponse() {
-  return json({ error: "A valid Highlighter connection token is required." }, 401, {
-    "www-authenticate": "Bearer realm=\"Highlighter MCP\""
+function oauthResource(origin) {
+  return `${origin}/mcp`;
+}
+
+function oauthMetadata(origin) {
+  return {
+    issuer: origin,
+    authorization_response_iss_parameter_supported: true,
+    authorization_endpoint: `${origin}/oauth/authorize`,
+    token_endpoint: `${origin}/oauth/token`,
+    registration_endpoint: `${origin}/oauth/register`,
+    revocation_endpoint: `${origin}/oauth/revoke`,
+    token_endpoint_auth_methods_supported: ["none"],
+    code_challenge_methods_supported: ["S256"],
+    grant_types_supported: ["authorization_code", "refresh_token"],
+    response_types_supported: ["code"],
+    scopes_supported: [OAUTH_SCOPE]
+  };
+}
+
+function protectedResourceMetadata(origin) {
+  return {
+    resource: oauthResource(origin),
+    authorization_servers: [origin],
+    scopes_supported: [OAUTH_SCOPE],
+    resource_documentation: `${STATIC_BASE}/mcp.html`,
+    resource_policy_uri: `${STATIC_BASE}/privacy.html`,
+    resource_tos_uri: `${STATIC_BASE}/terms.html`
+  };
+}
+
+function bearerToken(request) {
+  return request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] || "";
+}
+
+function unauthorizedAgentResponse(origin, description = "Connect your Highlighter browser extension to continue.") {
+  const metadataUrl = `${origin}/.well-known/oauth-protected-resource`;
+  return json({ error: "authentication_required", error_description: description }, 401, {
+    "cache-control": "no-store",
+    "www-authenticate": `Bearer resource_metadata="${metadataUrl}", scope="${OAUTH_SCOPE}", error="invalid_token", error_description="${description}"`
   });
+}
+
+function oauthError(error, description, status = 400) {
+  return json({ error, error_description: description }, status, { "cache-control": "no-store" });
+}
+
+function randomPairingCode() {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  let code = "";
+  for (let index = 0; index < bytes.length; index++) {
+    code += OAUTH_PAIRING_ALPHABET[bytes[index] % OAUTH_PAIRING_ALPHABET.length];
+  }
+  return `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8)}`;
+}
+
+function normalizePairingCode(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function isAllowedOAuthRedirect(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.username || url.password || url.hash) return false;
+    if (url.hostname !== "chatgpt.com") return false;
+    return url.pathname === "/connector_platform_oauth_redirect"
+      || /^\/connector\/oauth\/[A-Za-z0-9_-]+$/.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function requestedOAuthScope(value) {
+  const scopes = [...new Set(String(value || OAUTH_SCOPE).trim().split(/\s+/).filter(Boolean))];
+  return scopes.length === 1 && scopes[0] === OAUTH_SCOPE ? OAUTH_SCOPE : "";
+}
+
+async function handleOAuthRegistration(request, env) {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > 32_000) return oauthError("invalid_client_metadata", "Registration metadata is too large.", 413);
+  let body;
+  try { body = await request.json(); } catch { return oauthError("invalid_client_metadata", "Registration metadata must be JSON."); }
+  const redirectUris = Array.isArray(body?.redirect_uris) ? body.redirect_uris.map(String) : [];
+  if (!redirectUris.length || redirectUris.length > 8 || !redirectUris.every(isAllowedOAuthRedirect)) {
+    return oauthError("invalid_redirect_uri", "Highlighter accepts only ChatGPT OAuth callback URLs.");
+  }
+  const grantTypes = Array.isArray(body?.grant_types) ? body.grant_types.map(String) : ["authorization_code"];
+  const responseTypes = Array.isArray(body?.response_types) ? body.response_types.map(String) : ["code"];
+  if (!grantTypes.includes("authorization_code") || grantTypes.some(value => !["authorization_code", "refresh_token"].includes(value))) {
+    return oauthError("invalid_client_metadata", "Only authorization_code and refresh_token grants are supported.");
+  }
+  if (!responseTypes.includes("code") || responseTypes.some(value => value !== "code")) {
+    return oauthError("invalid_client_metadata", "Only the code response type is supported.");
+  }
+  if (body?.token_endpoint_auth_method && body.token_endpoint_auth_method !== "none") {
+    return oauthError("invalid_client_metadata", "Highlighter uses public clients with PKCE.");
+  }
+  const clientId = randomToken(24);
+  const client = {
+    client_id: clientId,
+    client_id_issued_at: Math.floor(Date.now() / 1000),
+    client_name: String(body?.client_name || "ChatGPT").trim().slice(0, 120) || "ChatGPT",
+    redirect_uris: redirectUris,
+    grant_types: grantTypes,
+    response_types: responseTypes,
+    token_endpoint_auth_method: "none"
+  };
+  await env.HIGHLIGHTS.put(`oauth:client:${clientId}`, JSON.stringify(client));
+  return json(client, 201, { "cache-control": "no-store" });
+}
+
+async function handleAgentPairingCode(request, env, origin) {
+  const token = bearerToken(request);
+  if (!validAgentToken(token)) return unauthorizedAgentResponse(origin, "Enable the Highlighter agent connection before creating a pairing code.");
+  const code = randomPairingCode();
+  const normalized = normalizePairingCode(code);
+  const bridgeKey = await sha256Hex(token);
+  await oauthSession(env, `pair:${await sha256Hex(normalized)}`).store({
+    bridgeKey,
+    createdAt: Date.now()
+  }, OAUTH_PAIRING_TTL_SECONDS);
+  return json({
+    code,
+    expiresInSeconds: OAUTH_PAIRING_TTL_SECONDS,
+    mcpUrl: oauthResource(origin)
+  }, 200, { "cache-control": "no-store" });
+}
+
+function oauthAuthorizationParams(source) {
+  return {
+    responseType: String(source.get("response_type") || ""),
+    clientId: String(source.get("client_id") || ""),
+    redirectUri: String(source.get("redirect_uri") || ""),
+    codeChallenge: String(source.get("code_challenge") || ""),
+    codeChallengeMethod: String(source.get("code_challenge_method") || ""),
+    state: String(source.get("state") || ""),
+    resource: String(source.get("resource") || ""),
+    scope: String(source.get("scope") || OAUTH_SCOPE)
+  };
+}
+
+async function validateOAuthAuthorization(params, env, origin) {
+  const client = params.clientId ? await env.HIGHLIGHTS.get(`oauth:client:${params.clientId}`, "json") : null;
+  if (!client) return { error: "invalid_client", description: "This ChatGPT connection is not registered with Highlighter." };
+  if (params.responseType !== "code") return { error: "unsupported_response_type", description: "Highlighter supports the OAuth code flow only.", client };
+  if (!client.redirect_uris?.includes(params.redirectUri) || !isAllowedOAuthRedirect(params.redirectUri)) {
+    return { error: "invalid_request", description: "The OAuth callback URL does not match the registered client." };
+  }
+  if (params.codeChallengeMethod !== "S256" || !/^[A-Za-z0-9_-]{43}$/.test(params.codeChallenge)) {
+    return { error: "invalid_request", description: "A valid S256 PKCE code challenge is required.", client };
+  }
+  if (params.resource !== oauthResource(origin)) {
+    return { error: "invalid_target", description: "The OAuth resource does not match the Highlighter MCP server.", client };
+  }
+  const scope = requestedOAuthScope(params.scope);
+  if (!scope) return { error: "invalid_scope", description: "The requested permission is not supported.", client };
+  return { client, scope };
+}
+
+function oauthRedirect(redirectUri, values) {
+  const destination = new URL(redirectUri);
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined && value !== "") destination.searchParams.set(key, String(value));
+  }
+  return Response.redirect(destination.toString(), 302);
+}
+
+function renderOAuthPage(params, error = "") {
+  const hidden = Object.entries({
+    response_type: params.responseType,
+    client_id: params.clientId,
+    redirect_uri: params.redirectUri,
+    code_challenge: params.codeChallenge,
+    code_challenge_method: params.codeChallengeMethod,
+    state: params.state,
+    resource: params.resource,
+    scope: params.scope
+  }).map(([name, value]) => `<input type="hidden" name="${name}" value="${escapeHtml(value)}">`).join("");
+  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect Highlighter to ChatGPT</title><style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f2ec;color:#211f1c;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{width:min(440px,calc(100% - 32px));padding:30px;background:#fffdf9;border:1px solid #d9d3ca;border-radius:14px;box-shadow:0 18px 55px rgba(43,36,25,.1)}.brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}.mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#7557dc,#e954a5);color:white;font-size:20px}.brand b{font-size:17px}h1{margin:0 0 8px;font-family:Georgia,serif;font-size:27px;font-weight:500;letter-spacing:-.02em}p{margin:0 0 18px;color:#625d55}.steps{margin:0 0 22px;padding-left:20px;color:#47423b}.steps li{margin:5px 0}label{display:block;margin-bottom:7px;font-weight:650}input[type=text]{width:100%;padding:12px 13px;border:1px solid #bdb5aa;border-radius:8px;background:#fff;color:#211f1c;font:600 18px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em}button{width:100%;margin-top:12px;padding:12px 15px;border:0;border-radius:8px;background:#5f52cc;color:#fff;font:650 15px/1.2 inherit;cursor:pointer}.error{margin-bottom:16px;padding:10px 12px;border-radius:8px;background:#fff0ef;color:#982d27}.fine{margin:16px 0 0;font-size:12px;color:#777067}.fine a{color:inherit}</style></head><body><main class="card"><div class="brand"><span class="mark">✦</span><b>Highlighter</b></div><h1>Connect your browser</h1><p>This lets ChatGPT read and change highlights only through the Highlighter extension connected to this browser.</p>${error ? `<div class="error">${escapeHtml(error)}</div>` : ""}<ol class="steps"><li>Open the Highlighter extension in Chrome.</li><li>Press <strong>?</strong>, then <strong>Pair ChatGPT</strong>.</li><li>Paste the one-time code below.</li></ol><form method="post" action="/oauth/authorize">${hidden}<label for="pairing_code">One-time pairing code</label><input id="pairing_code" name="pairing_code" type="text" inputmode="text" autocomplete="one-time-code" maxlength="14" placeholder="ABCD-EFGH-JKLM" required autofocus><button type="submit">Connect Highlighter</button></form><p class="fine">The code expires after 10 minutes and can be used once. By connecting, you agree to the <a href="${STATIC_BASE}/terms.html">terms</a> and <a href="${STATIC_BASE}/privacy.html">privacy policy</a>.</p></main></body></html>`, {
+    status: error ? 400 : 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff"
+    }
+  });
+}
+
+async function handleOAuthAuthorize(request, env, origin) {
+  let source;
+  if (request.method === "GET") source = new URL(request.url).searchParams;
+  else {
+    try { source = await request.formData(); } catch { return oauthError("invalid_request", "The authorization form could not be read."); }
+  }
+  const params = oauthAuthorizationParams(source);
+  const validation = await validateOAuthAuthorization(params, env, origin);
+  if (validation.error) {
+    if (validation.client && validation.client.redirect_uris?.includes(params.redirectUri)) {
+      return oauthRedirect(params.redirectUri, {
+        error: validation.error,
+        error_description: validation.description,
+        state: params.state,
+        iss: origin
+      });
+    }
+    return oauthError(validation.error, validation.description);
+  }
+  if (request.method === "GET") return renderOAuthPage(params);
+
+  const pairingCode = normalizePairingCode(source.get("pairing_code"));
+  const pairingKey = pairingCode ? `pair:${await sha256Hex(pairingCode)}` : "";
+  const pairing = pairingKey ? await oauthSession(env, pairingKey).consume() : null;
+  if (!pairing?.bridgeKey || !/^[a-f0-9]{64}$/.test(pairing.bridgeKey)) {
+    return renderOAuthPage(params, "That pairing code is invalid or expired. Generate a new code in the Highlighter extension.");
+  }
+  const code = randomToken(32);
+  await oauthSession(env, `code:${await sha256Hex(code)}`).store({
+    clientId: params.clientId,
+    redirectUri: params.redirectUri,
+    codeChallenge: params.codeChallenge,
+    bridgeKey: pairing.bridgeKey,
+    resource: params.resource,
+    scope: validation.scope,
+    createdAt: Date.now()
+  }, OAUTH_CODE_TTL_SECONDS);
+  return oauthRedirect(params.redirectUri, { code, state: params.state, iss: origin });
+}
+
+function bytesToBase64Url(bytes) {
+  let binary = "";
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function jsonToBase64Url(value) {
+  return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(value)));
+}
+
+async function hmacKey(secret, usages) {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    usages
+  );
+}
+
+export async function createOAuthAccessToken(env, origin, session) {
+  if (typeof env.OAUTH_SIGNING_SECRET !== "string" || env.OAUTH_SIGNING_SECRET.length < 32) {
+    throw new Error("OAuth signing is not configured.");
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const header = jsonToBase64Url({ alg: "HS256", typ: "at+jwt" });
+  const payload = jsonToBase64Url({
+    iss: origin,
+    aud: oauthResource(origin),
+    sub: session.bridgeKey,
+    scope: session.scope,
+    iat: now,
+    exp: now + OAUTH_ACCESS_TTL_SECONDS,
+    jti: crypto.randomUUID()
+  });
+  const signingInput = `${header}.${payload}`;
+  const signature = await crypto.subtle.sign("HMAC", await hmacKey(env.OAUTH_SIGNING_SECRET, ["sign"]), new TextEncoder().encode(signingInput));
+  return `${signingInput}.${bytesToBase64Url(new Uint8Array(signature))}`;
+}
+
+export async function verifyOAuthAccessToken(env, origin, token) {
+  if (typeof env.OAUTH_SIGNING_SECRET !== "string" || env.OAUTH_SIGNING_SECRET.length < 32) return null;
+  const parts = String(token || "").split(".");
+  if (parts.length !== 3) return null;
+  let header;
+  let claims;
+  try {
+    header = JSON.parse(new TextDecoder().decode(b64UrlToBytes(parts[0])));
+    claims = JSON.parse(new TextDecoder().decode(b64UrlToBytes(parts[1])));
+  } catch { return null; }
+  if (header?.alg !== "HS256" || header?.typ !== "at+jwt") return null;
+  const verified = await crypto.subtle.verify(
+    "HMAC",
+    await hmacKey(env.OAUTH_SIGNING_SECRET, ["verify"]),
+    b64UrlToBytes(parts[2]),
+    new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
+  );
+  const now = Math.floor(Date.now() / 1000);
+  if (!verified || claims?.iss !== origin || claims?.aud !== oauthResource(origin)
+      || !Number.isFinite(claims?.exp) || claims.exp <= now || Number(claims?.iat || 0) > now + 60
+      || !/^[a-f0-9]{64}$/.test(claims?.sub || "")
+      || !String(claims?.scope || "").split(/\s+/).includes(OAUTH_SCOPE)) return null;
+  return claims;
+}
+
+async function sha256Base64Url(value) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return bytesToBase64Url(new Uint8Array(digest));
+}
+
+async function issueOAuthTokens(env, origin, session) {
+  const accessToken = await createOAuthAccessToken(env, origin, session);
+  const refreshToken = randomToken(32);
+  await oauthSession(env, `refresh:${await sha256Hex(refreshToken)}`).store({
+    bridgeKey: session.bridgeKey,
+    clientId: session.clientId,
+    resource: session.resource,
+    scope: session.scope,
+    createdAt: Date.now()
+  }, OAUTH_REFRESH_TTL_SECONDS);
+  return {
+    access_token: accessToken,
+    token_type: "Bearer",
+    expires_in: OAUTH_ACCESS_TTL_SECONDS,
+    refresh_token: refreshToken,
+    scope: session.scope
+  };
+}
+
+async function handleOAuthToken(request, env, origin) {
+  let form;
+  try { form = await request.formData(); } catch { return oauthError("invalid_request", "The token request must be form encoded."); }
+  const grantType = String(form.get("grant_type") || "");
+  const clientId = String(form.get("client_id") || "");
+  const client = clientId ? await env.HIGHLIGHTS.get(`oauth:client:${clientId}`, "json") : null;
+  if (!client) return oauthError("invalid_client", "The OAuth client is not registered.", 401);
+  const resource = String(form.get("resource") || "");
+  if (resource !== oauthResource(origin)) return oauthError("invalid_target", "The token resource does not match Highlighter.");
+
+  if (grantType === "authorization_code") {
+    const code = String(form.get("code") || "");
+    const codeKey = code ? `code:${await sha256Hex(code)}` : "";
+    const session = codeKey ? await oauthSession(env, codeKey).consume() : null;
+    if (!session) return oauthError("invalid_grant", "The authorization code is invalid or expired.");
+    const verifier = String(form.get("code_verifier") || "");
+    const redirectUri = String(form.get("redirect_uri") || "");
+    if (session.clientId !== clientId || session.redirectUri !== redirectUri || session.resource !== resource
+        || !/^[A-Za-z0-9._~-]{43,128}$/.test(verifier)
+        || !constantTimeEqual(await sha256Base64Url(verifier), session.codeChallenge)) {
+      return oauthError("invalid_grant", "The authorization code, callback, or PKCE verifier is invalid.");
+    }
+    return json(await issueOAuthTokens(env, origin, session), 200, { "cache-control": "no-store" });
+  }
+
+  if (grantType === "refresh_token") {
+    const refreshToken = String(form.get("refresh_token") || "");
+    const refreshKey = refreshToken ? `refresh:${await sha256Hex(refreshToken)}` : "";
+    const session = refreshKey ? await oauthSession(env, refreshKey).consume() : null;
+    if (!session || session.clientId !== clientId || session.resource !== resource) {
+      return oauthError("invalid_grant", "The refresh token is invalid or expired.");
+    }
+    return json(await issueOAuthTokens(env, origin, session), 200, { "cache-control": "no-store" });
+  }
+
+  return oauthError("unsupported_grant_type", "Highlighter supports authorization_code and refresh_token grants.");
+}
+
+async function handleOAuthRevocation(request, env) {
+  let form;
+  try { form = await request.formData(); } catch { return new Response(null, { status: 200 }); }
+  const token = String(form.get("token") || "");
+  if (token) await oauthSession(env, `refresh:${await sha256Hex(token)}`).consume();
+  return new Response(null, { status: 200, headers: { "cache-control": "no-store" } });
+}
+
+async function resolveMcpBridgeKey(request, env, origin) {
+  const url = new URL(request.url);
+  const privateToken = url.searchParams.get("token");
+  if (validAgentToken(privateToken)) return sha256Hex(privateToken);
+  const bearer = bearerToken(request);
+  if (validAgentToken(bearer)) return sha256Hex(bearer);
+  const claims = await verifyOAuthAccessToken(env, origin, bearer);
+  return claims?.sub || "";
+}
+
+async function decorateMcpToolSecurity(response) {
+  const contentType = response.headers.get("content-type") || "";
+  const decorate = body => {
+    if (!Array.isArray(body?.result?.tools)) return false;
+    for (const tool of body.result.tools) {
+      tool.securitySchemes = tool?._meta?.securitySchemes || OAUTH_SECURITY_SCHEMES;
+    }
+    return true;
+  };
+  let output;
+  if (contentType.includes("application/json")) {
+    let body;
+    try { body = await response.clone().json(); } catch { return response; }
+    if (!decorate(body)) return response;
+    output = JSON.stringify(body);
+  } else if (contentType.includes("text/event-stream")) {
+    let changed = false;
+    const text = await response.clone().text();
+    output = text.split(/(\r?\n)/).map(part => {
+      if (!part.startsWith("data: ")) return part;
+      try {
+        const body = JSON.parse(part.slice(6));
+        if (!decorate(body)) return part;
+        changed = true;
+        return `data: ${JSON.stringify(body)}`;
+      } catch { return part; }
+    }).join("");
+    if (!changed) return response;
+  } else {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  return new Response(output, { status: response.status, statusText: response.statusText, headers });
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const origin = url.origin;
+
+    if (request.method === "GET" && url.pathname === "/.well-known/oauth-protected-resource") {
+      return json(protectedResourceMetadata(origin), 200, { "cache-control": "public, max-age=300" });
+    }
+
+    if (request.method === "GET" && ["/.well-known/oauth-authorization-server", "/.well-known/openid-configuration"].includes(url.pathname)) {
+      return json(oauthMetadata(origin), 200, { "cache-control": "public, max-age=300" });
+    }
+
+    if (request.method === "POST" && url.pathname === "/oauth/register") {
+      return handleOAuthRegistration(request, env);
+    }
+
+    if (["GET", "POST"].includes(request.method) && url.pathname === "/oauth/authorize") {
+      return handleOAuthAuthorize(request, env, origin);
+    }
+
+    if (request.method === "POST" && url.pathname === "/oauth/token") {
+      return handleOAuthToken(request, env, origin);
+    }
+
+    if (request.method === "POST" && url.pathname === "/oauth/revoke") {
+      return handleOAuthRevocation(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/agent/pairing-code") {
+      return handleAgentPairingCode(request, env, origin);
+    }
 
     if (url.pathname === "/mcp") {
-      const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
-      const token = bearer || url.searchParams.get("token");
-      if (!validAgentToken(token)) return unauthorizedAgentResponse();
-      const handler = createMcpHandler(() => createHighlighterMcpServer(env, token), {
+      const bridgeKey = await resolveMcpBridgeKey(request, env, origin);
+      if (!bridgeKey) return unauthorizedAgentResponse(origin);
+      const handler = createMcpHandler(() => createHighlighterMcpServer(env, bridgeKey), {
         route: "/mcp"
       });
-      return handler(request, env, ctx);
+      return decorateMcpToolSecurity(await handler(request, env, ctx));
     }
 
     if (url.pathname === "/api/agent/socket") {
       const token = url.searchParams.get("token");
       const origin = request.headers.get("origin") || "";
       if (!validAgentToken(token) || !origin.startsWith("chrome-extension://")) {
-        return unauthorizedAgentResponse();
+        return unauthorizedAgentResponse(url.origin, "A valid Highlighter browser connection is required.");
       }
       const bridge = await agentBridgeForToken(env, token);
       return bridge.fetch(request);

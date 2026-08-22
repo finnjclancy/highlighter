@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect Highlighter to ChatGPT</title>
+  <meta name="description" content="Pair the public Highlighter MCP server with ChatGPT using a secure one-time code.">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="stylesheet" href="styles.css?v=5">
+  <style>
+    .setup-intro{max-width:650px;font-size:17px;line-height:1.7;color:var(--text-2)}
+    .endpoint{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:28px 0;padding:16px 18px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+    .endpoint code{overflow-wrap:anywhere;font-size:13px}
+    .steps-list{list-style:none;margin:24px 0 34px;padding:0;counter-reset:step}
+    .steps-list li{position:relative;margin:0;padding:0 0 24px 50px;counter-increment:step}
+    .steps-list li::before{content:counter(step);position:absolute;left:0;top:0;display:grid;place-items:center;width:30px;height:30px;border:1px solid var(--border);border-radius:50%;font:600 13px/1 ui-monospace,monospace;color:var(--text-2)}
+    .steps-list li:not(:last-child)::after{content:"";position:absolute;left:15px;top:34px;bottom:4px;width:1px;background:var(--border)}
+    .steps-list h3{margin:0 0 5px;font-size:16px}.steps-list p{margin:0;color:var(--text-2)}
+    .note{margin:24px 0;padding:16px 18px;border-left:3px solid #7769d8;background:var(--surface);color:var(--text-2)}
+    .tools{columns:2;column-gap:34px}.tools li{break-inside:avoid;margin-bottom:7px}
+    @media(max-width:620px){.endpoint{display:block}.tools{columns:1}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="brand"><span class="logo">✦</span><h1>Highlighter</h1><span class="sep">·</span><span style="color:var(--text-3);font-size:13px">MCP setup</span></header>
+
+    <h2 class="page-title">Connect Highlighter to ChatGPT</h2>
+    <p class="setup-intro">The public Highlighter MCP server gives ChatGPT permission to work with the pages, PDFs, and local highlight library in one Chrome profile. Pairing uses a one-time code; your private browser token never goes into ChatGPT.</p>
+
+    <div class="endpoint"><strong>Public MCP endpoint</strong><code>https://highlighter-share.finnjclancy.workers.dev/mcp</code></div>
+
+    <div class="section-lbl">Set up the connection</div>
+    <ol class="steps-list">
+      <li><h3>Install and open Highlighter</h3><p>Install the Chrome extension, open an ordinary web page or a PDF in Highlighter's reader, and click the Highlighter toolbar icon.</p></li>
+      <li><h3>Add the public connection</h3><p>Install the Highlighter plugin when it is available in ChatGPT. Until then, add the endpoint above as a Streamable HTTP MCP server in ChatGPT's Plugins area.</p></li>
+      <li><h3>Start OAuth</h3><p>Press Connect. ChatGPT opens the Highlighter authorization page; leave that page open.</p></li>
+      <li><h3>Generate the one-time code</h3><p>In the Highlighter popup, press <strong>?</strong> beside Agent connection, then <strong>Pair ChatGPT</strong>. The code is copied automatically.</p></li>
+      <li><h3>Approve this browser</h3><p>Paste the code into the authorization page. It expires after 10 minutes and works only once.</p></li>
+      <li><h3>Use Highlighter in chat</h3><p>Keep Chrome open. Select Highlighter from the tools menu—or mention <strong>@Highlighter</strong> after the public plugin is listed—then ask it to work on the open page or PDF.</p></li>
+    </ol>
+
+    <div class="note"><strong>Try:</strong> “Read the PDF open in Highlighter, mark the main claim and every stated limitation, add short notes, and give me a live sharing link.”</div>
+
+    <div class="section-lbl">What the agent can do</div>
+    <ul class="tools">
+      <li>Read the active page and browser selection</li>
+      <li>Read an open PDF by page range</li>
+      <li>Create, update, remove, and restore highlights</li>
+      <li>Search highlights and list saved pages</li>
+      <li>Organise folders, tags, notes, and snapshots</li>
+      <li>Summarise or compare marked passages</li>
+      <li>Export Markdown, JSON, CSV, BibTeX, or RIS</li>
+      <li>Create, update, protect, and revoke live links</li>
+    </ul>
+
+    <div class="section-lbl">Troubleshooting</div>
+    <p>If the code is rejected, generate a new one. If tools say Highlighter is disconnected, open the extension and enable Agent connection. The target must be a normal HTTP(S) page or Highlighter's PDF Reader; Chrome does not allow extensions on internal pages such as <code>chrome://extensions</code>.</p>
+    <p><strong>Developer fallback:</strong> the help screen can still copy a private MCP URL for compatible development clients. That URL contains a secret and must never be pasted into a chat, screenshot, plugin, or public document.</p>
+
+    <footer class="foot"><a href="index.html">← Highlighter</a> &nbsp;·&nbsp; <a href="privacy.html">Privacy</a> &nbsp;·&nbsp; <a href="terms.html">Terms</a></footer>
+  </div>
+</body>
+</html>

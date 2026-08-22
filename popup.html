@@ -175,6 +175,19 @@
     .agent-help-actions { display: flex; flex-direction: column; gap: 5px; }
     .agent-help-actions button { justify-content: center; text-align: center; }
     .agent-help-link { color: #a5b4fc; background: transparent; }
+    .agent-pair-code {
+      margin: 7px 0 2px;
+      padding: 10px;
+      border: 1px solid rgba(129,140,248,0.38);
+      border-radius: 8px;
+      background: rgba(99,102,241,0.1);
+      color: #e0e2ff;
+      font: 650 16px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.08em;
+      text-align: center;
+      user-select: all;
+    }
+    .agent-pair-code[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -202,7 +215,7 @@
     </div>
     <button id="toggle-panel"><span class="ico">⇆</span> Toggle overlay</button>
     <div class="agent-row">
-      <button id="agent-toggle"><span id="agent-dot" class="agent-dot"></span><span id="agent-label">Connect agent &amp; copy link</span></button>
+      <button id="agent-toggle"><span id="agent-dot" class="agent-dot"></span><span id="agent-label">Connect agent</span></button>
       <button id="agent-help" class="agent-help-button" title="How to connect an agent" aria-label="How to connect an agent">?</button>
       <button id="agent-disconnect" class="agent-disconnect" title="Disconnect agent" aria-label="Disconnect agent">×</button>
     </div>
@@ -218,15 +231,17 @@
     </div>
     <p class="agent-help-intro">This gives ChatGPT 24 tools for reading open PDFs, highlighting, library search, reversible edits, exports, source comparison, and managed live links.</p>
     <div class="agent-help-steps">
-      <div class="agent-help-step"><span class="agent-help-num">1</span><div><b>Copy your private link</b><span>Use the button below. Highlighter connects and copies the full MCP URL for you.</span></div></div>
-      <div class="agent-help-step"><span class="agent-help-num">2</span><div><b>Enable ChatGPT developer mode</b><span>Open Settings → Security and login → turn on Developer mode.</span></div></div>
-      <div class="agent-help-step"><span class="agent-help-num">3</span><div><b>Add a plugin connection</b><span>Open ChatGPT Plugins, press +, and name it “Highlighter”.</span></div></div>
-      <div class="agent-help-step"><span class="agent-help-num">4</span><div><b>Paste and create</b><span>Choose the public URL / Streamable HTTP option, paste the full link, then review the 24 discovered tools.</span></div></div>
+      <div class="agent-help-step"><span class="agent-help-num">1</span><div><b>Add Highlighter in ChatGPT</b><span>Install the Highlighter plugin or add the public MCP URL in developer mode.</span></div></div>
+      <div class="agent-help-step"><span class="agent-help-num">2</span><div><b>Start connecting</b><span>ChatGPT opens Highlighter's secure connection page and asks for a one-time code.</span></div></div>
+      <div class="agent-help-step"><span class="agent-help-num">3</span><div><b>Pair this browser</b><span>Press Pair ChatGPT below, then paste the code into that connection page.</span></div></div>
+      <div class="agent-help-step"><span class="agent-help-num">4</span><div><b>Keep Chrome open</b><span>The agent can now work with the pages, PDFs, and Library stored in this browser.</span></div></div>
     </div>
-    <div class="agent-help-warning">🔒 Treat the copied URL like a password. Anyone who has it can use your connected Highlighter while Chrome is open.</div>
+    <div class="agent-help-warning">🔒 Pairing codes expire after 10 minutes and work once. The private MCP link below is only for advanced developer-mode setup.</div>
     <div class="agent-help-actions">
-      <button id="agent-help-copy" class="primary">Copy private MCP link</button>
+      <button id="agent-help-pair" class="primary">Pair ChatGPT</button>
+      <div id="agent-pair-code" class="agent-pair-code" hidden></div>
       <button id="agent-help-chatgpt">Open ChatGPT Plugins ↗</button>
+      <button id="agent-help-copy">Copy private MCP link</button>
       <button id="agent-help-docs" class="agent-help-link">Open the official setup guide ↗</button>
     </div>
   </section>

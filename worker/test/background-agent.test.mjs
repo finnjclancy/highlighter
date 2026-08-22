@@ -121,14 +121,19 @@ async function loadBackground() {
       addEventListener() {}
       close() {}
     },
-    fetch: async () => new Response(JSON.stringify({
-      id: "abcd2345",
-      url: "https://highlighter-share.example/v/abcd2345"
-    }), { status: 200, headers: { "content-type": "application/json" } })
+    fetch: async (requestUrl) => new Response(JSON.stringify(String(requestUrl).endsWith("/api/agent/pairing-code")
+      ? { code: "ABCD-EFGH-JKLM", expiresInSeconds: 600, mcpUrl: "https://highlighter-share.example/mcp" }
+      : { id: "abcd2345", url: "https://highlighter-share.example/v/abcd2345" }
+    ), { status: 200, headers: { "content-type": "application/json" } })
   };
   context.globalThis = context;
-  vm.runInNewContext(`${source}\n;globalThis.__backgroundTest = { handleAgentCommand };`, context);
-  return { handleAgentCommand: context.__backgroundTest.handleAgentCommand, storage, tabMessages };
+  vm.runInNewContext(`${source}\n;globalThis.__backgroundTest = { handleAgentCommand, createAgentPairingCode };`, context);
+  return {
+    handleAgentCommand: context.__backgroundTest.handleAgentCommand,
+    createAgentPairingCode: context.__backgroundTest.createAgentPairingCode,
+    storage,
+    tabMessages
+  };
 }
 
 test("background returns highlighted text in a chat-ready format", async () => {
@@ -167,6 +172,17 @@ test("background creates and records a live share", async () => {
   assert.equal(result.count, 1);
   assert.equal(storage.hl_shares.length, 1);
   assert.equal(storage.hl_shares[0].name, "Agent share");
+});
+
+test("background enables the bridge and creates a one-time ChatGPT pairing code", async () => {
+  const { createAgentPairingCode, storage } = await loadBackground();
+  const result = await createAgentPairingCode();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.code, "ABCD-EFGH-JKLM");
+  assert.equal(result.expiresInSeconds, 600);
+  assert.equal(storage.hl_agent_connection.enabled, true);
+  assert.match(storage.hl_agent_connection.token, /^[A-Za-z0-9_-]{43}$/);
 });
 
 test("background removes only explicit highlight IDs from the target page", async () => {

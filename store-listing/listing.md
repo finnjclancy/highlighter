@@ -6,7 +6,7 @@ Prepared: 2026-08-22
 
 Upload this ZIP:
 
-`dist/highlighter-1.8.0.zip`
+`dist/highlighter-1.9.0.zip`
 
 ## Product details
 
@@ -16,7 +16,7 @@ Name:
 
 Short description:
 
-`Highlight web pages and PDFs manually, with AI, or connected agents. Organise quotes, add comments, and share live links.`
+`Highlight web pages and PDFs manually, with AI, or securely paired agents. Organise quotes, add comments, and share live links.`
 
 Category:
 
@@ -45,7 +45,8 @@ Key features:
 - Draw on pages with pen, line, and rectangle tools
 - Highlight selectable PDFs manually, use optional AI-assisted Deep Highlight after reviewing its disclosure, or ask a connected agent to read the open PDF and create exact annotated highlights
 - Create share links for a page's highlights
-- Optionally connect ChatGPT or another MCP-compatible agent through 24 focused MCP tools so it can read PDFs open in Highlighter, retrieve an exact staged Library selection, search the full library, create or reorganize folders, make reversible edits, compare sources, export research, and create or manage protected live links
+- Securely pair ChatGPT or another OAuth-capable MCP agent with a one-time code—your private browser token never goes into the chat client
+- Use 24 focused MCP tools to read PDFs open in Highlighter, retrieve an exact staged Library selection, search the full library, create or reorganize folders, make reversible edits, compare sources, export research, and create or manage protected live links
 - Highlight the current browser selection from the context menu or a keyboard shortcut
 - Let recipients read shared highlights in a clean gallery, or reopen them on the original page with Highlighter installed
 - Customize highlight colours in Design Studio
@@ -116,7 +117,7 @@ Recommended data disclosure:
 - Website content: Yes. User-created or agent-requested highlights, selected text, notes/comments, folders/tags, drawings, highlight colours, and shared-link comments.
 - Web history: Yes, conservatively. Highlighter stores source page URLs and titles only for pages where the user creates highlights, drawings, exports, or share links.
 - Personally identifiable information: Conservatively, Yes. Highlighter has no accounts and does not collect profile data, but a viewer can deliberately submit an optional author name with a shared-gallery comment.
-- Authentication information: Conservatively, Yes. A randomly generated private MCP connection token and live-link management credentials are stored locally; optional gallery passwords are sent over HTTPS and stored by the service only as cryptographic hashes.
+- Authentication information: Conservatively, Yes. A randomly generated private MCP connection token and live-link management credentials are stored locally. Public agent pairing uses a one-time code and OAuth session records tied only to a hash-derived browser identifier. Optional gallery passwords are sent over HTTPS and stored by the service only as cryptographic hashes.
 - User activity: No analytics, tracking, browsing activity monitoring, ad measurement, or background profiling.
 
 Data use:
@@ -128,7 +129,7 @@ Data is used only to provide Highlighter's core functionality: saving highlights
 Remote storage:
 
 ```text
-Most data is stored locally in the user's browser. When a user or their connected agent creates a share link, the selected highlights for that page are sent over HTTPS to Highlighter's share service and stored for the selected expiry period of 1–365 days. Optional gallery passwords and management credentials are stored only as cryptographic hashes by the service. Viewer comments, reactions, optional author names, and related highlight IDs are stored with the share until it expires. If the user enables the optional agent connection, active-page details, exact highlight requests, saved highlighted text, library searches, exports, snapshots, and requested changes are relayed through the Highlighter Worker in memory and are not intentionally stored by the agent bridge.
+Most data is stored locally in the user's browser. When a user or their connected agent creates a share link, the selected highlights for that page are sent over HTTPS to Highlighter's share service and stored for the selected expiry period of 1–365 days. Optional gallery passwords and management credentials are stored only as cryptographic hashes by the service. Viewer comments, reactions, optional author names, and related highlight IDs are stored with the share until it expires. If the user enables the optional agent connection, active-page details, exact highlight requests, saved highlighted text, library searches, exports, snapshots, and requested changes are relayed through the Highlighter Worker in memory and are not intentionally stored by the agent bridge. Public pairing codes expire after 10 minutes, authorization codes after 5 minutes, access tokens after 1 hour, and OAuth refresh sessions after 30 days. The service never stores the raw private browser token during public pairing.
 ```
 
 Permission justifications:
@@ -145,7 +146,7 @@ Permission justifications:
 1. Install the submitted ZIP and open any ordinary HTTPS article.
 2. Select text and choose a colour from the Highlighter toolbar. Open the extension popup and choose **Open library / design** to verify the saved quote.
 3. In the Library, select one or more rows. **Copy for browser agent** stages their local IDs and copies a short instruction. **Open in ChatGPT web** opens or focuses `chatgpt.com` and fills the composer without sending; a ChatGPT account is needed only to test that optional destination.
-4. To test the optional MCP bridge, open the extension popup, press the **?** beside Agent connection, enable the connection, and copy the generated private Streamable HTTP URL into an MCP-compatible client. The connection exposes 24 tools. The private URL is generated locally and should not be included in review notes or screenshots.
+4. To test the optional MCP bridge, add `https://highlighter-share.finnjclancy.workers.dev/mcp` as a Streamable HTTP MCP server in an OAuth-capable client. When its authorization page opens, press **? → Pair ChatGPT** in the extension, paste the generated one-time code, and approve the connection. The code expires after 10 minutes and works once. The connection exposes 24 tools; the private browser token remains local.
 5. Open a selectable PDF in Highlighter's PDF Reader. **Copy for ChatGPT extension** copies an MCP instruction while keeping the PDF active; open the ChatGPT browser extension and paste it into a chat with Highlighter enabled. **Open ChatGPT web** is the separate web-tab option. The agent can call `get_pdf_document` to read page-numbered text and use `highlight_passages` to create exact marks. Highlighter never presses Send.
 6. PDF Deep Highlight is optional and requires accepting the in-product disclosure. All manual highlighting, Library, drawing, export, agent, and ordinary share-link features can be tested without accepting the Gemini disclosure.
 

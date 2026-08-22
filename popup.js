@@ -20,6 +20,8 @@ const agentHelp = document.getElementById("agent-help");
 const agentHelpScreen = document.getElementById("agent-help-screen");
 const agentHelpClose = document.getElementById("agent-help-close");
 const agentHelpCopy = document.getElementById("agent-help-copy");
+const agentHelpPair = document.getElementById("agent-help-pair");
+const agentPairCode = document.getElementById("agent-pair-code");
 
 function renderAgentStatus(status) {
   if (agentFeedbackTimer) {
@@ -30,9 +32,9 @@ function renderAgentStatus(status) {
   currentAgentMcpUrl = status?.mcpUrl || "";
   agentDot.classList.toggle("connected", status?.connected === true);
   agentLabel.textContent = !agentConnectionEnabled
-    ? "Connect agent & copy link"
-    : status?.connected ? "Connected · Copy link" : "Connecting… · Copy link";
-  agentToggle.title = agentConnectionEnabled ? "Copy private MCP link" : "Connect agent and copy private MCP link";
+    ? "Connect agent"
+    : status?.connected ? "Agent connected" : "Agent connecting…";
+  agentToggle.title = agentConnectionEnabled ? "Open agent setup" : "Enable the agent connection";
   agentDisconnect.classList.toggle("visible", agentConnectionEnabled);
   agentDisconnect.disabled = !agentConnectionEnabled;
 }
@@ -71,8 +73,13 @@ async function connectAndCopyAgentLink() {
 
 agentToggle.addEventListener("click", async () => {
   try {
-    await connectAndCopyAgentLink();
-    showAgentFeedback("✓ MCP link copied");
+    if (agentConnectionEnabled) {
+      setAgentHelpOpen(true);
+      return;
+    }
+    const status = await chrome.runtime.sendMessage({ type: "setAgentConnectionEnabled", enabled: true });
+    renderAgentStatus(status);
+    showAgentFeedback("✓ Agent connection enabled");
   } catch {
     toast("Could not change the agent connection.");
   }
@@ -97,6 +104,25 @@ agentHelpCopy.addEventListener("click", async () => {
     setTimeout(() => { agentHelpCopy.textContent = "Copy private MCP link"; }, 1300);
   } catch {
     agentHelpCopy.textContent = "Could not copy — try again";
+  }
+});
+
+agentHelpPair.addEventListener("click", async () => {
+  agentHelpPair.disabled = true;
+  agentHelpPair.textContent = "Creating code…";
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "createAgentPairingCode" });
+    if (!result?.ok || !result.code) throw new Error(result?.error || "Pairing failed");
+    agentPairCode.textContent = result.code;
+    agentPairCode.hidden = false;
+    await copyToClipboard(result.code);
+    agentHelpPair.textContent = "✓ Code copied — paste it in ChatGPT";
+    await refreshAgentStatus();
+  } catch {
+    agentHelpPair.textContent = "Could not create code — try again";
+  } finally {
+    agentHelpPair.disabled = false;
+    setTimeout(() => { agentHelpPair.textContent = "Generate a new pairing code"; }, 2500);
   }
 });
 

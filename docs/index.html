@@ -1916,7 +1916,7 @@
       </div>
       <div class="links">
         <a class="mcp-nav" href="#mcp-tools">MCP tools</a>
-        <a class="mcp-nav" href="#mcp-setup">Setup</a>
+        <a class="mcp-nav" href="mcp.html">Setup</a>
         <a href="privacy.html">Privacy</a>
         <a href="https://github.com/finnjclancy/highlighter" target="_blank" rel="noopener">GitHub</a>
         <a href="https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo" class="primary" target="_blank" rel="noopener">Install</a>
@@ -1958,7 +1958,7 @@
             <span class="power-kind">AI agent + MCP</span>
             <h3>Ask your LLM to highlight anything</h3>
           </div>
-          <p class="power-copy">Connect the private MCP URL, then ask for limitations, evidence, definitions, or anything else. The agent saves the exact passages.</p>
+          <p class="power-copy">Pair the secure MCP connection, then ask for limitations, evidence, definitions, or anything else. The agent saves the exact passages.</p>
           <span class="power-arrow" aria-hidden="true">↗</span>
         </a>
 
@@ -2074,7 +2074,7 @@
           <div class="feat-text">
             <span class="feat-tag">Agent tools · MCP</span>
             <h3>Tell an LLM exactly what to highlight</h3>
-            <p>Connect ChatGPT or another MCP-compatible agent with a private URL. Ask it to highlight limitations or evidence, organise selected Library quotes, compare sources, export research, and share the result.</p>
+            <p>Pair ChatGPT or another OAuth-capable MCP agent with a one-time code. Ask it to highlight limitations or evidence, organise selected Library quotes, compare sources, export research, and share the result.</p>
           </div>
           <div class="art" aria-hidden="true">
             <div class="agent-prompt">Highlight every limitation in this paper.</div>
@@ -2114,9 +2114,9 @@
         </div>
         <div class="loop-arrow" aria-hidden="true">→</div>
         <div class="loop-node browser">
-          <div class="loop-kicker"><span class="loop-icon">↗</span> Private MCP bridge</div>
+          <div class="loop-kicker"><span class="loop-icon">↗</span> Secure MCP bridge</div>
           <h3>The right tool is called</h3>
-          <p>Your private connection carries a structured request to the paired Highlighter extension in Chrome.</p>
+          <p>An OAuth connection carries a structured request to the paired Highlighter extension in Chrome.</p>
         </div>
         <div class="loop-arrow" aria-hidden="true">→</div>
         <div class="loop-node library">
@@ -2222,7 +2222,7 @@
       <div class="section-h">
         <div class="label">Set up in a few minutes</div>
         <h2>Connect the MCP server to ChatGPT</h2>
-        <p>Highlighter creates and copies the complete private MCP URL for you. Add that connection once, select it in a conversation, and the agent can use all 24 browser tools.</p>
+        <p>Add the public Highlighter MCP endpoint once, pair it to your browser with a one-time code, and the agent can use all 24 browser tools without receiving your private browser token.</p>
       </div>
       <div class="setup-before">
         <div>
@@ -2238,26 +2238,26 @@
       <div class="steps">
         <div class="step">
           <div class="num-wrap"><div class="num">1</div><div class="tag">Highlighter</div></div>
-          <h3>Connect and copy the link</h3>
-          <p>Open the extension and select <b>Connect agent &amp; copy link</b>. You can also press <b>?</b> and choose <b>Copy private MCP link</b>.</p>
+          <h3>Add Highlighter</h3>
+          <p>Install the public Highlighter plugin, or add <b>https://highlighter-share.finnjclancy.workers.dev/mcp</b> as a Streamable HTTP MCP server.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
           <div class="num-wrap"><div class="num">2</div><div class="tag">ChatGPT settings</div></div>
-          <h3>Enable developer mode</h3>
-          <p>In ChatGPT, open <b>Settings → Security and login</b>, then turn on <b>Developer mode</b>. Availability can depend on your account or workspace policy.</p>
+          <h3>Start the connection</h3>
+          <p>Press <b>Connect</b>. ChatGPT opens Highlighter's secure authorization page and registers its callback automatically.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
           <div class="num-wrap"><div class="num">3</div><div class="tag">ChatGPT Plugins</div></div>
-          <h3>Create the connection</h3>
-          <p>Open <a href="https://chatgpt.com/plugins" target="_blank" rel="noopener">ChatGPT Plugins</a>, press <b>+</b>, and enter <b>Highlighter</b> as the user-facing name. Add a short description if requested.</p>
+          <h3>Generate a pairing code</h3>
+          <p>Open the extension, press <b>?</b> beside Agent connection, then choose <b>Pair ChatGPT</b>. The one-time code is copied automatically.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
           <div class="num-wrap"><div class="num">4</div><div class="tag">Connection</div></div>
-          <h3>Paste the private MCP URL</h3>
-          <p>Choose the public URL / <b>Streamable HTTP</b> connection, paste the complete link, create it, and review the 24 tools ChatGPT discovers.</p>
+          <h3>Approve this browser</h3>
+          <p>Paste the one-time code into Highlighter's authorization page and connect. It expires after 10 minutes and cannot be reused.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
@@ -2275,7 +2275,7 @@
       </div>
       <div class="ai-disclosure">
         <span class="ai-mark" aria-hidden="true">🔒</span>
-        <span><b>Your MCP URL is a password.</b> Do not paste it into a post, screenshot, or message. Anyone who has it can use your connected Highlighter while Chrome is open. Select <b>×</b> beside the agent row to disconnect and discard the local token.</span>
+        <span><b>Your private token stays in the extension.</b> ChatGPT receives a short-lived OAuth session tied to the browser you approve. The developer-only private MCP link is still available in the help screen; if you use it, treat it like a password and never share it.</span>
       </div>
       <div class="setup-finish">
         <div class="setup-test">
@@ -2287,7 +2287,7 @@
         <div class="setup-help">
           <span class="mini-label">If it does not connect</span>
           <h3>Check these three things</h3>
-          <p>Confirm Developer mode is enabled, paste the entire private URL, and keep the paired Chrome extension connected. The connection does not work on internal pages such as <b>chrome://extensions</b>.</p>
+          <p>Generate a fresh pairing code, keep the Highlighter agent row connected, and confirm the target is an ordinary web page or Highlighter PDF Reader. Browser extensions cannot run on internal pages such as <b>chrome://extensions</b>.</p>
           <p style="margin-top:10px"><a href="https://developers.openai.com/plugins/deploy/connect-chatgpt" target="_blank" rel="noopener">Read the official OpenAI setup guide →</a></p>
         </div>
       </div>
@@ -2556,7 +2556,7 @@
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Local-first.</b> Highlights and drawings live in your browser storage by default.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>No accounts.</b> Nothing to sign up for, ever.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>No trackers.</b> Zero analytics, zero third-party scripts.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>You stay in control.</b> Data leaves your device only when you invoke AI, create a share link, export, or post a shared-link comment.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>You stay in control.</b> Data leaves your device only when you invoke AI or an agent tool, create a share link, export, or post a shared-link comment.</span></li>
       </ul>
     </div>
 
@@ -2569,6 +2569,10 @@
       Built with no accounts and no tracking. Highlights stay local unless you deliberately use AI, sharing, export, or shared-link comments.
       <br>
       <a href="privacy.html">Privacy policy</a>
+      &nbsp;·&nbsp;
+      <a href="mcp.html">MCP setup</a>
+      &nbsp;·&nbsp;
+      <a href="terms.html">Terms</a>
       &nbsp;·&nbsp;
       <a href="https://github.com/finnjclancy/highlighter" target="_blank" rel="noopener">Source on GitHub</a>
     </footer>
