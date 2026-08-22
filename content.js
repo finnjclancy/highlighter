@@ -76,6 +76,7 @@
   let pendingShared = [];
   let sharedUrlProcessed = false;
   let panelSelecting = false;
+  let pendingTextControlSelection = null;
   const panelSelectedIds = new Set();
   let resolveInitializationReady;
   const initializationReady = new Promise(resolve => { resolveInitializationReady = resolve; });
@@ -396,15 +397,26 @@
 
   function highlightSelection(bg, fg) {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
-    const range = sel.getRangeAt(0);
+    let range = sel && sel.rangeCount > 0 && !sel.isCollapsed ? sel.getRangeAt(0) : null;
+    let selectedText = range?.toString() || "";
+    let prefix = "";
+    let suffix = "";
+    let control = null;
+    let controlEnd = 0;
+    if (!selectedText.trim() && pendingTextControlSelection) {
+      ({ text: selectedText, prefix, suffix, control, end: controlEnd } = pendingTextControlSelection);
+      range = findRangeByText(selectedText, prefix, suffix);
+    }
+    if (!range || !selectedText.trim() || rangeUsesSkippedContent(range)) return null;
     const serialized = serializeRange(range);
     if (!serialized.text.trim()) return null;
     const id = "h_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
     const h = {
       id, bg, fg,
-      text: serialized.text,
+      text: selectedText,
       range: serialized,
+      prefix,
+      suffix,
       url: pageIdentityUrl().href,
       title: document.title,
       tags: [],
@@ -413,7 +425,11 @@
     };
     highlights.push(h);
     if (applyHighlight(h)) saveHighlights();
-    sel.removeAllRanges();
+    sel?.removeAllRanges();
+    if (control && Number.isInteger(controlEnd)) {
+      try { control.setSelectionRange(controlEnd, controlEnd); } catch {}
+    }
+    pendingTextControlSelection = null;
     hideToolbar();
     renderPanel();
     return h;
@@ -552,10 +568,25 @@
     // pages (X/Twitter, etc.) that briefly mess with the selection.
     const tryShow = () => {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !sel.toString().trim()) {
-        return false;
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed && sel.toString().trim()) {
+        pendingTextControlSelection = null;
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) return false;
+        showToolbar(rect);
+        return true;
       }
-      const rect = sel.getRangeAt(0).getBoundingClientRect();
+
+      const controlSelection = getGitHubCodeControlSelection(e.target) ||
+        getGitHubCodeControlSelection(document.activeElement);
+      if (!controlSelection) return false;
+      const visibleRange = findRangeByText(
+        controlSelection.text,
+        controlSelection.prefix,
+        controlSelection.suffix
+      );
+      if (!visibleRange) return false;
+      pendingTextControlSelection = controlSelection;
+      const rect = visibleRange.getBoundingClientRect();
       if (rect.width === 0 && rect.height === 0) return false;
       showToolbar(rect);
       return true;
@@ -567,7 +598,10 @@
   document.addEventListener("mouseup", handleMouseUp, true);
   document.addEventListener("pointerup", handleMouseUp, true);
   document.addEventListener("mousedown", e => {
-    if (toolbar && !toolbar.contains(e.target)) hideToolbar();
+    if (toolbar && !toolbar.contains(e.target)) {
+      pendingTextControlSelection = null;
+      hideToolbar();
+    }
   }, true);
   document.addEventListener("scroll", hideToolbar, { passive: true, capture: true });
 
@@ -1104,7 +1138,7 @@
         ok: true,
         url: pageIdentityUrl().href,
         title: document.title,
-        selection: (window.getSelection()?.toString() || "").trim().slice(0, 4000),
+        selection: currentPageSelectionText().trim().slice(0, 4000),
         highlightCount: highlights.length,
         isPdfReader: location.protocol === "chrome-extension:" && location.pathname.endsWith("/pdf-reader.html")
       });
@@ -1290,30 +1324,145 @@
     return null;
   }
 
-  function findRangeByText(text, prefix, suffix) {
-    if (!text) return null;
-    const { segs, fullText } = buildTextSegments();
+  function queryOpenRoots(selector) {
+    const matches = [];
+    const visited = new WeakSet();
+    function visit(root) {
+      if (!root || visited.has(root) || !root.querySelectorAll) return;
+      visited.add(root);
+      matches.push(...root.querySelectorAll(selector));
+      root.querySelectorAll("*").forEach(element => {
+        if (element.shadowRoot) visit(element.shadowRoot);
+      });
+    }
+    visit(document);
+    return matches;
+  }
+
+  function buildGitHubCodeSegments() {
+    if (location.hostname !== "github.com") return null;
+    const cells = queryOpenRoots('[data-testid="code-cell"][data-line-number]')
+      .sort((a, b) => Number(a.dataset.lineNumber) - Number(b.dataset.lineNumber));
+    if (!cells.length) return null;
+
+    const segs = [];
+    const parts = [];
+    let cursor = 0;
+    cells.forEach((cell, cellIndex) => {
+      const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue?.length) return NodeFilter.FILTER_REJECT;
+          if (node.parentElement?.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let node;
+      while ((node = walker.nextNode())) {
+        const text = node.nodeValue;
+        segs.push({ node, start: cursor, end: cursor + text.length });
+        parts.push(text);
+        cursor += text.length;
+      }
+      if (cellIndex < cells.length - 1) {
+        segs.push({ node: null, start: cursor, end: cursor + 1 });
+        parts.push("\n");
+        cursor += 1;
+      }
+    });
+    return { segs, fullText: parts.join("") };
+  }
+
+  function codePositionToNode(segs, pos, bias) {
+    for (let index = 0; index < segs.length; index++) {
+      const segment = segs[index];
+      if (pos < segment.start || pos > segment.end) continue;
+      if (segment.node) {
+        return { node: segment.node, offset: Math.max(0, Math.min(segment.node.nodeValue.length, pos - segment.start)) };
+      }
+      if (bias === "end") {
+        for (let previous = index - 1; previous >= 0; previous--) {
+          if (segs[previous].node) return { node: segs[previous].node, offset: segs[previous].node.nodeValue.length };
+        }
+      } else {
+        for (let next = index + 1; next < segs.length; next++) {
+          if (segs[next].node) return { node: segs[next].node, offset: 0 };
+        }
+      }
+    }
+    return null;
+  }
+
+  function findTextPosition(fullText, text, prefix, suffix) {
     let pos = -1;
     if (prefix || suffix) {
       const target = (prefix || "") + text + (suffix || "");
       pos = fullText.indexOf(target);
-      if (pos >= 0) pos += (prefix ? prefix.length : 0);
+      if (pos >= 0) pos += prefix ? prefix.length : 0;
     }
-    if (pos < 0) {
-      // Fall back: just find the text. If the prefix/suffix are present anywhere
-      // in the doc, prefer the occurrence closest to that anchor.
-      const occurrences = [];
-      let i = -1;
-      while ((i = fullText.indexOf(text, i + 1)) >= 0) occurrences.push(i);
-      if (!occurrences.length) return null;
-      if (prefix) {
-        const anchor = fullText.indexOf(prefix);
-        if (anchor >= 0) {
-          occurrences.sort((a, b) => Math.abs(a - anchor) - Math.abs(b - anchor));
-        }
-      }
-      pos = occurrences[0];
+    if (pos >= 0) return pos;
+
+    const occurrences = [];
+    let index = -1;
+    while ((index = fullText.indexOf(text, index + 1)) >= 0) occurrences.push(index);
+    if (!occurrences.length) return -1;
+    if (prefix) {
+      const anchor = fullText.indexOf(prefix);
+      if (anchor >= 0) occurrences.sort((a, b) => Math.abs(a - anchor) - Math.abs(b - anchor));
     }
+    return occurrences[0];
+  }
+
+  function findGitHubCodeRange(text, prefix, suffix) {
+    const code = buildGitHubCodeSegments();
+    if (!code) return null;
+    const cleanText = String(text || "").replace(/\r\n?/g, "\n");
+    const cleanPrefix = String(prefix || "").replace(/\r\n?/g, "\n");
+    const cleanSuffix = String(suffix || "").replace(/\r\n?/g, "\n");
+    const pos = findTextPosition(code.fullText, cleanText, cleanPrefix, cleanSuffix);
+    if (pos < 0) return null;
+    const start = codePositionToNode(code.segs, pos, "start");
+    const end = codePositionToNode(code.segs, pos + cleanText.length, "end");
+    if (!start || !end) return null;
+    try {
+      const range = document.createRange();
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, end.offset);
+      return range;
+    } catch { return null; }
+  }
+
+  function getGitHubCodeControlSelection(candidate) {
+    if (location.hostname !== "github.com") return null;
+    const control = candidate instanceof HTMLTextAreaElement ? candidate : null;
+    if (!(control instanceof HTMLTextAreaElement) || control.getAttribute("aria-label") !== "file content") return null;
+    const start = Number(control.selectionStart);
+    const end = Number(control.selectionEnd);
+    if (!Number.isInteger(start) || !Number.isInteger(end) || end <= start) return null;
+    const text = control.value.slice(start, end);
+    if (!text.trim()) return null;
+    return {
+      control,
+      start,
+      end,
+      text,
+      prefix: control.value.slice(Math.max(0, start - 120), start),
+      suffix: control.value.slice(end, end + 120)
+    };
+  }
+
+  function currentPageSelectionText() {
+    const selected = window.getSelection()?.toString() || "";
+    if (selected.trim()) return selected;
+    return getGitHubCodeControlSelection(document.activeElement)?.text || "";
+  }
+
+  function findRangeByText(text, prefix, suffix) {
+    if (!text) return null;
+    const githubRange = findGitHubCodeRange(text, prefix, suffix);
+    if (githubRange) return githubRange;
+    const { segs, fullText } = buildTextSegments();
+    const pos = findTextPosition(fullText, text, prefix, suffix);
+    if (pos < 0) return null;
     const start = positionToNode(segs, pos);
     const end = positionToNode(segs, pos + text.length);
     if (!start || !end) return null;
