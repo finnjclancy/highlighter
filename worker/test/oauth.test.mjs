@@ -86,6 +86,16 @@ test("publishes protected-resource and OAuth discovery metadata", async () => {
   assert.deepEqual(metadata.code_challenge_methods_supported, ["S256"]);
 });
 
+test("serves the exact OpenAI domain challenge only when configured", async () => {
+  const env = testEnv();
+  const missing = await fetchWorker(env, "/.well-known/openai-apps-challenge");
+  assert.equal(missing.status, 404);
+  env.OPENAI_APPS_CHALLENGE = "openai-domain-verification-token";
+  const configured = await fetchWorker(env, "/.well-known/openai-apps-challenge");
+  assert.equal(configured.status, 200);
+  assert.equal(await configured.text(), "openai-domain-verification-token");
+});
+
 test("pairs a browser through OAuth authorization code and PKCE", async () => {
   const env = testEnv();
   const client = await registerClient(env);

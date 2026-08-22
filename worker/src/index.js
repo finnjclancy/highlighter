@@ -547,7 +547,7 @@ export function createHighlighterMcpServer(env, bridgeKey) {
       action: z.enum(["list", "add_comment", "add_reaction"]), id: z.string().max(40).optional(), url: httpUrl().optional(),
       author: z.string().max(40).optional(), text: z.string().max(2000).optional(), highlightId: highlightId().optional(),
       reaction: z.enum(["👍", "❤️", "💡", "❓", "✅"]).optional()
-    }, annotations: { ...mutating, openWorldHint: true }
+    }, annotations: { ...mutating, destructiveHint: true, openWorldHint: true }
   }, input => ({ type: "collaborate_on_live_link", ...input }), value => JSON.stringify(value));
 
   registerBridgeTool("get_highlight_context", {
@@ -988,6 +988,13 @@ export default {
 
     if (request.method === "GET" && ["/.well-known/oauth-authorization-server", "/.well-known/openid-configuration"].includes(url.pathname)) {
       return json(oauthMetadata(origin), 200, { "cache-control": "public, max-age=300" });
+    }
+
+    if (request.method === "GET" && url.pathname === "/.well-known/openai-apps-challenge") {
+      const challenge = String(env.OPENAI_APPS_CHALLENGE || "").trim();
+      return challenge
+        ? new Response(challenge, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } })
+        : new Response("Not configured", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
     }
 
     if (request.method === "POST" && url.pathname === "/oauth/register") {
