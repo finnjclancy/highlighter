@@ -146,7 +146,7 @@ Permission justifications:
 2. Select text and choose a colour from the Highlighter toolbar. Open the extension popup and choose **Open library / design** to verify the saved quote.
 3. In the Library, select one or more rows. **Copy for browser agent** stages their local IDs and copies a short instruction. **Open in ChatGPT web** opens or focuses `chatgpt.com` and fills the composer without sending; a ChatGPT account is needed only to test that optional destination.
 4. To test the optional MCP bridge, open the extension popup, press the **?** beside Agent connection, enable the connection, and copy the generated private Streamable HTTP URL into an MCP-compatible client. The connection exposes 24 tools. The private URL is generated locally and should not be included in review notes or screenshots.
-5. Open a selectable PDF in Highlighter's PDF Reader. **Ask agent** prepares a task for ChatGPT; the agent can call `get_pdf_document` to read page-numbered text and use `highlight_passages` to create exact marks. Highlighter opens or fills the composer but never presses Send.
+5. Open a selectable PDF in Highlighter's PDF Reader. **Copy for ChatGPT extension** copies an MCP instruction while keeping the PDF active; open the ChatGPT browser extension and paste it into a chat with Highlighter enabled. **Open ChatGPT web** is the separate web-tab option. The agent can call `get_pdf_document` to read page-numbered text and use `highlight_passages` to create exact marks. Highlighter never presses Send.
 6. PDF Deep Highlight is optional and requires accepting the in-product disclosure. All manual highlighting, Library, drawing, export, agent, and ordinary share-link features can be tested without accepting the Gemini disclosure.
 
 ## Final pre-submit checks

@@ -542,7 +542,7 @@ agentPdfCopy.addEventListener("click", async () => {
   try {
     await copyAgentPdfPrompt();
     agentPdfCopy.textContent = "Copied";
-    showAiToast("Agent prompt copied. Paste it into a chat where the Highlighter MCP connection is enabled.");
+    showAiToast("Copied. Keep this PDF open, launch the ChatGPT extension, and paste the instruction into a chat with Highlighter enabled.");
   } catch {
     agentPdfCopy.textContent = "Couldn’t copy";
   }
@@ -556,7 +556,7 @@ agentPdfOpen.addEventListener("click", async () => {
   agentPdfOpen.disabled = true;
   try {
     const mode = await openAgentPdfInChatGpt();
-    agentPdfOpen.textContent = mode === "inserted" ? "Added — review & send" : "Opened — prompt copied";
+    agentPdfOpen.textContent = mode === "inserted" ? "Added — review & send" : "Opened web — prompt copied";
   } catch (error) {
     agentPdfOpen.textContent = "Couldn’t open ChatGPT";
     showAiToast(error?.message || "ChatGPT could not be opened.", { error: true });
