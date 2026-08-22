@@ -597,8 +597,30 @@ async function stageSelectionForAgent(items) {
     "Use get_library_selection to load that exact set, then help me work with or organise it.",
     "If I ask for folder changes, check list_folders first and use organize_folders only after confirming the intended structure."
   ].join(" ");
-  await navigator.clipboard.writeText(prompt);
-  return selection;
+  return { selection, prompt };
+}
+
+async function addSelectionToChat(items) {
+  const staged = await stageSelectionForAgent(items);
+  const tabs = await chrome.tabs.query({ url: ["https://chatgpt.com/*", "https://chat.openai.com/*"] });
+  const target = tabs.sort((a, b) => Number(b.active) - Number(a.active) || Number(b.lastAccessed || 0) - Number(a.lastAccessed || 0))[0];
+  if (target?.id) {
+    try {
+      const result = await chrome.tabs.sendMessage(target.id, {
+        type: "insertHighlighterChatPrompt",
+        prompt: staged.prompt
+      });
+      if (result?.ok) {
+        await chrome.tabs.update(target.id, { active: true });
+        if (target.windowId !== undefined && chrome.windows?.update) {
+          await chrome.windows.update(target.windowId, { focused: true }).catch(() => {});
+        }
+        return { mode: "inserted" };
+      }
+    } catch {}
+  }
+  await navigator.clipboard.writeText(staged.prompt);
+  return { mode: "copied" };
 }
 
 function renderSelectionBar() {
@@ -647,8 +669,8 @@ function renderSelectionBar() {
       const original = button.textContent;
       button.disabled = true;
       try {
-        await stageSelectionForAgent(items);
-        button.textContent = "Copied — paste in chat";
+        const result = await addSelectionToChat(items);
+        button.textContent = result.mode === "inserted" ? "Added — review & send" : "No chat open — copied";
       } catch {
         button.textContent = "Couldn’t copy";
       }

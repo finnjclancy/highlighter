@@ -19,7 +19,7 @@ A clean browser extension for highlighting text on any web page with custom colo
 - **Design Studio** — drag-and-drop palette editor with presets, live preview, and per-swatch text/background pickers.
 - **Sharing** — generate a single link that works two ways: viewers without the extension see a clean reader-style gallery; viewers with the extension can jump straight to the source page with your highlights painted on it.
 - **Bulk management** — select several or all highlights directly in the page/PDF panel, or delete every highlight in the current filtered Library view, with confirmation before removal.
-- **Agent research workspace** — select highlights in the Library and add that exact set to a chat, then let ChatGPT or another MCP-compatible agent create, move, rename, merge, or remove folders; search and organize the full library; update or restore highlights; compare sources; export research; and manage collaborative live galleries.
+- **Agent research workspace** — select highlights in the Library and place that exact set into an open ChatGPT conversation, then let ChatGPT or another MCP-compatible agent create, move, rename, merge, or remove folders; search and organize the full library; update or restore highlights; compare sources; export research; and manage collaborative live galleries. Highlighter fills the composer but never presses Send for you.
 - **Fast actions** — highlight the current selection from the page context menu or with `Alt+Shift+H` (`⌃⇧H` on macOS).
 - **Privacy-first** — no accounts and no tracking. Highlights live in your own browser storage unless you explicitly copy them or create a share link.
 

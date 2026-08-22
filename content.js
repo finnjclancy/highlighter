@@ -1139,7 +1139,7 @@
       }
       sendResponse({ ok: true });
     }
-    return true;
+    return false;
   });
 
   // react to palette changes live

@@ -28,6 +28,7 @@ rm -f "$OUT_FILE"
 INCLUDE=(
   manifest.json
   background.js
+  chat-bridge.js
   content.js
   content.css
   drawing.js

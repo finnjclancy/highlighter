@@ -45,6 +45,12 @@
       "css": ["content.css", "drawing.css"],
       "run_at": "document_idle",
       "all_frames": false
+    },
+    {
+      "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      "js": ["chat-bridge.js"],
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [
