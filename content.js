@@ -80,7 +80,13 @@
   let resolveInitializationReady;
   const initializationReady = new Promise(resolve => { resolveInitializationReady = resolve; });
 
-  const SKIP_SELECTOR = "script,style,#hl-toolbar,#hl-panel,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-share-banner,#hl-hover-toolbar,#pdf-appbar,#pdf-sidebar,#pdf-status";
+  // Text controls expose their value through hidden/default text nodes on
+  // some sites. GitHub's code viewer, for example, places the entire file in
+  // an accessibility textarea before rendering a second, visible code layer.
+  // Anchoring to that first copy saves a valid quotation but paints nothing
+  // the user can see, so form controls must never participate in page-text
+  // matching or range restoration.
+  const SKIP_SELECTOR = "script,style,textarea,input,select,option,#hl-toolbar,#hl-panel,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-share-banner,#hl-hover-toolbar,#pdf-appbar,#pdf-sidebar,#pdf-status";
   const CONTEXT_LEN = 40;
 
   // ---------- storage ----------
@@ -163,9 +169,17 @@
     } catch { return null; }
   }
 
+  function rangeUsesSkippedContent(range) {
+    if (!range) return false;
+    const asElement = node => node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+    return [range.startContainer, range.endContainer].some(node =>
+      asElement(node)?.closest?.(SKIP_SELECTOR)
+    );
+  }
+
   // ---------- highlight rendering ----------
   function wrapRange(range, id, bg, fg, options = {}) {
-    const SKIP = "script,style,#hl-toolbar,#hl-panel,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-share-banner,#pdf-appbar,#pdf-sidebar,#pdf-status";
+    const SKIP = SKIP_SELECTOR;
     const nodes = [];
     const root = range.commonAncestorContainer;
 
@@ -249,6 +263,10 @@
   function applyHighlightSmart(h) {
     // Try the cheap XPath path first
     let range = h.range ? deserializeRange(h.range) : null;
+    // Previously saved GitHub code highlights may point into its invisible
+    // full-file textarea. Force those anchors through quote matching again so
+    // they migrate to the visible syntax-highlighted code on the next load.
+    if (rangeUsesSkippedContent(range)) range = null;
     if (!range || (h.text && range.toString().trim() !== h.text.trim())) {
       // Fall back to text-quote search if we have prefix/suffix anchors
       if (typeof findRangeByText === "function" && h.text) {
