@@ -13,7 +13,7 @@ A clean browser extension for highlighting text on any web page with custom colo
 - **Custom palette** — each swatch has its own text and background colour. Hover a highlight to re-colour or remove it instantly.
 - **Folders, tags, comments** — organise quotes the way you think. Free-form notes per highlight, batch-select and export selections as plain text or Markdown.
 - **Floating overlay** — a tiny burger in the bottom-left lists every highlight on the current page; click any to flash + scroll to it.
-- **PDF reader** — open browser PDFs in Highlighter's own selectable reader, then highlight and organise them with the same palette and library as web pages.
+- **PDF reader** — open browser PDFs in Highlighter's own selectable reader, then highlight and organise them with the same palette and library as web pages. A connected agent can read the rendered document in page ranges, create exact highlights, add notes/tags, undo edits, and publish the finished selection.
 - **Draw on the page** — pen, line, and rectangle tools for marking up diagrams, screenshots, or PDFs in-place.
 - **Library** — single dashboard for every highlight across every site. Filter by folder, site, or search.
 - **Design Studio** — drag-and-drop palette editor with presets, live preview, and per-swatch text/background pickers.
@@ -82,7 +82,7 @@ Toolbar icon → press the **?** beside the agent connection for the built-in se
 
 Treat the copied URL like a password. Press the connected-agent row to copy it again, or use × to disconnect and discard the local token. Developer mode availability can depend on the ChatGPT account and workspace policy; see the [official OpenAI setup guide](https://developers.openai.com/plugins/deploy/connect-chatgpt) for current details.
 
-The connection exposes 23 focused tools. Alongside active-page reading, exact highlighting, quote retrieval, reversible removal, and live-link creation, an agent can load the exact highlights staged from the Library, inspect and reorganize folders, update notes/tags/colours, search the entire local library, list highlighted pages, undo operations, highlight the current browser selection, export Markdown/JSON/CSV/BibTeX/RIS, prepare source-linked summaries and cross-page comparisons, add page notes, capture snapshots, manage or revoke protected live links, collaborate with attributed comments/reactions, retrieve surrounding context, and open a saved passage in Chrome.
+The connection exposes 24 focused tools. Alongside active-page reading, page-ranged PDF reading, exact highlighting, quote retrieval, reversible removal, and live-link creation, an agent can load the exact highlights staged from the Library, inspect and reorganize folders, update notes/tags/colours, search the entire local library, list highlighted pages, undo operations, highlight the current browser selection, export Markdown/JSON/CSV/BibTeX/RIS, prepare source-linked summaries and cross-page comparisons, add page notes, capture snapshots, manage or revoke protected live links, collaborate with attributed comments/reactions, retrieve surrounding context, and open a saved passage in Chrome.
 
 Every highlight mutation returns an operation ID and can be reversed. Summary and comparison tools return only your marked passages and source links; the connected model performs the synthesis. Live links can be unlisted or password-protected, can expire from 1–365 days, and receive a local-only management credential so the agent can refresh or revoke links without exposing that credential in chat.
 

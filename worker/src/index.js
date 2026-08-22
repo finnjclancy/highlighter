@@ -142,9 +142,9 @@ function toolResult(result, successText, structuredResult = value => value) {
 
 export function createHighlighterMcpServer(env, token) {
   const server = new McpServer(
-    { name: "highlighter", version: "2.1.0" },
+    { name: "highlighter", version: "2.2.0" },
     {
-      instructions: "Use get_active_page when the target is uncertain, then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged from the Library for ChatGPT web or a browser agent. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
+      instructions: "Use get_active_page when the target is uncertain. For a PDF open in Highlighter's reader, use get_pdf_document to read page-numbered source text before choosing exact quotations for highlight_passages. Then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged from the Library for ChatGPT web or a browser agent. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
     }
   );
 
@@ -169,6 +169,50 @@ export function createHighlighterMcpServer(env, token) {
         title: value.title,
         selection: value.selection || "",
         highlightCount: value.highlightCount || 0
+      }));
+    }
+  );
+
+  server.registerTool(
+    "get_pdf_document",
+    {
+      title: "Read an open PDF",
+      description: "Read page-numbered selectable text from a PDF currently open in Highlighter's PDF Reader. Use the returned source URL and copy quotations exactly into highlight_passages. Long PDFs can be read in consecutive page ranges with startPage and pageCount.",
+      inputSchema: {
+        url: z.string().url().refine(value => /^https?:\/\//i.test(value), "Use an HTTP(S) PDF source URL").optional(),
+        startPage: z.number().int().min(1).optional().describe("First PDF page to read; defaults to 1"),
+        pageCount: z.number().int().min(1).max(30).optional().describe("Number of consecutive pages to read; defaults to 12"),
+        maxChars: z.number().int().min(10000).max(180000).optional().describe("Maximum extracted characters to return; defaults to 120000")
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ url, startPage, pageCount, maxChars }) => {
+      const bridge = await agentBridgeForToken(env, token);
+      const result = await bridge.issueCommand({
+        type: "get_pdf_document",
+        ...(url ? { url } : {}),
+        ...(startPage ? { startPage } : {}),
+        ...(pageCount ? { pageCount } : {}),
+        ...(maxChars ? { maxChars } : {})
+      });
+      return toolResult(result, value => {
+        const continuation = value.nextPage
+          ? `\n\n[More pages are available. Continue with startPage ${value.nextPage}.]`
+          : "";
+        return `${value.text}${continuation}`;
+      }, value => ({
+        url: value.url,
+        title: value.title,
+        pageCount: value.pageCount,
+        startPage: value.startPage,
+        endPage: value.endPage,
+        nextPage: value.nextPage,
+        truncated: value.truncated === true
       }));
     }
   );

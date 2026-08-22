@@ -35,7 +35,7 @@ test("registers text, removal, and live-link tools with the intended annotations
 test("registers the complete library, history, export, sharing, and collaboration toolset", () => {
   const { server } = serverWithBridge(() => ({ ok: true }));
   const expected = [
-    "get_active_page", "highlight_passages", "get_highlighted_text", "remove_highlights", "create_live_link",
+    "get_active_page", "get_pdf_document", "highlight_passages", "get_highlighted_text", "remove_highlights", "create_live_link",
     "update_highlight", "search_highlights", "list_highlighted_pages", "restore_highlights", "highlight_selection",
     "export_highlights", "summarize_highlights", "bulk_tag_highlights", "add_page_note", "capture_snapshot",
     "compare_pages", "manage_live_links", "collaborate_on_live_link", "get_highlight_context", "open_highlight",
@@ -48,6 +48,39 @@ test("registers the complete library, history, export, sharing, and collaboratio
   assert.equal(server._registeredTools.get_library_selection.annotations.readOnlyHint, true);
   assert.equal(server._registeredTools.list_folders.annotations.readOnlyHint, true);
   assert.equal(server._registeredTools.organize_folders.annotations.destructiveHint, true);
+});
+
+test("get_pdf_document forwards a page range and returns continuation metadata", async () => {
+  const { server, commands } = serverWithBridge(() => ({
+    ok: true,
+    url: "https://example.com/paper.pdf",
+    title: "Example paper",
+    pageCount: 40,
+    startPage: 5,
+    endPage: 12,
+    nextPage: 13,
+    truncated: true,
+    text: "[Page 5]\nExact PDF text."
+  }));
+
+  const result = await server._registeredTools.get_pdf_document.handler({
+    url: "https://example.com/paper.pdf",
+    startPage: 5,
+    pageCount: 8,
+    maxChars: 80000
+  });
+
+  assert.deepEqual(commands, [{
+    type: "get_pdf_document",
+    url: "https://example.com/paper.pdf",
+    startPage: 5,
+    pageCount: 8,
+    maxChars: 80000
+  }]);
+  assert.match(result.content[0].text, /Exact PDF text/);
+  assert.match(result.content[0].text, /startPage 13/);
+  assert.equal(result.structuredContent.nextPage, 13);
+  assert.equal(result.structuredContent.pageCount, 40);
 });
 
 test("library selection and folder organization forward exact agent commands", async () => {

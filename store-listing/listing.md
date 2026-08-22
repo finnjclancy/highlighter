@@ -43,9 +43,9 @@ Key features:
 - Select a precise set of Library highlights, open a prepared instruction in ChatGPT web, or copy it for a browser agent
 - Export selected highlights as plain text or Markdown
 - Draw on pages with pen, line, and rectangle tools
-- Highlight selectable PDFs manually or use optional AI-assisted Deep Highlight after reviewing its disclosure
+- Highlight selectable PDFs manually, use optional AI-assisted Deep Highlight after reviewing its disclosure, or ask a connected agent to read the open PDF and create exact annotated highlights
 - Create share links for a page's highlights
-- Optionally connect ChatGPT or another MCP-compatible agent through 23 focused MCP tools so it can retrieve an exact staged Library selection, search the full library, create or reorganize folders, make reversible edits, compare sources, export research, and create or manage protected live links
+- Optionally connect ChatGPT or another MCP-compatible agent through 24 focused MCP tools so it can read PDFs open in Highlighter, retrieve an exact staged Library selection, search the full library, create or reorganize folders, make reversible edits, compare sources, export research, and create or manage protected live links
 - Highlight the current browser selection from the context menu or a keyboard shortcut
 - Let recipients read shared highlights in a clean gallery, or reopen them on the original page with Highlighter installed
 - Customize highlight colours in Design Studio
@@ -145,8 +145,9 @@ Permission justifications:
 1. Install the submitted ZIP and open any ordinary HTTPS article.
 2. Select text and choose a colour from the Highlighter toolbar. Open the extension popup and choose **Open library / design** to verify the saved quote.
 3. In the Library, select one or more rows. **Copy for browser agent** stages their local IDs and copies a short instruction. **Open in ChatGPT web** opens or focuses `chatgpt.com` and fills the composer without sending; a ChatGPT account is needed only to test that optional destination.
-4. To test the optional MCP bridge, open the extension popup, press the **?** beside Agent connection, enable the connection, and copy the generated private Streamable HTTP URL into an MCP-compatible client. The connection exposes 23 tools. The private URL is generated locally and should not be included in review notes or screenshots.
-5. PDF AI highlighting is optional and requires accepting the in-product disclosure. All manual highlighting, Library, drawing, export, and ordinary share-link features can be tested without an account.
+4. To test the optional MCP bridge, open the extension popup, press the **?** beside Agent connection, enable the connection, and copy the generated private Streamable HTTP URL into an MCP-compatible client. The connection exposes 24 tools. The private URL is generated locally and should not be included in review notes or screenshots.
+5. Open a selectable PDF in Highlighter's PDF Reader. **Ask agent** prepares a task for ChatGPT; the agent can call `get_pdf_document` to read page-numbered text and use `highlight_passages` to create exact marks. Highlighter opens or fills the composer but never presses Send.
+6. PDF Deep Highlight is optional and requires accepting the in-product disclosure. All manual highlighting, Library, drawing, export, agent, and ordinary share-link features can be tested without accepting the Gemini disclosure.
 
 ## Final pre-submit checks
 

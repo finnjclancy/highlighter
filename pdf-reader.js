@@ -30,6 +30,14 @@ const aiOptionsClose = document.getElementById("ai-options-close");
 const aiFocus = document.getElementById("ai-focus");
 const aiFocusClear = document.getElementById("ai-focus-clear");
 const aiFocusRun = document.getElementById("ai-focus-run");
+const agentPdfButton = document.getElementById("agent-pdf");
+const agentPdfDot = document.getElementById("agent-pdf-dot");
+const agentPdfPanel = document.getElementById("agent-pdf-panel");
+const agentPdfClose = document.getElementById("agent-pdf-close");
+const agentPdfStatus = document.getElementById("agent-pdf-status");
+const agentPdfTask = document.getElementById("agent-pdf-task");
+const agentPdfCopy = document.getElementById("agent-pdf-copy");
+const agentPdfOpen = document.getElementById("agent-pdf-open");
 
 const AI_ENDPOINT = "https://highlighter-share.finnjclancy.workers.dev/api/ai/highlights";
 const AI_CONSENT_KEY = "hl_ai_gemini_consent_v1";
@@ -48,6 +56,7 @@ let aiRanForDocument = false;
 let consentResolver = null;
 let toastTimer = null;
 let aiProgressTimers = [];
+let agentConnection = { enabled: false, connected: false };
 
 function getSourceUrl() {
   try {
@@ -151,9 +160,77 @@ async function getAiPreferences() {
 }
 
 function setAiOptionsOpen(open) {
+  if (open) setAgentPdfOpen(false);
   aiOptionsPanel.hidden = !open;
   aiOptionsToggle.setAttribute("aria-expanded", String(open));
   if (open) setTimeout(() => aiFocus.focus(), 0);
+}
+
+function setAgentPdfOpen(open) {
+  agentPdfPanel.hidden = !open;
+  agentPdfButton.setAttribute("aria-expanded", String(open));
+  if (open) {
+    setAiOptionsOpen(false);
+    refreshAgentConnection();
+    setTimeout(() => agentPdfTask.focus(), 0);
+  }
+}
+
+function renderAgentConnection() {
+  const connected = agentConnection.connected === true;
+  const enabled = agentConnection.enabled === true;
+  agentPdfDot.classList.toggle("connected", connected);
+  agentPdfDot.classList.toggle("reconnecting", enabled && !connected);
+  agentPdfStatus.textContent = connected
+    ? "Connected — your PDF tools are ready"
+    : enabled
+      ? "Agent is reconnecting — keep Chrome open"
+      : "Connect an agent from the Highlighter extension menu first";
+  agentPdfCopy.disabled = !connected || !pdfDocument;
+  agentPdfOpen.disabled = !connected || !pdfDocument;
+}
+
+async function refreshAgentConnection() {
+  try {
+    const status = await chrome.runtime.sendMessage({ type: "getAgentConnectionStatus" });
+    agentConnection = {
+      enabled: status?.enabled === true,
+      connected: status?.connected === true
+    };
+  } catch {
+    agentConnection = { enabled: false, connected: false };
+  }
+  renderAgentConnection();
+}
+
+function buildAgentPdfPrompt() {
+  const task = String(agentPdfTask.value || "").replace(/\s+/g, " ").trim() ||
+    "Highlight the central claims, strongest evidence, and important caveats. Add a concise note to each highlight.";
+  const cleanSource = new URL(sourceUrl.href);
+  cleanSource.searchParams.delete("hlshare");
+  return [
+    `I am viewing “${titleEl.textContent}” in Highlighter's PDF Reader.`,
+    `Use get_pdf_document with the source URL ${cleanSource.href} to read the PDF, continuing through later page ranges when needed.`,
+    `Task: ${task}`,
+    "When you create highlights, use highlight_passages with exact quotations from get_pdf_document and this same source URL. Keep notes concise, use useful tags, and tell me what you changed. Do not create a live link unless I ask for one."
+  ].join(" ");
+}
+
+async function copyAgentPdfPrompt() {
+  const prompt = buildAgentPdfPrompt();
+  await navigator.clipboard.writeText(prompt);
+  return prompt;
+}
+
+async function openAgentPdfInChatGpt() {
+  const prompt = buildAgentPdfPrompt();
+  const result = await chrome.runtime.sendMessage({
+    type: "openChatGptWithHighlighterPrompt",
+    prompt
+  });
+  if (!result?.ok) throw new Error(result?.error || "ChatGPT could not be opened.");
+  if (result.mode !== "inserted") await navigator.clipboard.writeText(prompt);
+  return result.mode;
 }
 
 function updateFocusIndicator(value) {
@@ -421,6 +498,7 @@ async function renderDocument() {
   annotateAiSpans();
   setAiBusy(false);
   window.dispatchEvent(new Event("hl-pdf-rendered"));
+  renderAgentConnection();
   maybeRunAiAutomatically();
 }
 
@@ -447,6 +525,47 @@ aiOptionsToggle.addEventListener("click", event => {
   event.stopPropagation();
   setAiOptionsOpen(aiOptionsPanel.hidden);
 });
+agentPdfButton.addEventListener("click", event => {
+  event.stopPropagation();
+  setAgentPdfOpen(agentPdfPanel.hidden);
+});
+agentPdfClose.addEventListener("click", () => setAgentPdfOpen(false));
+document.querySelectorAll("[data-agent-preset]").forEach(button => {
+  button.addEventListener("click", () => {
+    agentPdfTask.value = button.dataset.agentPreset || "";
+    agentPdfTask.focus();
+  });
+});
+agentPdfCopy.addEventListener("click", async () => {
+  const original = agentPdfCopy.textContent;
+  agentPdfCopy.disabled = true;
+  try {
+    await copyAgentPdfPrompt();
+    agentPdfCopy.textContent = "Copied";
+    showAiToast("Agent prompt copied. Paste it into a chat where the Highlighter MCP connection is enabled.");
+  } catch {
+    agentPdfCopy.textContent = "Couldn’t copy";
+  }
+  setTimeout(() => {
+    agentPdfCopy.textContent = original;
+    renderAgentConnection();
+  }, 1800);
+});
+agentPdfOpen.addEventListener("click", async () => {
+  const original = agentPdfOpen.textContent;
+  agentPdfOpen.disabled = true;
+  try {
+    const mode = await openAgentPdfInChatGpt();
+    agentPdfOpen.textContent = mode === "inserted" ? "Added — review & send" : "Opened — prompt copied";
+  } catch (error) {
+    agentPdfOpen.textContent = "Couldn’t open ChatGPT";
+    showAiToast(error?.message || "ChatGPT could not be opened.", { error: true });
+  }
+  setTimeout(() => {
+    agentPdfOpen.textContent = original;
+    renderAgentConnection();
+  }, 2200);
+});
 aiOptionsClose.addEventListener("click", () => setAiOptionsOpen(false));
 aiFocusClear.addEventListener("click", async () => {
   await saveAiFocus("");
@@ -464,8 +583,12 @@ document.querySelectorAll("[data-ai-preset]").forEach(button => {
   });
 });
 document.addEventListener("mousedown", event => {
-  if (aiOptionsPanel.hidden || aiOptionsPanel.contains(event.target) || aiOptionsToggle.contains(event.target)) return;
-  setAiOptionsOpen(false);
+  if (!aiOptionsPanel.hidden && !aiOptionsPanel.contains(event.target) && !aiOptionsToggle.contains(event.target)) {
+    setAiOptionsOpen(false);
+  }
+  if (!agentPdfPanel.hidden && !agentPdfPanel.contains(event.target) && !agentPdfButton.contains(event.target)) {
+    setAgentPdfOpen(false);
+  }
 });
 aiAuto.addEventListener("change", async () => {
   if (aiAuto.checked && !(await ensureAiConsent())) {
@@ -488,6 +611,10 @@ window.addEventListener("keydown", event => {
     setAiOptionsOpen(false);
     return;
   }
+  if (event.key === "Escape" && !agentPdfPanel.hidden) {
+    setAgentPdfOpen(false);
+    return;
+  }
   if (event.key === "Escape" && !aiConsent.hidden) {
     closeAiConsent(false);
     return;
@@ -508,5 +635,7 @@ getAiPreferences().then(preferences => {
   aiAuto.checked = !!preferences[AI_AUTO_KEY];
   updateFocusIndicator(focus);
 });
+
+refreshAgentConnection();
 
 loadDocument();

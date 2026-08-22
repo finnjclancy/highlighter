@@ -33,6 +33,10 @@
             <svg aria-hidden="true" viewBox="0 0 12 8" width="12" height="8"><path d="M1.5 1.5 6 6l4.5-4.5"/></svg>
           </button>
         </div>
+        <button id="agent-pdf" class="pdf-agent-button" type="button" aria-label="Ask agent" aria-expanded="false" title="Ask your connected agent to read and work with this PDF">
+          <span id="agent-pdf-dot" class="pdf-agent-dot" aria-hidden="true"></span>
+          <span id="agent-pdf-label">Ask agent</span>
+        </button>
         <label class="pdf-ai-auto" title="Automatically create AI highlights when a PDF opens">
           <input id="ai-auto" type="checkbox">
           <span class="pdf-ai-auto-track" aria-hidden="true"><span></span></span>
@@ -65,6 +69,29 @@
     <div class="pdf-ai-options-actions">
       <button id="ai-focus-clear" type="button">Clear focus</button>
       <button id="ai-focus-run" class="primary" type="button">Follow this instruction</button>
+    </div>
+  </section>
+
+  <section id="agent-pdf-panel" class="pdf-agent-panel" aria-labelledby="agent-pdf-title" hidden>
+    <div class="pdf-agent-head">
+      <div>
+        <strong id="agent-pdf-title">Work with this PDF</strong>
+        <span id="agent-pdf-status">Checking your agent connection…</span>
+      </div>
+      <button id="agent-pdf-close" type="button" aria-label="Close agent options">×</button>
+    </div>
+    <label for="agent-pdf-task">What should your agent do?</label>
+    <textarea id="agent-pdf-task" rows="4" maxlength="1200" placeholder="e.g. Highlight the central claim, strongest evidence, and two important limitations. Add a short note to each."></textarea>
+    <div class="pdf-agent-presets" aria-label="Agent task presets">
+      <button type="button" data-agent-preset="Highlight the paper's central claims and indispensable concepts. Add a concise explanatory note to each highlight.">Key ideas</button>
+      <button type="button" data-agent-preset="Highlight the methodology and strongest supporting evidence. Use different colors for methods and findings, and add concise notes.">Methods &amp; evidence</button>
+      <button type="button" data-agent-preset="Read critically. Highlight assumptions, limitations, unsupported leaps, counterarguments, and threats to validity. Add a short critical note to each.">Critical review</button>
+      <button type="button" data-agent-preset="Highlight every passage directly relevant to my question, using exact quotations from the PDF and brief notes explaining the connection.">My question</button>
+    </div>
+    <p class="pdf-agent-capability">The connected agent can read the open PDF, create exact highlights, add notes and tags, undo edits, and make a live sharing link.</p>
+    <div class="pdf-agent-actions">
+      <button id="agent-pdf-copy" type="button">Copy prompt</button>
+      <button id="agent-pdf-open" class="primary" type="button">Open in ChatGPT</button>
     </div>
   </section>
 

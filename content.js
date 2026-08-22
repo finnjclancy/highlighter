@@ -1084,10 +1084,15 @@
     } else if (msg.type === "getAgentPageState") {
       sendResponse({
         ok: true,
+        url: pageIdentityUrl().href,
         title: document.title,
         selection: (window.getSelection()?.toString() || "").trim().slice(0, 4000),
-        highlightCount: highlights.length
+        highlightCount: highlights.length,
+        isPdfReader: location.protocol === "chrome-extension:" && location.pathname.endsWith("/pdf-reader.html")
       });
+    } else if (msg.type === "getAgentPdfDocument") {
+      initializationReady.then(() => getAgentPdfDocument(msg)).then(sendResponse);
+      return true;
     } else if (msg.type === "agentHighlightPassages") {
       initializationReady.then(() => addAgentPassages(msg.passages)).then(sendResponse);
       return true;
@@ -1189,6 +1194,72 @@
     }
     walkRoot(document.body);
     return { segs, fullText: segs.map(s => s.node.nodeValue).join("") };
+  }
+
+  function textFromRoot(root) {
+    if (!root) return "";
+    const parts = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue?.length) return NodeFilter.FILTER_REJECT;
+        if (node.parentElement?.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    let node;
+    while ((node = walker.nextNode())) parts.push(node.nodeValue);
+    return parts.join("");
+  }
+
+  function getAgentPdfDocument(options = {}) {
+    const isPdfReader = location.protocol === "chrome-extension:" && location.pathname.endsWith("/pdf-reader.html");
+    if (!isPdfReader) {
+      return { ok: false, error: "This tool reads PDFs that are open in Highlighter's PDF Reader." };
+    }
+    const pages = [...document.querySelectorAll(".pdf-page")];
+    if (!pages.length || document.body.classList.contains("pdf-rendering")) {
+      return { ok: false, error: "The PDF is still rendering. Try again in a moment." };
+    }
+
+    const startPage = Math.max(1, Math.min(pages.length, Number(options.startPage) || 1));
+    const pageCount = Math.max(1, Math.min(30, Number(options.pageCount) || 12));
+    const maxChars = Math.max(10_000, Math.min(180_000, Number(options.maxChars) || 120_000));
+    const selectedPages = pages.slice(startPage - 1, startPage - 1 + pageCount);
+    const blocks = [];
+    let used = 0;
+    let lastPage = startPage - 1;
+    let truncated = false;
+
+    for (const page of selectedPages) {
+      const pageNumber = Number(page.dataset.pageNumber) || lastPage + 1;
+      const pageText = textFromRoot(page);
+      const block = `[Page ${pageNumber}]\n${pageText}`;
+      const separatorChars = blocks.length ? 2 : 0;
+      if (used + separatorChars + block.length > maxChars) {
+        if (!blocks.length) {
+          blocks.push(block.slice(0, maxChars));
+          used = maxChars;
+          lastPage = pageNumber;
+        }
+        truncated = true;
+        break;
+      }
+      blocks.push(block);
+      used += separatorChars + block.length;
+      lastPage = pageNumber;
+    }
+
+    const hasMorePages = lastPage < pages.length;
+    return {
+      ok: true,
+      title: document.title.replace(/\s+-\s+Highlighter$/, ""),
+      pageCount: pages.length,
+      startPage,
+      endPage: lastPage,
+      nextPage: hasMorePages ? lastPage + 1 : null,
+      truncated: truncated || hasMorePages,
+      text: blocks.join("\n\n")
+    };
   }
 
   function positionToNode(segs, pos) {

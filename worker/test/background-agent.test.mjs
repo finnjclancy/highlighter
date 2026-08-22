@@ -22,6 +22,10 @@ async function loadBackground() {
     "hl_page_https://example.com/article": highlights
   };
   const tab = { id: 7, url: "https://example.com/article", title: "Example article" };
+  const pdfTab = {
+    id: 8,
+    title: "Example paper - Highlighter"
+  };
   const listeners = { socket: null };
   const tabMessages = [];
   const chrome = {
@@ -44,9 +48,31 @@ async function loadBackground() {
       sync: { async get() { return {}; }, async set() {} }
     },
     tabs: {
-      async query() { return [tab]; },
-      async sendMessage(_tabId, message) {
+      async query() { return [tab, pdfTab]; },
+      async sendMessage(tabId, message) {
         tabMessages.push(message);
+        if (tabId === pdfTab.id && message.type === "getAgentPageState") {
+          return {
+            ok: true,
+            url: "https://example.com/paper.pdf",
+            title: "Example paper",
+            selection: "",
+            highlightCount: 0,
+            isPdfReader: true
+          };
+        }
+        if (tabId === pdfTab.id && message.type === "getAgentPdfDocument") {
+          return {
+            ok: true,
+            title: "Example paper",
+            pageCount: 12,
+            startPage: Number(message.startPage) || 1,
+            endPage: 4,
+            nextPage: 5,
+            truncated: true,
+            text: "[Page 1]\nExact PDF text."
+          };
+        }
         if (message.type === "getContextForShare") return { ok: true, highlights };
         if (message.type === "agentRemoveHighlights") {
           const requested = new Set(message.ids);
@@ -114,6 +140,22 @@ test("background returns highlighted text in a chat-ready format", async () => {
   assert.match(result.text, /A saved quote\./);
   assert.match(result.text, /Tags: Research/);
   assert.match(result.text, /Note: Useful/);
+});
+
+test("background reads an exact PDF source from the open Highlighter reader", async () => {
+  const { handleAgentCommand, tabMessages } = await loadBackground();
+  const result = await handleAgentCommand({
+    type: "get_pdf_document",
+    url: "https://example.com/paper.pdf",
+    startPage: 1,
+    pageCount: 4
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.url, "https://example.com/paper.pdf");
+  assert.equal(result.pageCount, 12);
+  assert.match(result.text, /Exact PDF text/);
+  assert.equal(tabMessages.at(-1).type, "getAgentPdfDocument");
 });
 
 test("background creates and records a live share", async () => {

@@ -97,6 +97,7 @@ async function connectAgentBridge() {
     try { command = JSON.parse(event.data); } catch { return; }
     if (!command?.id || ![
       "get_active_page",
+      "get_pdf_document",
       "highlight_passages",
       "get_highlighted_text",
       "create_live_link",
@@ -165,13 +166,30 @@ async function activeAgentTab() {
   return tab || null;
 }
 
+async function resolveAgentTab(tab) {
+  if (!tab?.id) return { tab: null, url: "", state: {} };
+  let state = {};
+  try { state = await chrome.tabs.sendMessage(tab.id, { type: "getAgentPageState" }); } catch {}
+  const url = canonicalAgentUrl(tab.url) || canonicalAgentUrl(state?.url);
+  return {
+    tab: url ? { ...tab, url } : tab,
+    url,
+    state: state && typeof state === "object" ? state : {}
+  };
+}
+
 async function findAgentTargetTab(targetUrl) {
   const wanted = canonicalAgentUrl(targetUrl);
   if (!wanted) return null;
-  const active = await activeAgentTab();
-  if (active && canonicalAgentUrl(active.url) === wanted) return active;
+  const active = await resolveAgentTab(await activeAgentTab());
+  if (active.url === wanted) return active.tab;
   const tabs = await chrome.tabs.query({});
-  return tabs.find(tab => canonicalAgentUrl(tab.url) === wanted) || null;
+  for (const tab of tabs) {
+    if (tab.id === active.tab?.id) continue;
+    const resolved = await resolveAgentTab(tab);
+    if (resolved.url === wanted) return resolved.tab;
+  }
+  return null;
 }
 
 function agentPageKeyDisambiguator(url) {
@@ -785,8 +803,10 @@ async function manageAgentLiveLinks(command) {
 }
 
 async function resolveAgentPage(command) {
-  const tab = command.url ? await findAgentTargetTab(command.url) : await activeAgentTab();
-  const pageUrl = canonicalAgentUrl(tab?.url);
+  const candidate = command.url ? await findAgentTargetTab(command.url) : await activeAgentTab();
+  const resolved = await resolveAgentTab(candidate);
+  const tab = resolved.tab;
+  const pageUrl = resolved.url;
   if (!tab?.id || !pageUrl) {
     return { error: command.url
       ? "That exact page is not open in the paired Chrome browser."
@@ -798,17 +818,42 @@ async function resolveAgentPage(command) {
 async function handleAgentCommand(command) {
   try {
     if (command.type === "get_active_page") {
-      const tab = await activeAgentTab();
-      const url = canonicalAgentUrl(tab?.url);
+      const resolved = await resolveAgentTab(await activeAgentTab());
+      const tab = resolved.tab;
+      const url = resolved.url;
       if (!tab?.id || !url) return { ok: false, error: "The active tab is not an HTTP(S) page." };
-      let state = {};
-      try { state = await chrome.tabs.sendMessage(tab.id, { type: "getAgentPageState" }); } catch {}
+      const state = resolved.state;
       return {
         ok: true,
         url,
         title: tab.title || state.title || "",
         selection: state.selection || "",
         highlightCount: Number(state.highlightCount || 0)
+      };
+    }
+
+    if (command.type === "get_pdf_document") {
+      const page = await resolveAgentPage(command);
+      if (page.error) return { ok: false, error: page.error };
+      let result;
+      try {
+        result = await chrome.tabs.sendMessage(page.tab.id, {
+          type: "getAgentPdfDocument",
+          startPage: command.startPage,
+          pageCount: command.pageCount,
+          maxChars: command.maxChars
+        });
+      } catch {}
+      if (!result?.ok) {
+        return {
+          ok: false,
+          error: result?.error || "That page is not open in Highlighter's PDF Reader. Open the PDF in the reader, then try again."
+        };
+      }
+      return {
+        ...result,
+        url: page.pageUrl,
+        title: page.tab.title || result.title || ""
       };
     }
 
@@ -1116,6 +1161,31 @@ async function highlightCurrentSelection(tab, color = "yellow") {
   try { return await chrome.tabs.sendMessage(tab.id, { type: "agentHighlightSelection", color, tags: [] }); } catch { return null; }
 }
 
+async function openChatGptWithHighlighterPrompt(rawPrompt) {
+  const prompt = String(rawPrompt || "").trim().slice(0, 8000);
+  if (!prompt) return { ok: false, error: "The chat prompt is empty." };
+  const tabs = await chrome.tabs.query({ url: ["https://chatgpt.com/*", "https://chat.openai.com/*"] });
+  let target = tabs.sort((a, b) => Number(b.active) - Number(a.active) || Number(b.lastAccessed || 0) - Number(a.lastAccessed || 0))[0];
+  if (!target?.id) target = await chrome.tabs.create({ url: "https://chatgpt.com/" });
+  if (!target?.id) return { ok: false, error: "ChatGPT could not be opened." };
+
+  await chrome.tabs.update(target.id, { active: true });
+  if (target.windowId !== undefined && chrome.windows?.update) {
+    await chrome.windows.update(target.windowId, { focused: true }).catch(() => {});
+  }
+  for (let attempt = 0; attempt < 20; attempt++) {
+    try {
+      const result = await chrome.tabs.sendMessage(target.id, {
+        type: "insertHighlighterChatPrompt",
+        prompt
+      });
+      if (result?.ok) return { ok: true, mode: "inserted" };
+    } catch {}
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+  return { ok: true, mode: "opened" };
+}
+
 chrome.contextMenus?.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "hl-open-library") {
     chrome.tabs.create({ url: chrome.runtime.getURL("library.html") });
@@ -1161,6 +1231,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   } else if (msg.type === "setAgentConnectionEnabled") {
     setAgentConnectionEnabled(msg.enabled === true).then(sendResponse);
+    return true;
+  } else if (msg.type === "openChatGptWithHighlighterPrompt") {
+    openChatGptWithHighlighterPrompt(msg.prompt).then(sendResponse);
     return true;
   } else if (msg.type === "recordHighlightRemoval") {
     const pageUrl = canonicalAgentUrl(msg.pageUrl);
