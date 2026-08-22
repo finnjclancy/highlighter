@@ -5,14 +5,14 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
+const { chromium } = globalThis.__highlighterPlaywright || require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const OUT_DIR = join(ROOT, "store-listing", "assets");
 const PROFILE_DIR = join(ROOT, "output", "playwright", "highlighter-store-profile");
-const EXTENSION_DIR = ROOT;
-const CHROME = process.env.CHROME_EXECUTABLE || chromium.executablePath();
+const EXTENSION_DIR = globalThis.__highlighterExtensionDir || ROOT;
+const CHROME = globalThis.__highlighterChromeExecutable || process.env.CHROME_EXECUTABLE || chromium.executablePath();
 
 const palette = [
   { name: "Yellow", bg: "#fff59d", fg: "#1a1a1a" },
@@ -25,7 +25,7 @@ const palette = [
   { name: "Dark", bg: "#263238", fg: "#ffffff" }
 ];
 
-const now = Date.UTC(2026, 4, 18, 10, 30, 0);
+const now = Date.UTC(2026, 7, 22, 10, 30, 0);
 
 function htmlPage(body) {
   return `<!doctype html><html lang="en">${body}</html>`;
@@ -443,7 +443,7 @@ function sharePayload(baseUrl) {
   };
 }
 
-async function main() {
+export async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   await rm(PROFILE_DIR, { recursive: true, force: true });
   await mkdir(PROFILE_DIR, { recursive: true });
@@ -508,7 +508,11 @@ async function main() {
     }, seedData(baseUrl));
     await library.reload({ waitUntil: "domcontentloaded" });
     await library.waitForFunction(() => document.querySelectorAll("#results .row").length >= 8);
+    await library.locator("#results .row .rcheck").nth(0).click();
+    await library.locator("#results .row .rcheck").nth(1).click();
+    await library.waitForFunction(() => document.querySelector(".sel-chatgpt")?.textContent.includes("ChatGPT web"));
     await library.screenshot({ path: join(OUT_DIR, "screenshot-4-library.png") });
+    await library.locator(".sel-clear").click();
 
     await library.goto(`${extensionUrl}/library.html#design`, { waitUntil: "domcontentloaded" });
     await library.waitForFunction(() => document.querySelectorAll("#grid .card").length >= 6);
@@ -551,7 +555,9 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+if (!globalThis.__highlighterSkipStoreAssetAutorun) {
+  main().catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
+}

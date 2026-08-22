@@ -600,25 +600,33 @@ async function stageSelectionForAgent(items) {
   return { selection, prompt };
 }
 
-async function addSelectionToChat(items) {
+async function sendSelectionToChatGptWeb(items) {
   const staged = await stageSelectionForAgent(items);
   const tabs = await chrome.tabs.query({ url: ["https://chatgpt.com/*", "https://chat.openai.com/*"] });
-  const target = tabs.sort((a, b) => Number(b.active) - Number(a.active) || Number(b.lastAccessed || 0) - Number(a.lastAccessed || 0))[0];
+  let target = tabs.sort((a, b) => Number(b.active) - Number(a.active) || Number(b.lastAccessed || 0) - Number(a.lastAccessed || 0))[0];
+  if (!target?.id) target = await chrome.tabs.create({ url: "https://chatgpt.com/" });
   if (target?.id) {
-    try {
-      const result = await chrome.tabs.sendMessage(target.id, {
-        type: "insertHighlighterChatPrompt",
-        prompt: staged.prompt
-      });
-      if (result?.ok) {
-        await chrome.tabs.update(target.id, { active: true });
-        if (target.windowId !== undefined && chrome.windows?.update) {
-          await chrome.windows.update(target.windowId, { focused: true }).catch(() => {});
-        }
-        return { mode: "inserted" };
-      }
-    } catch {}
+    await chrome.tabs.update(target.id, { active: true });
+    if (target.windowId !== undefined && chrome.windows?.update) {
+      await chrome.windows.update(target.windowId, { focused: true }).catch(() => {});
+    }
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try {
+        const result = await chrome.tabs.sendMessage(target.id, {
+          type: "insertHighlighterChatPrompt",
+          prompt: staged.prompt
+        });
+        if (result?.ok) return { mode: "inserted" };
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
   }
+  await navigator.clipboard.writeText(staged.prompt);
+  return { mode: "opened_and_copied" };
+}
+
+async function copySelectionForBrowserAgent(items) {
+  const staged = await stageSelectionForAgent(items);
   await navigator.clipboard.writeText(staged.prompt);
   return { mode: "copied" };
 }
@@ -643,7 +651,8 @@ function renderSelectionBar() {
       <span class="sel-count"></span>
       <button class="sel-clear" style="background:transparent;border:0;color:rgba(25,25,28,0.48);cursor:pointer;font:inherit;padding:4px 0;">Clear</button>
       <button class="sel-folder" style="background:transparent;border:0;border-left:1px solid rgba(23,23,26,0.14);color:#19191c;cursor:pointer;font:inherit;font-weight:500;padding:4px 0 4px 12px;">Add to folder</button>
-      <button class="sel-agent" style="background:transparent;border:0;color:#5557c9;cursor:pointer;font:inherit;font-weight:600;padding:4px 0;">Add to chat</button>
+      <button class="sel-chatgpt" style="background:transparent;border:0;color:#5557c9;cursor:pointer;font:inherit;font-weight:600;padding:4px 0;">Open in ChatGPT web</button>
+      <button class="sel-agent" style="background:transparent;border:0;color:#5557c9;cursor:pointer;font:inherit;font-weight:500;padding:4px 0;">Copy for browser agent</button>
       <button class="sel-delete" style="background:transparent;border:0;color:#a03636;cursor:pointer;font:inherit;font-weight:500;padding:4px 0;">Delete</button>
       <button class="sel-export" style="background:transparent;border:0;color:#5557c9;cursor:pointer;font:inherit;font-weight:500;padding:4px 0;">Export ↗</button>
     `;
@@ -662,6 +671,23 @@ function renderSelectionBar() {
       if (!items.length) return;
       openFolderPicker(items);
     });
+    selBar.querySelector(".sel-chatgpt").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      const items = flat.filter(h => selected.has(h.id));
+      if (!items.length) return;
+      const original = button.textContent;
+      button.disabled = true;
+      try {
+        const result = await sendSelectionToChatGptWeb(items);
+        button.textContent = result.mode === "inserted" ? "Added — review & send" : "Opened — prompt copied";
+      } catch {
+        button.textContent = "Couldn’t open ChatGPT";
+      }
+      setTimeout(() => {
+        button.textContent = original;
+        button.disabled = false;
+      }, 1800);
+    });
     selBar.querySelector(".sel-agent").addEventListener("click", async event => {
       const button = event.currentTarget;
       const items = flat.filter(h => selected.has(h.id));
@@ -669,8 +695,8 @@ function renderSelectionBar() {
       const original = button.textContent;
       button.disabled = true;
       try {
-        const result = await addSelectionToChat(items);
-        button.textContent = result.mode === "inserted" ? "Added — review & send" : "No chat open — copied";
+        await copySelectionForBrowserAgent(items);
+        button.textContent = "Copied — paste in agent";
       } catch {
         button.textContent = "Couldn’t copy";
       }

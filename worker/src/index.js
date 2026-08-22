@@ -144,7 +144,7 @@ export function createHighlighterMcpServer(env, token) {
   const server = new McpServer(
     { name: "highlighter", version: "2.1.0" },
     {
-      instructions: "Use get_active_page when the target is uncertain, then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged with Add to chat in the Library. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
+      instructions: "Use get_active_page when the target is uncertain, then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged from the Library for ChatGPT web or a browser agent. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
     }
   );
 
@@ -392,7 +392,7 @@ export function createHighlighterMcpServer(env, token) {
 
   registerBridgeTool("get_library_selection", {
     title: "Get selected library highlights",
-    description: "Read the exact highlights the user staged by selecting them in the Highlighter Library and choosing Add to chat. Returns stable IDs, quotes, notes, folders, and source links in selection order.",
+    description: "Read the exact highlights the user staged from the Highlighter Library for ChatGPT web or a browser agent. Returns stable IDs, quotes, notes, folders, and source links in selection order.",
     inputSchema: {}, annotations: readOnly
   }, () => ({ type: "get_library_selection" }), value =>
     `Loaded ${value.count} selected highlight${value.count === 1 ? "" : "s"}${value.unavailable ? `; ${value.unavailable} selected item${value.unavailable === 1 ? " is" : "s are"} no longer available` : ""}.`);

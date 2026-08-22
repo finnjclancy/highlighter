@@ -522,13 +522,13 @@ async function getAgentLibrarySelection() {
   const ids = [...new Set((Array.isArray(selection?.highlightIds) ? selection.highlightIds : [])
     .map(id => String(id || "").trim()).filter(Boolean))].slice(0, 100);
   if (!ids.length) {
-    return { ok: false, error: "No library selection is staged. Select highlights in the Library and choose Add to chat." };
+    return { ok: false, error: "No library selection is staged. Select highlights in the Library and choose Open in ChatGPT web or Copy for browser agent." };
   }
   const { highlights } = await agentLibrary();
   const byId = new Map(highlights.map(item => [String(item.id || ""), item]));
   const selected = ids.map(id => byId.get(id)).filter(Boolean);
   if (!selected.length) {
-    return { ok: false, error: "The staged highlights are no longer in the library. Make a new selection and choose Add to chat." };
+    return { ok: false, error: "The staged highlights are no longer in the library. Make a new selection and stage it again from the Library." };
   }
   return {
     ok: true,

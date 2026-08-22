@@ -1,12 +1,12 @@
 # Chrome Web Store listing - Highlighter
 
-Prepared: 2026-05-18
+Prepared: 2026-08-22
 
 ## Upload package
 
 Upload this ZIP:
 
-`dist/highlighter-1.0.1.zip`
+`dist/highlighter-1.8.0.zip`
 
 ## Product details
 
@@ -40,15 +40,17 @@ Key features:
 - Add comments and folders so quotes stay organized
 - Browse every saved quote in one searchable library
 - Filter by folder, source site, or search term
+- Select a precise set of Library highlights, open a prepared instruction in ChatGPT web, or copy it for a browser agent
 - Export selected highlights as plain text or Markdown
 - Draw on pages with pen, line, and rectangle tools
+- Highlight selectable PDFs manually or use optional AI-assisted Deep Highlight after reviewing its disclosure
 - Create share links for a page's highlights
-- Optionally connect ChatGPT or another MCP-compatible agent so it can search and organize the full library, make reversible edits, compare sources, export research, and create or manage protected live links
+- Optionally connect ChatGPT or another MCP-compatible agent through 23 focused MCP tools so it can retrieve an exact staged Library selection, search the full library, create or reorganize folders, make reversible edits, compare sources, export research, and create or manage protected live links
 - Highlight the current browser selection from the context menu or a keyboard shortcut
 - Let recipients read shared highlights in a clean gallery, or reopen them on the original page with Highlighter installed
 - Customize highlight colours in Design Studio
 
-Highlighter is local-first: your highlights, drawings, folders, comments, palette, and share history are stored in your browser by default. There are no accounts, no ads, and no tracking. Data leaves your browser only when you explicitly use optional AI or agent features, copy/export content, create a share link, or post a comment on a shared link.
+Highlighter is local-first: your highlights, drawings, folders, comments, palette, and share history are stored in your browser by default. There are no accounts, no ads, and no tracking. Data leaves your browser only when you explicitly use optional AI or agent features, copy/export content, create a share link, or post a comment on a shared link. Highlighter can prepare a Library instruction in ChatGPT web, but it never reads your conversation or presses Send.
 
 Good for research, studying, writing, product work, collecting quotes, reviewing long articles, and sending source-backed notes to other people.
 ```
@@ -62,14 +64,14 @@ Store icon:
 Upload these five screenshots in this order:
 
 1. `store-listing/assets/screenshot-1-highlighting.png`
-2. `store-listing/assets/screenshot-3-drawing-tools.png`
-3. `store-listing/assets/screenshot-4-library.png`
-4. `store-listing/assets/screenshot-5-design-studio.png`
-5. `store-listing/assets/screenshot-6-share-gallery.png`
+2. `store-listing/assets/screenshot-2-page-panel.png`
+3. `store-listing/assets/screenshot-3-drawing-tools.png`
+4. `store-listing/assets/screenshot-4-library.png`
+5. `store-listing/assets/screenshot-5-design-studio.png`
 
 Alternate screenshot, do not upload unless you replace one of the five above:
 
-`store-listing/assets/screenshot-2-page-panel.png`
+`store-listing/assets/screenshot-6-share-gallery.png`
 
 Small promo tile:
 
@@ -113,13 +115,14 @@ Recommended data disclosure:
 
 - Website content: Yes. User-created or agent-requested highlights, selected text, notes/comments, folders/tags, drawings, highlight colours, and shared-link comments.
 - Web history: Yes, conservatively. Highlighter stores source page URLs and titles only for pages where the user creates highlights, drawings, exports, or share links.
-- Personally identifiable information: No account/profile data is collected by the extension. If the dashboard treats optional share-gallery author names as PII, disclose that optional author name can be submitted by viewers when they post comments on shared links.
+- Personally identifiable information: Conservatively, Yes. Highlighter has no accounts and does not collect profile data, but a viewer can deliberately submit an optional author name with a shared-gallery comment.
+- Authentication information: Conservatively, Yes. A randomly generated private MCP connection token and live-link management credentials are stored locally; optional gallery passwords are sent over HTTPS and stored by the service only as cryptographic hashes.
 - User activity: No analytics, tracking, browsing activity monitoring, ad measurement, or background profiling.
 
 Data use:
 
 ```text
-Data is used only to provide Highlighter's core functionality: saving highlights/drawings, organizing and exporting quotes, customizing colours, optionally applying, searching, updating, restoring, summarizing, or comparing highlights through a user-connected agent, and creating, managing, or displaying share links requested by the user. Data is not sold, used for advertising, used for credit-worthiness, or transferred for unrelated purposes.
+Data is used only to provide Highlighter's core functionality: saving highlights/drawings, organizing and exporting quotes, customizing colours, staging user-selected Library items for a chat, optionally applying, searching, updating, restoring, summarizing, or comparing highlights through a user-connected agent, and creating, managing, or displaying share links requested by the user. Data is not sold, used for advertising, used for credit-worthiness, or transferred for unrelated purposes.
 ```
 
 Remote storage:
@@ -132,15 +135,23 @@ Permission justifications:
 
 - `storage`: Saves highlights, drawings, folders, comments, colour palette, and share history in the user's browser.
 - `activeTab`: Reads the active tab URL/title after the user opens the extension, so Highlighter can show page counts and copy/share highlights for the current page.
-- `clipboardWrite`: Copies exported text, Markdown, and share links to the clipboard when the user chooses those actions.
+- `clipboardWrite`: Copies exported text, Markdown, share links, and staged Library instructions when the user chooses those actions.
 - `alarms`: Restores the optional live agent connection after Chrome restarts or suspends the extension service worker.
 - `contextMenus`: Adds right-click actions for highlighting selected text, choosing a colour, and opening tag/note editing.
-- Host permission `<all_urls>`: Lets Highlighter apply and restore highlights and drawings on any web page the user chooses to use it on.
+- Host permission `<all_urls>`: Lets Highlighter apply and restore highlights and drawings on any web page the user chooses to use it on. On `chatgpt.com`, it also lets Highlighter append a prepared Library instruction only after the user presses **Open in ChatGPT web**; it never reads the conversation or presses Send.
+
+## Reviewer test instructions
+
+1. Install the submitted ZIP and open any ordinary HTTPS article.
+2. Select text and choose a colour from the Highlighter toolbar. Open the extension popup and choose **Open library / design** to verify the saved quote.
+3. In the Library, select one or more rows. **Copy for browser agent** stages their local IDs and copies a short instruction. **Open in ChatGPT web** opens or focuses `chatgpt.com` and fills the composer without sending; a ChatGPT account is needed only to test that optional destination.
+4. To test the optional MCP bridge, open the extension popup, press the **?** beside Agent connection, enable the connection, and copy the generated private Streamable HTTP URL into an MCP-compatible client. The connection exposes 23 tools. The private URL is generated locally and should not be included in review notes or screenshots.
+5. PDF AI highlighting is optional and requires accepting the in-product disclosure. All manual highlighting, Library, drawing, export, and ordinary share-link features can be tested without an account.
 
 ## Final pre-submit checks
 
 - Publish the updated `docs/privacy.html` and `docs/index.html` before submitting, so the live privacy URL matches the extension's current share-link behaviour.
-- Confirm the uploaded ZIP is the rebuilt `dist/highlighter-1.7.0.zip`.
+- Confirm the uploaded ZIP is the rebuilt `dist/highlighter-1.8.0.zip`.
 - Upload no more than five screenshots.
 - Mature content: `No`, unless future user-facing content changes require it.
 - Region distribution: use all regions unless you have a specific launch restriction.

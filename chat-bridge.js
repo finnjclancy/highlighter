@@ -17,16 +17,15 @@
 
   function insertIntoComposer(composer, prompt) {
     composer.focus();
-    const current = String(composer.value ?? composer.innerText ?? "").trim();
-    const text = (current ? "\n\n" : "") + prompt;
+    const hasContent = composer.tagName === "TEXTAREA" || composer.tagName === "INPUT"
+      ? Number(composer.value?.length || 0) > 0
+      : Number(composer.childNodes?.length || 0) > 0;
+    const text = (hasContent ? "\n\n" : "") + prompt;
 
     if (composer.tagName === "TEXTAREA" || composer.tagName === "INPUT") {
-      const prototype = composer.tagName === "TEXTAREA"
-        ? globalThis.HTMLTextAreaElement?.prototype
-        : globalThis.HTMLInputElement?.prototype;
-      const setter = prototype && Object.getOwnPropertyDescriptor(prototype, "value")?.set;
-      if (setter) setter.call(composer, String(composer.value || "") + text);
-      else composer.value = String(composer.value || "") + text;
+      const end = Number(composer.value?.length || 0);
+      if (typeof composer.setRangeText === "function") composer.setRangeText(text, end, end, "end");
+      else composer.value += text;
       composer.dispatchEvent(new Event("input", { bubbles: true }));
       return;
     }
@@ -41,7 +40,7 @@
     }
     const inserted = typeof document.execCommand === "function" && document.execCommand("insertText", false, text);
     if (!inserted) {
-      composer.textContent = String(composer.innerText || composer.textContent || "") + text;
+      composer.append(document.createTextNode(text));
       composer.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
     }
   }

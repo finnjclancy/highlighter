@@ -19,7 +19,7 @@ A clean browser extension for highlighting text on any web page with custom colo
 - **Design Studio** — drag-and-drop palette editor with presets, live preview, and per-swatch text/background pickers.
 - **Sharing** — generate a single link that works two ways: viewers without the extension see a clean reader-style gallery; viewers with the extension can jump straight to the source page with your highlights painted on it.
 - **Bulk management** — select several or all highlights directly in the page/PDF panel, or delete every highlight in the current filtered Library view, with confirmation before removal.
-- **Agent research workspace** — select highlights in the Library and place that exact set into an open ChatGPT conversation, then let ChatGPT or another MCP-compatible agent create, move, rename, merge, or remove folders; search and organize the full library; update or restore highlights; compare sources; export research; and manage collaborative live galleries. Highlighter fills the composer but never presses Send for you.
+- **Agent research workspace** — select highlights in the Library, open a prepared instruction in ChatGPT web or copy it for a browser agent, then let an MCP-compatible agent create, move, rename, merge, or remove folders; search and organize the full library; update or restore highlights; compare sources; export research; and manage collaborative live galleries. Highlighter never presses Send for you.
 - **Fast actions** — highlight the current selection from the page context menu or with `Alt+Shift+H` (`⌃⇧H` on macOS).
 - **Privacy-first** — no accounts and no tracking. Highlights live in your own browser storage unless you explicitly copy them or create a share link.
 
@@ -100,6 +100,7 @@ Toolbar icon → **📋 Copy text**. Drops every highlight on the current page o
   pdf-reader.*     PDF.js reader — renders selectable PDF text for highlighting
   drawing.js/css   drawing canvas + toolbar
   library.html/js  full-page library dashboard + design studio (tabs)
+  chat-bridge.js   inserts a staged Library instruction into ChatGPT web on request
   popup.html/js    toolbar popup
   welcome.html/js  one-time onboarding shown on install
   icons/           extension icons + store promo tile

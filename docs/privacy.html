@@ -19,7 +19,7 @@
     </header>
 
     <h2 class="page-title">Privacy Policy</h2>
-    <p class="meta">Last updated: 20 August 2026</p>
+    <p class="meta">Last updated: 22 August 2026</p>
 
     <p>This page describes how the <strong>Highlighter</strong> browser extension (the “Extension”), the companion website at <a href="https://finnjclancy.github.io/highlighter/">finnjclancy.github.io/highlighter</a> (the “Gallery”), and the share/AI/agent service at <code>highlighter-share.finnjclancy.workers.dev</code> handle your information. The short version: Highlighter stores your highlights locally by default, has no accounts, ads, analytics, or tracking, and sends data off your device only when you deliberately use AI highlights, connect an agent, create a share link, copy/export content, or post a comment on a shared link.</p>
 
@@ -32,13 +32,18 @@
       <li>Your local share history, including the share name, source URL/title, share URL, highlight count, and creation time.</li>
       <li>Whether you accepted the AI-highlighting disclosure, whether you enabled automatic AI highlighting, and any optional Deep Read instruction you save.</li>
       <li>Whether you enabled the optional agent connection and its randomly generated private connection token.</li>
+      <li>The stable IDs of the most recent Library selection you deliberately staged for ChatGPT web or a browser agent.</li>
       <li>Optional page notes, captured highlight snapshots, reversible operation history, and local-only credentials used to manage live links you created.</li>
     </ul>
     <p>This local data leaves your browser only when you take a deliberate action: invoking AI highlights, enabling an agent connection, copying/exporting content, generating a share link, or posting a comment on a shared link.</p>
 
     <div class="section-lbl">When you connect an agent</div>
     <p>The optional agent connection is off by default. If you enable it, the Extension creates a random private token and opens an encrypted WebSocket connection to the Highlighter Worker. You copy a private MCP URL into ChatGPT or another compatible agent. Treat that URL like a password.</p>
-    <p>A connected agent can request the active page and selection; add, edit, remove, restore, search, tag, export, summarize, compare, snapshot, or open saved highlights; add page notes; and create or manage live links and their discussion. Library searches, operation history, page notes, exports, and snapshots remain in your browser unless a tool returns them to the connected agent or you explicitly publish a live link. Tool requests and responses are relayed through the Worker in memory and are not intentionally stored by the agent bridge. Published highlight payloads and discussion are stored by the share service until their selected expiry. Cloudflare may process standard request logs under its own policies. Disconnecting closes the browser connection and discards the local connection token.</p>
+    <p>A connected agent can request the active page and selection; read a set you deliberately staged from the Library; list, create, move, rename, merge, or remove folder labels; add, edit, remove, restore, search, tag, export, summarize, compare, snapshot, or open saved highlights; add page notes; and create or manage live links and their discussion. Library searches, staged selection IDs, operation history, page notes, exports, and snapshots remain in your browser unless a tool returns them to the connected agent or you explicitly publish a live link. Tool requests and responses are relayed through the Worker in memory and are not intentionally stored by the agent bridge. Published highlight payloads and discussion are stored by the share service until their selected expiry. Cloudflare may process standard request logs under its own policies. Disconnecting closes the browser connection and discards the local connection token.</p>
+
+    <div class="section-lbl">When you stage Library highlights for a chat</div>
+    <p>After you select highlights in the Library, <em>Open in ChatGPT web</em> stores only those highlights' existing local IDs as the current staged selection, opens or focuses <code>chatgpt.com</code>, and inserts a short instruction into the ChatGPT composer. <em>Copy for browser agent</em> stores the same local IDs and copies that instruction to your clipboard instead. The instruction contains the number of selected highlights and asks the connected Highlighter MCP tool to retrieve them; it does not place the highlight text itself on the clipboard or in the composer.</p>
+    <p>Highlighter does not read or store your ChatGPT conversation, does not transmit an existing ChatGPT draft, and never presses Send. It only appends the prepared instruction after you click the corresponding Library action. ChatGPT receives the instruction only if you choose to send it, and receives the selected highlight data only if the connected agent then calls <code>get_library_selection</code>.</p>
 
     <div class="section-lbl">When you use AI highlights</div>
     <p>AI highlights is optional and disabled until you accept an in-product disclosure. When you invoke it—or enable the clearly labelled Auto setting—the Extension extracts selectable text from the open PDF and sends that text, the PDF title, source URL, temporary text-span identifiers, and any optional reader instruction over HTTPS to the Highlighter Worker. Explicit literal keyword and phrase instructions can be matched by the Worker itself. For open-ended or semantic instructions, the Worker forwards the request to the Google Gemini API so Gemini can select passages.</p>
@@ -65,10 +70,10 @@
     <ul>
       <li><strong>storage</strong> — to save your highlights, drawings, and palette in your own browser.</li>
       <li><strong>activeTab</strong> — to read the current tab's URL/title after you click the Extension so it can show page counts and copy/share the highlights for that active page.</li>
-      <li><strong>clipboardWrite</strong> — to copy share links and exported text/Markdown to your clipboard.</li>
+      <li><strong>clipboardWrite</strong> — to copy share links, exported text/Markdown, and a staged Library instruction when you choose a copy action.</li>
       <li><strong>alarms</strong> — to check and restore the optional agent connection after Chrome restarts or suspends the Extension's background worker.</li>
       <li><strong>contextMenus</strong> — to offer a fast “Highlight selection” action when you right-click selected text.</li>
-      <li><strong>host permissions: <code>&lt;all_urls&gt;</code></strong> — so the Extension can apply highlights and drawings on any web page you choose to use it on. Page details or selected passages are transmitted only when you deliberately invoke AI, sharing, or the optional connected-agent feature described above.</li>
+      <li><strong>host permissions: <code>&lt;all_urls&gt;</code></strong> — so the Extension can apply highlights and drawings on any web page you choose to use it on. On <code>chatgpt.com</code>, this also lets Highlighter append a prepared Library instruction only after you press <em>Open in ChatGPT web</em>. Page details or selected passages are transmitted only when you deliberately invoke AI, sharing, or the optional connected-agent feature described above.</li>
     </ul>
 
     <div class="section-lbl">Data retention and deletion</div>
@@ -77,7 +82,7 @@
       <li>Open the Extension's library page and delete individual highlights or use Select All → Delete.</li>
       <li>Or remove the Extension via <code>chrome://extensions</code>, which clears all of its stored data.</li>
     </ul>
-    <p>Short share links and share-link comments are stored for about one year. There is not currently a self-service deletion control for already-created share links, so avoid sharing sensitive content.</p>
+    <p>Short share links, their highlight payloads, and discussion are stored until the expiry selected when the link is created, between 1 and 365 days. Links created by this Extension can also be listed and revoked before expiry through the connected-agent live-link tools; revocation deletes the stored gallery payload, discussion, and management record. Avoid sharing sensitive content.</p>
 
     <div class="section-lbl">Limited use</div>
     <p>Highlighter uses data obtained through Chrome extension permissions only to provide or improve its single purpose: highlighting, organising, understanding (including optional AI assistance), exporting, drawing on, and sharing selected web and PDF content at your request. Highlighter does not use or transfer this data for personalised advertising, retargeting, sale of data, credit-worthiness, or unrelated purposes. The use of information received from Chrome APIs adheres to the Chrome Web Store User Data Policy, including the Limited Use requirements.</p>
