@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Highlighter — Browser highlighting for people and AI agents</title>
-  <meta name="description" content="Highlight web pages and PDFs by hand or with an AI agent. Connect 20 MCP tools to capture, organise, compare, export, and share research from your browser.">
+  <meta name="description" content="Ask an AI agent to highlight any web page or PDF, review it in a built-in PDF viewer, and share the result with one live link.">
 
   <meta property="og:title" content="Highlighter">
-  <meta property="og:description" content="20 MCP tools turn your browser into an agent-powered research workspace: capture, organise, compare, export, and share what matters.">
+  <meta property="og:description" content="Ask an AI agent to highlight any web page or PDF, then share the result with one live link. Powered by 20 MCP tools.">
   <meta property="og:image" content="https://finnjclancy.github.io/highlighter/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
 
@@ -164,6 +164,151 @@
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
+    }
+
+    /* Standout capabilities */
+    .power-features {
+      margin: 0 0 84px;
+      animation: fade-up 0.8s cubic-bezier(0.2,0.8,0.2,1) 0.08s both;
+    }
+    .power-intro {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 0 2px 18px;
+    }
+    .power-intro .label {
+      margin-bottom: 7px;
+      color: #a5b4fc;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .power-intro h2 {
+      margin: 0;
+      max-width: 570px;
+      font-size: 28px;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+    }
+    .power-intro p {
+      margin: 0 0 2px;
+      max-width: 270px;
+      color: var(--text-3);
+      font-size: 12.5px;
+      line-height: 1.5;
+      text-align: right;
+    }
+    .power-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .power-card {
+      position: relative;
+      min-height: 218px;
+      padding: 24px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(20,20,27,0.82);
+      color: var(--text);
+      text-decoration: none;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .power-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(360px circle at 100% 0%, var(--power-glow), transparent 68%);
+    }
+    .power-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--power-border);
+      box-shadow: 0 18px 42px rgba(0,0,0,0.25);
+      text-decoration: none;
+    }
+    .power-card.share { --power-glow: rgba(74,222,128,0.17); --power-border: rgba(74,222,128,0.5); --power-accent: #86efac; }
+    .power-card.mcp { --power-glow: rgba(168,85,247,0.2); --power-border: rgba(168,85,247,0.54); --power-accent: #dfb6ff; }
+    .power-card.ai-pdf { --power-glow: rgba(236,72,153,0.17); --power-border: rgba(236,72,153,0.5); --power-accent: #f9a8d4; }
+    .power-card.viewer { --power-glow: rgba(56,189,248,0.18); --power-border: rgba(56,189,248,0.52); --power-accent: #8bddff; }
+    .power-card .power-top {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 27px;
+    }
+    .power-card .power-icon {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid color-mix(in srgb, var(--power-accent) 28%, transparent);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--power-accent) 11%, transparent);
+      color: var(--power-accent);
+      font-size: 18px;
+    }
+    .power-card .power-badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--power-accent) 11%, transparent);
+      color: var(--power-accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .power-card h3 {
+      position: relative;
+      margin: 0 0 9px;
+      color: #fff;
+      font-size: 21px;
+      letter-spacing: -0.02em;
+    }
+    .power-card p {
+      position: relative;
+      margin: 0;
+      max-width: 48ch;
+      color: var(--text-2);
+      font-size: 13.5px;
+      line-height: 1.55;
+    }
+    .power-card .power-link {
+      position: absolute;
+      right: 22px;
+      bottom: 18px;
+      color: var(--power-accent);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .power-card .power-link::after { content: "  →"; }
+    .power-card .viewer-note {
+      display: block;
+      margin-top: 8px;
+      color: var(--text-3);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 720px) {
+      .power-intro { display: block; }
+      .power-intro p { margin-top: 10px; max-width: 500px; text-align: left; }
+      .power-grid { grid-template-columns: 1fr; }
+      .power-card { min-height: 0; }
+      .power-card .power-link {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        display: block;
+        margin-top: 13px;
+        text-align: right;
+      }
     }
 
     @keyframes fade-up {
@@ -1813,7 +1958,60 @@
         Live for Chrome &amp; Edge
       </div>
       <h1>Your browser, now readable<br><span class="accent">by you and your AI agent.</span></h1>
-      <p class="hero-sub">Highlight web pages and PDFs by hand—or connect 20 MCP tools so an agent can capture, organise, compare, export, and share your research in the browser.</p>
+      <p class="hero-sub">Tell an LLM what matters in plain English. Highlighter can mark the exact passages on a web page or PDF, keep them in your library, and share the result with one live link.</p>
+    </section>
+
+    <section class="power-features" aria-labelledby="power-title">
+      <div class="power-intro">
+        <div>
+          <div class="label">The standout features</div>
+          <h2 id="power-title">From AI request to highlighted source—in one browser.</h2>
+        </div>
+        <p>These are the capabilities that make Highlighter more than a coloured-marker extension.</p>
+      </div>
+
+      <div class="power-grid">
+        <a class="power-card share" href="#sharing">
+          <div class="power-top">
+            <span class="power-icon" aria-hidden="true">↗</span>
+            <span class="power-badge">Sharing link</span>
+          </div>
+          <h3>Share the highlights, not a screenshot</h3>
+          <p>Create one live link. Anyone can read your highlighted passages, notes, and tags in a clean gallery—no extension or account required.</p>
+          <span class="power-link">See what recipients get</span>
+        </a>
+
+        <a class="power-card mcp" href="#mcp-setup">
+          <div class="power-top">
+            <span class="power-icon" aria-hidden="true">✦</span>
+            <span class="power-badge">AI agent + MCP</span>
+          </div>
+          <h3>Ask your LLM to highlight anything</h3>
+          <p>Connect Highlighter’s private MCP URL, then ask: “Highlight every limitation,” “mark the evidence,” or anything else. The agent finds and saves the exact passages.</p>
+          <span class="power-link">Connect an agent</span>
+        </a>
+
+        <a class="power-card ai-pdf" href="#features">
+          <div class="power-top">
+            <span class="power-icon" aria-hidden="true">⌁</span>
+            <span class="power-badge">AI Deep Read</span>
+          </div>
+          <h3>Turn long PDFs into focused reading</h3>
+          <p>Ask for definitions, supporting evidence, contradictions, or a custom topic. Deep Read marks the useful passages so you can verify them in context.</p>
+          <span class="power-link">Explore PDF AI</span>
+        </a>
+
+        <a class="power-card viewer" href="#features">
+          <div class="power-top">
+            <span class="power-icon" aria-hidden="true">▤</span>
+            <span class="power-badge">PDF viewer</span>
+          </div>
+          <h3>Read, annotate, and replay PDF highlights</h3>
+          <p>The built-in selectable viewer supports colours, notes, tags, drawing, AI highlighting, and share links—without flattening your research into an image.</p>
+          <span class="viewer-note">Shared gallery: works for everyone. In-context PDF replay: requires Highlighter and access to the source PDF.</span>
+          <span class="power-link">See the viewer</span>
+        </a>
+      </div>
     </section>
 
     <section id="features" class="features-hero">
@@ -1870,8 +2068,8 @@
         <div class="feat f-share">
           <div class="feat-text">
             <span class="feat-tag">Share</span>
-            <h3>Share what you read</h3>
-            <p>One link works for everyone — live overlay with the extension, clean gallery without.</p>
+            <h3>One live sharing link</h3>
+            <p>Anyone gets the clean gallery. Extension users can replay the highlights on the original web page or PDF.</p>
           </div>
           <div class="art">
             <div class="pcard">
@@ -1886,8 +2084,8 @@
         <div class="feat f-pdf">
           <div class="feat-text">
             <span class="feat-tag">PDF + optional AI</span>
-            <h3>Read papers deeply</h3>
-            <p>Open PDFs in a selectable reader, highlight and annotate them normally, or choose Deep Read to find materially important passages. Add a custom instruction for definitions, evidence, limitations, or exact phrases.</p>
+            <h3>A PDF viewer built for evidence</h3>
+            <p>Open PDFs in a selectable reader, highlight and annotate them normally, or choose Deep Read to find materially important passages. Share a gallery that works for anyone; recipients with Highlighter can also reopen the source PDF with highlights in context.</p>
           </div>
           <div class="art" aria-hidden="true">
             <div class="pdf-mock">
@@ -1905,12 +2103,12 @@
         <div class="feat f-agent">
           <div class="feat-text">
             <span class="feat-tag">Agent tools · MCP</span>
-            <h3>Turn reading into a research workspace</h3>
-            <p>Connect ChatGPT or another MCP-compatible agent with a private URL. It can search every saved page, update and restore highlights, compare sources, export research, and create protected collaborative galleries.</p>
+            <h3>Tell an LLM exactly what to highlight</h3>
+            <p>Connect ChatGPT or another MCP-compatible agent with a private URL. Ask it to highlight limitations, evidence, definitions, or any passage you describe—then search, update, compare, export, and share the result.</p>
           </div>
           <div class="art" aria-hidden="true">
-            <div class="agent-prompt">Make a live link for these highlights.</div>
-            <div class="agent-result"><b>create_live_link</b><br>✓ highlighter-share…/v/8f2kq3ms</div>
+            <div class="agent-prompt">Highlight every limitation in this paper.</div>
+            <div class="agent-result"><b>highlight_text</b><br>✓ 6 exact passages saved to the PDF</div>
           </div>
         </div>
       </div>
@@ -2203,7 +2401,7 @@
     </div>
 
     <!-- What recipients actually see -->
-    <section class="recipients">
+    <section id="sharing" class="recipients">
       <div class="section-h">
         <div class="label">What recipients see</div>
         <h2>One link, two ways to read it</h2>
@@ -2214,7 +2412,7 @@
         <div class="recipient-card r-without">
           <span class="r-eyebrow">Without the extension</span>
           <h3>A clean gallery page</h3>
-          <p>Your highlights, comments, and tags are pulled out of the original article and presented as readable cards on a Highlighter-branded page.</p>
+          <p>Your highlights, comments, and tags are pulled out of the original web page or PDF and presented as readable cards on a Highlighter-branded page.</p>
           <div class="mock mock-gallery">
             <div class="mg-head"></div>
             <div class="mg-body">
@@ -2234,8 +2432,8 @@
 
         <div class="recipient-card r-with">
           <span class="r-eyebrow">With the extension</span>
-          <h3>The original page, painted</h3>
-          <p>Click "Open on original page" and your highlights are applied directly to the live article — same colours, same comments, in context.</p>
+          <h3>The original page or PDF, painted</h3>
+          <p>Click "Open on original page" and your highlights are applied directly to the live article or built-in PDF viewer—same colours, same comments, in context. PDF replay requires access to the source file.</p>
           <div class="mock mock-article">
             <div class="ma-bar">
               <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -2249,7 +2447,7 @@
             </div>
           </div>
           <ul class="bullets">
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Highlights painted onto the real article</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Highlights painted onto the real article or source PDF</span></li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Read in flow — quotes stay in context</span></li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Save the shared highlights to your own library in one click</span></li>
           </ul>
