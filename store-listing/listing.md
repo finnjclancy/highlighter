@@ -6,7 +6,7 @@ Prepared: 2026-08-22
 
 Upload this ZIP:
 
-`dist/highlighter-1.9.0.zip`
+`dist/highlighter-2.0.0.zip`
 
 ## Product details
 
@@ -153,7 +153,7 @@ Permission justifications:
 ## Final pre-submit checks
 
 - Publish the updated `docs/privacy.html` and `docs/index.html` before submitting, so the live privacy URL matches the extension's current share-link behaviour.
-- Confirm the uploaded ZIP is the rebuilt `dist/highlighter-1.8.0.zip`.
+- Confirm the uploaded ZIP is the rebuilt `dist/highlighter-2.0.0.zip`.
 - Upload no more than five screenshots.
 - Mature content: `No`, unless future user-facing content changes require it.
 - Region distribution: use all regions unless you have a specific launch restriction.

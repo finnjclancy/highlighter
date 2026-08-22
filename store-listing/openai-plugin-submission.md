@@ -114,7 +114,7 @@ Initial public submission of Highlight. The plugin connects ChatGPT to the Highl
 
 ## Final checks before review
 
-- Chrome Web Store version 1.9.0, containing the Pair ChatGPT button, is publicly available to reviewers.
+- Chrome Web Store version 2.0.0, containing the Pair ChatGPT button and MCP connection, is publicly available to reviewers.
 - OpenAI publisher identity is verified and Apps Management is set to Write.
 - The portal's domain challenge token is installed and verified.
 - Scan Tools reports 24 tools and no metadata errors.
