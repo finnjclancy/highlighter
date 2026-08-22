@@ -586,23 +586,23 @@ function renderSelectionBar() {
     selBar = document.createElement("div");
     selBar.style.cssText = `
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: rgba(16,16,19,0.96); color: #fafafa;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 999px;
-      padding: 8px 10px 8px 16px;
-      display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.5);
-      backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(14,14,17,0.97); color: #fafafa;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 5px;
+      padding: 8px 12px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.34);
+      backdrop-filter: blur(14px);
       font: 500 12px -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
       letter-spacing: -0.005em;
       z-index: 90;
     `;
     selBar.innerHTML = `
       <span class="sel-count"></span>
-      <button class="sel-clear" style="background:transparent;border:none;color:rgba(250,250,250,0.5);cursor:pointer;font:inherit;padding:4px 6px;border-radius:6px;">Clear</button>
-      <button class="sel-folder" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:#fafafa;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">🏷 Add to folder</button>
-      <button class="sel-delete" style="background:transparent;border:1px solid rgba(239,68,68,0.4);color:#fca5a5;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">🗑 Delete</button>
-      <button class="sel-export" style="background:#6366f1;border:none;color:#fff;cursor:pointer;font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;">⬇ Export</button>
+      <button class="sel-clear" style="background:transparent;border:0;color:rgba(250,250,250,0.46);cursor:pointer;font:inherit;padding:4px 0;">Clear</button>
+      <button class="sel-folder" style="background:transparent;border:0;border-left:1px solid rgba(255,255,255,0.12);color:#d4d4dc;cursor:pointer;font:inherit;font-weight:500;padding:4px 0 4px 12px;">Add to folder</button>
+      <button class="sel-delete" style="background:transparent;border:0;color:#f0a0a0;cursor:pointer;font:inherit;font-weight:500;padding:4px 0;">Delete</button>
+      <button class="sel-export" style="background:transparent;border:0;color:#b8b9fa;cursor:pointer;font:inherit;font-weight:500;padding:4px 0;">Export ↗</button>
     `;
     document.body.appendChild(selBar);
     selBar.querySelector(".sel-clear").addEventListener("click", () => {
