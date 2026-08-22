@@ -18,6 +18,7 @@ async function loadBackground() {
   }];
   const storage = {
     hl_agent_connection: { enabled: false, token: "" },
+    hl_agent_library_selection: { selectionId: "selection-1", createdAt: 123, highlightIds: ["h1", "missing"] },
     "hl_page_https://example.com/article": highlights
   };
   const tab = { id: 7, url: "https://example.com/article", title: "Example article" };
@@ -174,4 +175,60 @@ test("background can reverse an update operation", async () => {
   const search = await handleAgentCommand({ type: "search_highlights", query: "Useful" });
   assert.equal(search.count, 1);
   assert.equal(search.highlights[0].note, "Useful");
+});
+
+test("background returns the exact staged library selection with current data", async () => {
+  const { handleAgentCommand } = await loadBackground();
+  const result = await handleAgentCommand({ type: "get_library_selection" });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.selectionId, "selection-1");
+  assert.equal(result.count, 1);
+  assert.equal(result.unavailable, 1);
+  assert.equal(result.highlights[0].id, "h1");
+  assert.equal(result.highlights[0].note, "Useful");
+});
+
+test("background lists folders and reversibly adds selected highlights to a folder", async () => {
+  const { handleAgentCommand } = await loadBackground();
+  const before = await handleAgentCommand({ type: "list_folders", includeSamples: true });
+  assert.equal(before.ok, true);
+  assert.equal(before.count, 1);
+  assert.equal(before.folders[0].name, "Research");
+  assert.equal(before.folders[0].samples[0].id, "h1");
+
+  const organized = await handleAgentCommand({
+    type: "organize_folders", action: "add_to_folder", ids: ["h1"], folder: "Literature review"
+  });
+  assert.equal(organized.ok, true);
+  assert.equal(organized.updated, 1);
+  assert.ok(organized.operationId);
+
+  const after = await handleAgentCommand({ type: "list_folders" });
+  assert.equal(after.folders.some(folder => folder.name === "Literature review"), true);
+
+  const restored = await handleAgentCommand({ type: "restore_highlights", operationId: organized.operationId });
+  assert.equal(restored.ok, true);
+  const finalFolders = await handleAgentCommand({ type: "list_folders" });
+  assert.equal(finalFolders.folders.some(folder => folder.name === "Literature review"), false);
+});
+
+test("background can rename and merge folder labels without deleting highlights", async () => {
+  const { handleAgentCommand } = await loadBackground();
+  const renamed = await handleAgentCommand({
+    type: "organize_folders", action: "rename_folder", fromFolder: "Research", folder: "Sources"
+  });
+  assert.equal(renamed.ok, true);
+
+  await handleAgentCommand({
+    type: "organize_folders", action: "add_to_folder", ids: ["h1"], folder: "Review"
+  });
+  const merged = await handleAgentCommand({
+    type: "organize_folders", action: "merge_folders", sourceFolders: ["Sources", "Review"], folder: "Evidence"
+  });
+  assert.equal(merged.ok, true);
+
+  const search = await handleAgentCommand({ type: "search_highlights", query: "saved quote" });
+  assert.equal(search.count, 1);
+  assert.deepEqual(Array.from(search.highlights[0].tags), ["Evidence"]);
 });

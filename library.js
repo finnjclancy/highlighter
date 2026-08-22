@@ -6,6 +6,7 @@ let sortMode = "newest";
 let openId = null;
 let selected = new Set();
 let lastSelectedId = null;  // shift-click anchor
+const AGENT_LIBRARY_SELECTION_KEY = "hl_agent_library_selection";
 
 const resultsEl = document.getElementById("results");
 const viewTitleEl = document.getElementById("view-title");
@@ -581,6 +582,25 @@ document.getElementById("delete-view").addEventListener("click", () => {
 
 // ---------- selection bar ----------
 let selBar;
+
+async function stageSelectionForAgent(items) {
+  const highlightIds = items.map(item => String(item.id || "").trim()).filter(Boolean).slice(0, 100);
+  if (!highlightIds.length) throw new Error("Select at least one highlight first.");
+  const selection = {
+    selectionId: crypto.randomUUID(),
+    createdAt: Date.now(),
+    highlightIds
+  };
+  await chrome.storage.local.set({ [AGENT_LIBRARY_SELECTION_KEY]: selection });
+  const prompt = [
+    `I selected ${highlightIds.length} highlight${highlightIds.length === 1 ? "" : "s"} in my Highlighter Library.`,
+    "Use get_library_selection to load that exact set, then help me work with or organise it.",
+    "If I ask for folder changes, check list_folders first and use organize_folders only after confirming the intended structure."
+  ].join(" ");
+  await navigator.clipboard.writeText(prompt);
+  return selection;
+}
+
 function renderSelectionBar() {
   if (!selBar) {
     selBar = document.createElement("div");
@@ -601,6 +621,7 @@ function renderSelectionBar() {
       <span class="sel-count"></span>
       <button class="sel-clear" style="background:transparent;border:0;color:rgba(25,25,28,0.48);cursor:pointer;font:inherit;padding:4px 0;">Clear</button>
       <button class="sel-folder" style="background:transparent;border:0;border-left:1px solid rgba(23,23,26,0.14);color:#19191c;cursor:pointer;font:inherit;font-weight:500;padding:4px 0 4px 12px;">Add to folder</button>
+      <button class="sel-agent" style="background:transparent;border:0;color:#5557c9;cursor:pointer;font:inherit;font-weight:600;padding:4px 0;">Add to chat</button>
       <button class="sel-delete" style="background:transparent;border:0;color:#a03636;cursor:pointer;font:inherit;font-weight:500;padding:4px 0;">Delete</button>
       <button class="sel-export" style="background:transparent;border:0;color:#5557c9;cursor:pointer;font:inherit;font-weight:500;padding:4px 0;">Export ↗</button>
     `;
@@ -618,6 +639,23 @@ function renderSelectionBar() {
       const items = flat.filter(h => selected.has(h.id));
       if (!items.length) return;
       openFolderPicker(items);
+    });
+    selBar.querySelector(".sel-agent").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      const items = flat.filter(h => selected.has(h.id));
+      if (!items.length) return;
+      const original = button.textContent;
+      button.disabled = true;
+      try {
+        await stageSelectionForAgent(items);
+        button.textContent = "Copied — paste in chat";
+      } catch {
+        button.textContent = "Couldn’t copy";
+      }
+      setTimeout(() => {
+        button.textContent = original;
+        button.disabled = false;
+      }, 1800);
     });
     selBar.querySelector(".sel-delete").addEventListener("click", () => {
       const items = flat.filter(h => selected.has(h.id));

@@ -142,9 +142,9 @@ function toolResult(result, successText, structuredResult = value => value) {
 
 export function createHighlighterMcpServer(env, token) {
   const server = new McpServer(
-    { name: "highlighter", version: "2.0.0" },
+    { name: "highlighter", version: "2.1.0" },
     {
-      instructions: "Use get_active_page when the target is uncertain, then use stable highlight IDs for edits, snapshots, opening, or removal. Mutations return operationId values and can be reversed with restore_highlights. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
+      instructions: "Use get_active_page when the target is uncertain, then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged with Add to chat in the Library. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
     }
   );
 
@@ -389,6 +389,34 @@ export function createHighlighterMcpServer(env, token) {
     inputSchema: { ids: z.array(highlightId()).min(1).max(100), url: httpUrl().optional(), addTags: tags().optional(), removeTags: tags().optional() },
     annotations: mutating
   }, input => ({ type: "bulk_tag_highlights", ...input }), value => `Updated tags on ${value.updated} highlight${value.updated === 1 ? "" : "s"}. Operation: ${value.operationId}`);
+
+  registerBridgeTool("get_library_selection", {
+    title: "Get selected library highlights",
+    description: "Read the exact highlights the user staged by selecting them in the Highlighter Library and choosing Add to chat. Returns stable IDs, quotes, notes, folders, and source links in selection order.",
+    inputSchema: {}, annotations: readOnly
+  }, () => ({ type: "get_library_selection" }), value =>
+    `Loaded ${value.count} selected highlight${value.count === 1 ? "" : "s"}${value.unavailable ? `; ${value.unavailable} selected item${value.unavailable === 1 ? " is" : "s are"} no longer available` : ""}.`);
+
+  registerBridgeTool("list_folders", {
+    title: "List highlight folders",
+    description: "List the user's highlight folders with highlight counts, source counts, and optional samples. Highlighter folders are backed by tags.",
+    inputSchema: { includeSamples: z.boolean().optional() }, annotations: readOnly
+  }, input => ({ type: "list_folders", ...input }), value =>
+    value.count ? JSON.stringify(value.folders) : "The library does not have any folders yet.");
+
+  registerBridgeTool("organize_folders", {
+    title: "Organize highlight folders",
+    description: "Create a folder by adding exact highlight IDs, move or remove selected highlights, or rename, merge, and delete folder labels across the library. This never deletes the highlights themselves and returns an operationId that restore_highlights can undo.",
+    inputSchema: {
+      action: z.enum(["add_to_folder", "move_between_folders", "remove_from_folder", "rename_folder", "merge_folders", "delete_folder"]),
+      ids: z.array(highlightId()).min(1).max(100).optional().describe("Required for add, move, and remove actions; use IDs from get_library_selection or search_highlights"),
+      folder: z.string().trim().min(1).max(50).optional().describe("Destination or new folder name"),
+      fromFolder: z.string().trim().min(1).max(50).optional().describe("Source folder for move, rename, remove, or delete"),
+      sourceFolders: tags().optional().describe("Source folders to combine when merging")
+    },
+    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false }
+  }, input => ({ type: "organize_folders", ...input }), value =>
+    `Completed ${value.action.replaceAll("_", " ")} for ${value.updated} highlight${value.updated === 1 ? "" : "s"}. Operation: ${value.operationId}`);
 
   registerBridgeTool("add_page_note", {
     title: "Add or update a page note",

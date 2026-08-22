@@ -38,12 +38,34 @@ test("registers the complete library, history, export, sharing, and collaboratio
     "get_active_page", "highlight_passages", "get_highlighted_text", "remove_highlights", "create_live_link",
     "update_highlight", "search_highlights", "list_highlighted_pages", "restore_highlights", "highlight_selection",
     "export_highlights", "summarize_highlights", "bulk_tag_highlights", "add_page_note", "capture_snapshot",
-    "compare_pages", "manage_live_links", "collaborate_on_live_link", "get_highlight_context", "open_highlight"
+    "compare_pages", "manage_live_links", "collaborate_on_live_link", "get_highlight_context", "open_highlight",
+    "get_library_selection", "list_folders", "organize_folders"
   ];
   assert.deepEqual(Object.keys(server._registeredTools).sort(), expected.sort());
   assert.equal(server._registeredTools.search_highlights.annotations.readOnlyHint, true);
   assert.equal(server._registeredTools.capture_snapshot.annotations.readOnlyHint, false);
   assert.equal(server._registeredTools.manage_live_links.annotations.destructiveHint, true);
+  assert.equal(server._registeredTools.get_library_selection.annotations.readOnlyHint, true);
+  assert.equal(server._registeredTools.list_folders.annotations.readOnlyHint, true);
+  assert.equal(server._registeredTools.organize_folders.annotations.destructiveHint, true);
+});
+
+test("library selection and folder organization forward exact agent commands", async () => {
+  const { server, commands } = serverWithBridge(command => command.type === "get_library_selection"
+    ? { ok: true, count: 2, unavailable: 0, highlights: [{ id: "h1" }, { id: "h2" }] }
+    : { ok: true, action: "add_to_folder", updated: 2, operationId: "op1" });
+
+  const selection = await server._registeredTools.get_library_selection.handler({});
+  const organized = await server._registeredTools.organize_folders.handler({
+    action: "add_to_folder", ids: ["h1", "h2"], folder: "Literature review"
+  });
+
+  assert.deepEqual(commands, [
+    { type: "get_library_selection" },
+    { type: "organize_folders", action: "add_to_folder", ids: ["h1", "h2"], folder: "Literature review" }
+  ]);
+  assert.equal(selection.structuredContent.highlights.length, 2);
+  assert.match(organized.content[0].text, /Operation: op1/);
 });
 
 test("get_highlighted_text returns copy-ready text to the MCP client", async () => {

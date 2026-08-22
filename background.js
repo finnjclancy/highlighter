@@ -15,6 +15,7 @@ const AGENT_RECONNECT_ALARM = "hl_agent_reconnect";
 const AGENT_SHARE_HISTORY_KEY = "hl_shares";
 const AGENT_OPERATION_HISTORY_KEY = "hl_agent_operations";
 const AGENT_PAGE_NOTES_KEY = "hl_page_notes";
+const AGENT_LIBRARY_SELECTION_KEY = "hl_agent_library_selection";
 const AGENT_SHARE_MAX_HIGHLIGHTS = 250;
 const AGENT_TEXT_MAX_CHARS = 200_000;
 const AGENT_OPERATION_LIMIT = 100;
@@ -108,6 +109,9 @@ async function connectAgentBridge() {
       "export_highlights",
       "summarize_highlights",
       "bulk_tag_highlights",
+      "get_library_selection",
+      "list_folders",
+      "organize_folders",
       "add_page_note",
       "capture_snapshot",
       "compare_pages",
@@ -499,6 +503,132 @@ async function listAgentPages(command = {}) {
   return { ok: true, count: result.length, pages: result };
 }
 
+function agentHighlightSummary(item) {
+  return {
+    id: String(item.id || ""),
+    text: String(item.text || ""),
+    note: String(item.note || ""),
+    tags: Array.isArray(item.tags) ? item.tags.map(String).slice(0, 20) : [],
+    color: String(item.bg || ""),
+    url: String(item.url || ""),
+    title: String(item.title || ""),
+    createdAt: Number(item.createdAt || 0)
+  };
+}
+
+async function getAgentLibrarySelection() {
+  const data = await chrome.storage.local.get(AGENT_LIBRARY_SELECTION_KEY);
+  const selection = data[AGENT_LIBRARY_SELECTION_KEY];
+  const ids = [...new Set((Array.isArray(selection?.highlightIds) ? selection.highlightIds : [])
+    .map(id => String(id || "").trim()).filter(Boolean))].slice(0, 100);
+  if (!ids.length) {
+    return { ok: false, error: "No library selection is staged. Select highlights in the Library and choose Add to chat." };
+  }
+  const { highlights } = await agentLibrary();
+  const byId = new Map(highlights.map(item => [String(item.id || ""), item]));
+  const selected = ids.map(id => byId.get(id)).filter(Boolean);
+  if (!selected.length) {
+    return { ok: false, error: "The staged highlights are no longer in the library. Make a new selection and choose Add to chat." };
+  }
+  return {
+    ok: true,
+    selectionId: String(selection.selectionId || ""),
+    createdAt: Number(selection.createdAt || 0),
+    count: selected.length,
+    unavailable: ids.length - selected.length,
+    highlights: selected.map(agentHighlightSummary)
+  };
+}
+
+async function listAgentFolders(command = {}) {
+  const { highlights } = await agentLibrary();
+  const folders = new Map();
+  for (const highlight of highlights) {
+    for (const rawTag of Array.isArray(highlight.tags) ? highlight.tags : []) {
+      const name = String(rawTag || "").trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (!folders.has(key)) folders.set(key, { name, highlights: [], sources: new Set(), updatedAt: 0 });
+      const folder = folders.get(key);
+      folder.highlights.push(highlight);
+      folder.sources.add(highlight.url);
+      folder.updatedAt = Math.max(folder.updatedAt, Number(highlight.createdAt || 0));
+    }
+  }
+  const includeSamples = command.includeSamples === true;
+  const result = [...folders.values()].map(folder => ({
+    name: folder.name,
+    count: folder.highlights.length,
+    sourceCount: folder.sources.size,
+    updatedAt: folder.updatedAt,
+    ...(includeSamples ? { samples: folder.highlights.slice(0, 3).map(agentHighlightSummary) } : {})
+  })).sort((a, b) => a.name.localeCompare(b.name));
+  return { ok: true, count: result.length, folders: result };
+}
+
+function agentFolderName(value) {
+  return sanitizeAgentTags([value])[0] || "";
+}
+
+async function organizeAgentFolders(command) {
+  const action = String(command.action || "");
+  const folder = agentFolderName(command.folder);
+  const fromFolder = agentFolderName(command.fromFolder);
+  const explicitIds = [...new Set((Array.isArray(command.ids) ? command.ids : [])
+    .map(id => String(id || "").trim()).filter(Boolean))].slice(0, 100);
+  let ids = explicitIds;
+  let addTags = [];
+  let removeTags = [];
+
+  if (action === "add_to_folder") {
+    if (!folder || !ids.length) return { ok: false, error: "add_to_folder needs a folder name and at least one highlight ID." };
+    addTags = [folder];
+  } else if (action === "move_between_folders") {
+    if (!fromFolder || !folder || !ids.length) return { ok: false, error: "move_between_folders needs highlight IDs, fromFolder, and folder." };
+    if (fromFolder.toLowerCase() === folder.toLowerCase()) return { ok: false, error: "The source and destination folder are the same." };
+    addTags = [folder];
+    removeTags = [fromFolder];
+  } else if (action === "remove_from_folder") {
+    if (!fromFolder || !ids.length) return { ok: false, error: "remove_from_folder needs a folder name and at least one highlight ID." };
+    removeTags = [fromFolder];
+  } else if (["rename_folder", "merge_folders", "delete_folder"].includes(action)) {
+    const sources = action === "merge_folders"
+      ? sanitizeAgentTags(command.sourceFolders)
+      : (fromFolder ? [fromFolder] : []);
+    if (!sources.length) return { ok: false, error: `${action} needs a source folder.` };
+    if ((action === "rename_folder" || action === "merge_folders") && !folder) {
+      return { ok: false, error: `${action} needs a destination folder.` };
+    }
+    const sourceNames = new Set(sources.map(name => name.toLowerCase()));
+    const destination = folder.toLowerCase();
+    const removableSources = sources.filter(name => name.toLowerCase() !== destination);
+    if (action !== "delete_folder" && !removableSources.length) {
+      return { ok: false, error: "The source and destination folder are the same." };
+    }
+    const { highlights } = await agentLibrary();
+    ids = highlights.filter(highlight => (highlight.tags || []).some(tag => sourceNames.has(String(tag).toLowerCase())))
+      .map(highlight => String(highlight.id || "")).filter(Boolean);
+    if (!ids.length) return { ok: false, error: "No highlights were found in the source folder." };
+    if (ids.length > 100) {
+      return { ok: false, error: "That folder operation matches more than 100 highlights. Narrow the set and move them in batches so each change remains safely reversible." };
+    }
+    removeTags = action === "delete_folder" ? sources : removableSources;
+    if (action !== "delete_folder") addTags = [folder];
+  } else {
+    return { ok: false, error: "Use add_to_folder, move_between_folders, remove_from_folder, rename_folder, merge_folders, or delete_folder." };
+  }
+
+  const result = await updateAgentHighlights({ ids, patch: { addTags, removeTags } });
+  if (!result.ok) return result;
+  return {
+    ...result,
+    action,
+    folder: folder || "",
+    fromFolder: fromFolder || "",
+    sourceFolders: action === "merge_folders" ? sanitizeAgentTags(command.sourceFolders) : undefined
+  };
+}
+
 async function restoreAgentOperation(command) {
   const data = await chrome.storage.local.get(AGENT_OPERATION_HISTORY_KEY);
   const history = Array.isArray(data[AGENT_OPERATION_HISTORY_KEY]) ? data[AGENT_OPERATION_HISTORY_KEY] : [];
@@ -836,6 +966,10 @@ async function handleAgentCommand(command) {
         patch: { addTags: command.addTags, removeTags: command.removeTags }
       });
     }
+
+    if (command.type === "get_library_selection") return getAgentLibrarySelection();
+    if (command.type === "list_folders") return listAgentFolders(command);
+    if (command.type === "organize_folders") return organizeAgentFolders(command);
 
     if (command.type === "add_page_note") return agentPageNote(command);
 
