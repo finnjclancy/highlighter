@@ -166,149 +166,120 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Standout capabilities */
+    /* Standout capabilities — an editorial index, not a dashboard */
     .power-features {
-      margin: 0 0 84px;
+      margin: 0 0 88px;
       animation: fade-up 0.8s cubic-bezier(0.2,0.8,0.2,1) 0.08s both;
     }
     .power-intro {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 24px;
-      margin: 0 2px 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.55fr);
+      align-items: end;
+      gap: 40px;
+      margin-bottom: 28px;
     }
     .power-intro .label {
-      margin-bottom: 7px;
-      color: #a5b4fc;
-      font-size: 11px;
+      margin-bottom: 9px;
+      color: var(--text-3);
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
     }
     .power-intro h2 {
       margin: 0;
-      max-width: 570px;
-      font-size: 28px;
-      line-height: 1.12;
-      letter-spacing: -0.025em;
+      max-width: 610px;
+      font-size: 31px;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+    }
+    .power-intro h2 em {
+      color: #c4b5fd;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
     }
     .power-intro p {
       margin: 0 0 2px;
-      max-width: 270px;
       color: var(--text-3);
       font-size: 12.5px;
-      line-height: 1.5;
-      text-align: right;
-    }
-    .power-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .power-card {
-      position: relative;
-      min-height: 218px;
-      padding: 24px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(20,20,27,0.82);
-      color: var(--text);
-      text-decoration: none;
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-    }
-    .power-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(360px circle at 100% 0%, var(--power-glow), transparent 68%);
-    }
-    .power-card:hover {
-      transform: translateY(-3px);
-      border-color: var(--power-border);
-      box-shadow: 0 18px 42px rgba(0,0,0,0.25);
-      text-decoration: none;
-    }
-    .power-card.share { --power-glow: rgba(74,222,128,0.17); --power-border: rgba(74,222,128,0.5); --power-accent: #86efac; }
-    .power-card.mcp { --power-glow: rgba(168,85,247,0.2); --power-border: rgba(168,85,247,0.54); --power-accent: #dfb6ff; }
-    .power-card.ai-pdf { --power-glow: rgba(236,72,153,0.17); --power-border: rgba(236,72,153,0.5); --power-accent: #f9a8d4; }
-    .power-card.viewer { --power-glow: rgba(56,189,248,0.18); --power-border: rgba(56,189,248,0.52); --power-accent: #8bddff; }
-    .power-card .power-top {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 27px;
-    }
-    .power-card .power-icon {
-      width: 40px;
-      height: 40px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid color-mix(in srgb, var(--power-accent) 28%, transparent);
-      border-radius: 12px;
-      background: color-mix(in srgb, var(--power-accent) 11%, transparent);
-      color: var(--power-accent);
-      font-size: 18px;
-    }
-    .power-card .power-badge {
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--power-accent) 11%, transparent);
-      color: var(--power-accent);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .power-card h3 {
-      position: relative;
-      margin: 0 0 9px;
-      color: #fff;
-      font-size: 21px;
-      letter-spacing: -0.02em;
-    }
-    .power-card p {
-      position: relative;
-      margin: 0;
-      max-width: 48ch;
-      color: var(--text-2);
-      font-size: 13.5px;
       line-height: 1.55;
     }
-    .power-card .power-link {
-      position: absolute;
-      right: 22px;
-      bottom: 18px;
-      color: var(--power-accent);
-      font-size: 12px;
-      font-weight: 600;
+    .power-list { border-top: 1px solid rgba(255,255,255,0.18); }
+    .power-row {
+      display: grid;
+      grid-template-columns: 42px minmax(190px, 0.8fr) minmax(260px, 1.2fr) 22px;
+      align-items: center;
+      gap: 20px;
+      min-height: 116px;
+      padding: 19px 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      text-decoration: none;
+      transition: background 0.18s, padding 0.18s;
     }
-    .power-card .power-link::after { content: "  →"; }
-    .power-card .viewer-note {
-      display: block;
-      margin-top: 8px;
+    .power-row:hover {
+      padding-left: 12px;
+      padding-right: 12px;
+      background: rgba(255,255,255,0.025);
+      text-decoration: none;
+    }
+    .power-row .power-num {
+      align-self: start;
+      padding-top: 3px;
       color: var(--text-3);
-      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+    }
+    .power-row .power-kind {
+      display: block;
+      margin-bottom: 7px;
+      color: #a5b4fc;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .power-row h3 {
+      margin: 0;
+      color: #f7f7fb;
+      font-size: 19px;
+      line-height: 1.2;
+      letter-spacing: -0.018em;
+    }
+    .power-row p {
+      margin: 0;
+      max-width: 55ch;
+      color: var(--text-2);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .power-row .power-arrow {
+      color: var(--text-3);
+      font-size: 15px;
+      transition: color 0.18s, transform 0.18s;
+    }
+    .power-row:hover .power-arrow { color: #c4b5fd; transform: translate(2px, -2px); }
+    .power-row .viewer-note {
+      display: block;
+      margin-top: 6px;
+      color: var(--text-3);
+      font-size: 10.5px;
       line-height: 1.4;
     }
 
     @media (max-width: 720px) {
       .power-intro { display: block; }
-      .power-intro p { margin-top: 10px; max-width: 500px; text-align: left; }
-      .power-grid { grid-template-columns: 1fr; }
-      .power-card { min-height: 0; }
-      .power-card .power-link {
-        position: relative;
-        right: auto;
-        bottom: auto;
-        display: block;
-        margin-top: 13px;
-        text-align: right;
+      .power-intro h2 { font-size: 28px; }
+      .power-intro p { margin-top: 12px; max-width: 500px; }
+      .power-row {
+        grid-template-columns: 30px minmax(0, 1fr) 18px;
+        gap: 12px;
+        padding: 22px 2px;
       }
+      .power-row .power-copy { grid-column: 2; margin-top: -3px; }
+      .power-row .power-arrow { grid-column: 3; grid-row: 1 / span 2; }
+      .power-row:hover { padding-left: 7px; padding-right: 7px; }
     }
 
     @keyframes fade-up {
@@ -1964,52 +1935,51 @@
     <section class="power-features" aria-labelledby="power-title">
       <div class="power-intro">
         <div>
-          <div class="label">The standout features</div>
-          <h2 id="power-title">From AI request to highlighted source—in one browser.</h2>
+          <div class="label">Four things worth knowing</div>
+          <h2 id="power-title">From a request to the <em>highlighted source.</em></h2>
         </div>
-        <p>These are the capabilities that make Highlighter more than a coloured-marker extension.</p>
+        <p>The shortest path from something worth reading to something worth keeping.</p>
       </div>
 
-      <div class="power-grid">
-        <a class="power-card share" href="#sharing">
-          <div class="power-top">
-            <span class="power-icon" aria-hidden="true">↗</span>
-            <span class="power-badge">Sharing link</span>
+      <div class="power-list">
+        <a class="power-row" href="#sharing">
+          <span class="power-num">01</span>
+          <div>
+            <span class="power-kind">Sharing link</span>
+            <h3>Share the highlights, not a screenshot</h3>
           </div>
-          <h3>Share the highlights, not a screenshot</h3>
-          <p>Create one live link. Anyone can read your highlighted passages, notes, and tags in a clean gallery—no extension or account required.</p>
-          <span class="power-link">See what recipients get</span>
+          <p class="power-copy">One live link opens a clean gallery of your passages, notes, and tags. No extension or account needed.</p>
+          <span class="power-arrow" aria-hidden="true">↗</span>
         </a>
 
-        <a class="power-card mcp" href="#mcp-setup">
-          <div class="power-top">
-            <span class="power-icon" aria-hidden="true">✦</span>
-            <span class="power-badge">AI agent + MCP</span>
+        <a class="power-row" href="#mcp-setup">
+          <span class="power-num">02</span>
+          <div>
+            <span class="power-kind">AI agent + MCP</span>
+            <h3>Ask your LLM to highlight anything</h3>
           </div>
-          <h3>Ask your LLM to highlight anything</h3>
-          <p>Connect Highlighter’s private MCP URL, then ask: “Highlight every limitation,” “mark the evidence,” or anything else. The agent finds and saves the exact passages.</p>
-          <span class="power-link">Connect an agent</span>
+          <p class="power-copy">Connect the private MCP URL, then ask for limitations, evidence, definitions, or anything else. The agent saves the exact passages.</p>
+          <span class="power-arrow" aria-hidden="true">↗</span>
         </a>
 
-        <a class="power-card ai-pdf" href="#features">
-          <div class="power-top">
-            <span class="power-icon" aria-hidden="true">⌁</span>
-            <span class="power-badge">AI Deep Read</span>
+        <a class="power-row" href="#features">
+          <span class="power-num">03</span>
+          <div>
+            <span class="power-kind">AI Deep Read</span>
+            <h3>Turn long PDFs into focused reading</h3>
           </div>
-          <h3>Turn long PDFs into focused reading</h3>
-          <p>Ask for definitions, supporting evidence, contradictions, or a custom topic. Deep Read marks the useful passages so you can verify them in context.</p>
-          <span class="power-link">Explore PDF AI</span>
+          <p class="power-copy">Give Deep Read a topic or question. It marks the useful parts so you can inspect the evidence in context.</p>
+          <span class="power-arrow" aria-hidden="true">↗</span>
         </a>
 
-        <a class="power-card viewer" href="#features">
-          <div class="power-top">
-            <span class="power-icon" aria-hidden="true">▤</span>
-            <span class="power-badge">PDF viewer</span>
+        <a class="power-row" href="#features">
+          <span class="power-num">04</span>
+          <div>
+            <span class="power-kind">PDF viewer</span>
+            <h3>Read, annotate, and replay PDF highlights</h3>
           </div>
-          <h3>Read, annotate, and replay PDF highlights</h3>
-          <p>The built-in selectable viewer supports colours, notes, tags, drawing, AI highlighting, and share links—without flattening your research into an image.</p>
-          <span class="viewer-note">Shared gallery: works for everyone. In-context PDF replay: requires Highlighter and access to the source PDF.</span>
-          <span class="power-link">See the viewer</span>
+          <p class="power-copy">Colours, notes, tags, drawing, AI highlighting, and sharing in one selectable viewer.<span class="viewer-note">The gallery works for everyone; PDF replay needs Highlighter and access to the source.</span></p>
+          <span class="power-arrow" aria-hidden="true">↗</span>
         </a>
       </div>
     </section>
