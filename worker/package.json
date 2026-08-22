@@ -1,7 +1,7 @@
 {
   "name": "highlighter-share",
   "version": "1.0.0",
-  "description": "Cloudflare Worker for Highlighter sharing, deep AI reading, and agent MCP tools.",
+  "description": "Cloudflare Worker for Highlight sharing, deep AI reading, and agent MCP tools.",
   "private": true,
   "type": "module",
   "scripts": {

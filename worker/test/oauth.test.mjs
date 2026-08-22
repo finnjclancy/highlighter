@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 
-import worker, { createHighlighterMcpServer, verifyOAuthAccessToken } from "../src/index.js";
+import worker, { createHighlightMcpServer, verifyOAuthAccessToken } from "../src/index.js";
 
 const ORIGIN = "https://highlighter-share.example";
 const REDIRECT_URI = "https://chatgpt.com/connector_platform_oauth_redirect";
@@ -173,7 +173,7 @@ test("pairs a browser through OAuth authorization code and PKCE", async () => {
 
 test("every public MCP tool advertises OAuth security metadata", () => {
   const env = testEnv();
-  const server = createHighlighterMcpServer(env, "b".repeat(64));
+  const server = createHighlightMcpServer(env, "b".repeat(64));
   for (const tool of Object.values(server._registeredTools)) {
     assert.deepEqual(tool._meta.securitySchemes, [{ type: "oauth2", scopes: ["highlighter:control"] }]);
   }

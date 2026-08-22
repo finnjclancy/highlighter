@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createHighlighterMcpServer } from "../src/index.js";
+import { createHighlightMcpServer } from "../src/index.js";
 
 function serverWithBridge(resultForCommand) {
   const commands = [];
@@ -12,7 +12,7 @@ function serverWithBridge(resultForCommand) {
     }
   };
   const env = { AGENT_BRIDGE: { getByName: () => bridge } };
-  return { server: createHighlighterMcpServer(env, "a".repeat(43)), commands };
+  return { server: createHighlightMcpServer(env, "a".repeat(43)), commands };
 }
 
 test("registers text, removal, and live-link tools with the intended annotations", () => {

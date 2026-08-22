@@ -1,4 +1,4 @@
-"""Generate Highlighter extension icons (16, 32, 48, 128 PNG).
+"""Generate Highlight extension icons (16, 32, 48, 128 PNG).
 
 Design: rounded-square gradient tile (indigo -> pink) with a single bold
 diagonal "highlighter swipe" — a thick rounded bar across the face. Reads
@@ -130,7 +130,7 @@ def render_promo(width: int = 440, height: int = 280) -> Image.Image:
         font_sub = ImageFont.load_default()
 
     text_x = 40 + icon_size + 24
-    draw.text((text_x, 92), "Highlighter", fill=(250, 250, 250, 255), font=font_title)
+    draw.text((text_x, 92), "Highlight", fill=(250, 250, 250, 255), font=font_title)
     draw.text((text_x, 142), "Highlight any page.", fill=(190, 190, 205, 255), font=font_sub)
     draw.text((text_x, 164), "Share what you read.", fill=(190, 190, 205, 255), font=font_sub)
 
@@ -200,7 +200,7 @@ def render_og(width: int = 1200, height: int = 630) -> Image.Image:
         font_small = ImageFont.load_default()
 
     text_x = 90 + icon_size + 60
-    draw.text((text_x, 200), "Highlighter", fill=(255, 255, 255, 255), font=font_title)
+    draw.text((text_x, 200), "Highlight", fill=(255, 255, 255, 255), font=font_title)
     draw.text((text_x, 310), "Highlight any page. Share what you read.", fill=(235, 235, 245, 235), font=font_sub)
     draw.text((text_x, 365), "Custom colours · folders · live links", fill=(200, 200, 215, 220), font=font_small)
 

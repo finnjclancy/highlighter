@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Highlighter — Browser highlighting for people and AI agents</title>
+  <title>Highlight — Browser highlighting for people and AI agents</title>
   <meta name="description" content="Ask an AI agent to highlight any web page or PDF, review it in a built-in PDF viewer, and share the result with one live link.">
 
-  <meta property="og:title" content="Highlighter">
+  <meta property="og:title" content="Highlight">
   <meta property="og:description" content="Ask an AI agent to highlight any web page or PDF, organise your research library, then share the result with one live link. Powered by 24 MCP tools.">
   <meta property="og:image" content="https://finnjclancy.github.io/highlighter/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -1330,7 +1330,7 @@
       position: relative;
     }
     .preview-card .pc-img::after {
-      content: "✦ Highlighter";
+      content: "✦ Highlight";
       position: absolute;
       inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -1582,7 +1582,7 @@
       position: relative;
     }
     .mock-gallery .mg-head::after {
-      content: "✦ Highlighter";
+      content: "✦ Highlight";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       font: 600 11px/1 -apple-system, BlinkMacSystemFont, sans-serif;
@@ -1912,7 +1912,7 @@
     <nav class="topnav">
       <div class="brand-mini">
         <span class="logo">✦</span>
-        <span>Highlighter</span>
+        <span>Highlight</span>
       </div>
       <div class="links">
         <a class="mcp-nav" href="#mcp-tools">MCP tools</a>
@@ -1929,7 +1929,7 @@
         Live for Chrome &amp; Edge
       </div>
       <h1>Your browser, now readable<br><span class="accent">by you and your AI agent.</span></h1>
-      <p class="hero-sub">Tell an LLM what matters in plain English. Highlighter can mark the exact passages on a web page or PDF, keep them in your library, and share the result with one live link.</p>
+      <p class="hero-sub">Tell an LLM what matters in plain English. Highlight can mark the exact passages on a web page or PDF, keep them in your library, and share the result with one live link.</p>
     </section>
 
     <section class="power-features" aria-labelledby="power-title">
@@ -1978,7 +1978,7 @@
             <span class="power-kind">PDF viewer</span>
             <h3>Read, annotate, and replay PDF highlights</h3>
           </div>
-          <p class="power-copy">Colours, notes, tags, drawing, AI highlighting, and sharing in one selectable viewer.<span class="viewer-note">The gallery works for everyone; PDF replay needs Highlighter and access to the source.</span></p>
+          <p class="power-copy">Colours, notes, tags, drawing, AI highlighting, and sharing in one selectable viewer.<span class="viewer-note">The gallery works for everyone; PDF replay needs Highlight and access to the source.</span></p>
           <span class="power-arrow" aria-hidden="true">↗</span>
         </a>
       </div>
@@ -2055,7 +2055,7 @@
           <div class="feat-text">
             <span class="feat-tag">PDF + optional AI</span>
             <h3>A PDF viewer built for evidence</h3>
-            <p>Open PDFs in a selectable reader, highlight and annotate them normally, or choose Deep Read to find materially important passages. Share a gallery that works for anyone; recipients with Highlighter can also reopen the source PDF with highlights in context.</p>
+            <p>Open PDFs in a selectable reader, highlight and annotate them normally, or choose Deep Read to find materially important passages. Share a gallery that works for anyone; recipients with Highlight can also reopen the source PDF with highlights in context.</p>
           </div>
           <div class="art" aria-hidden="true">
             <div class="pdf-mock">
@@ -2085,7 +2085,7 @@
 
       <div class="ai-disclosure">
         <span class="ai-mark" aria-hidden="true">✦</span>
-        <span><b>AI highlighting is optional and off until you consent.</b> When used, Highlighter sends the PDF’s extracted text, source details, and any instruction you provide to its Cloudflare Worker; semantic requests are forwarded to Google Gemini. Highlighter does not store the extracted source text, though selected span IDs and short reasons may be cached for up to 30 days. Google may use free-tier content to improve its products, so do not use Deep Read with confidential or sensitive PDFs. <a href="privacy.html">Full privacy details →</a></span>
+        <span><b>AI highlighting is optional and off until you consent.</b> When used, Highlight sends the PDF’s extracted text, source details, and any instruction you provide to its Cloudflare Worker; semantic requests are forwarded to Google Gemini. Highlight does not store the extracted source text, though selected span IDs and short reasons may be cached for up to 30 days. Google may use free-tier content to improve its products, so do not use Deep Read with confidential or sensitive PDFs. <a href="privacy.html">Full privacy details →</a></span>
       </div>
 
       <!-- Centred install CTA -->
@@ -2101,12 +2101,12 @@
 
     <section id="mcp-tools" class="mcp-capabilities">
       <div class="section-h">
-        <div class="label">Highlighter MCP server</div>
+        <div class="label">Highlight MCP server</div>
         <h2>24 tools. One browser research loop.</h2>
         <p>The agent does more than read a page. It can work with your current tab, your private highlight library, and the live links you deliberately publish.</p>
       </div>
 
-      <div class="agent-loop" aria-label="How the Highlighter MCP connection works">
+      <div class="agent-loop" aria-label="How the Highlight MCP connection works">
         <div class="loop-node agent">
           <div class="loop-kicker"><span class="loop-icon">✦</span> AI agent</div>
           <h3>You describe the outcome</h3>
@@ -2116,7 +2116,7 @@
         <div class="loop-node browser">
           <div class="loop-kicker"><span class="loop-icon">↗</span> Secure MCP bridge</div>
           <h3>The right tool is called</h3>
-          <p>An OAuth connection carries a structured request to the paired Highlighter extension in Chrome.</p>
+          <p>An OAuth connection carries a structured request to the paired Highlight extension in Chrome.</p>
         </div>
         <div class="loop-arrow" aria-hidden="true">→</div>
         <div class="loop-node library">
@@ -2130,7 +2130,7 @@
       <div class="section-h">
         <div class="label">Example workflows</div>
         <h2>From open tab to useful output</h2>
-        <p>Give the agent a goal. Highlighter provides the browser actions, saved context, and reversible operations needed to complete it.</p>
+        <p>Give the agent a goal. Highlight provides the browser actions, saved context, and reversible operations needed to complete it.</p>
       </div>
       <div class="workflow-grid">
         <article class="workflow-card">
@@ -2169,7 +2169,7 @@
             <h4>Read &amp; locate</h4>
             <div class="tool-list">
               <div class="tool-item"><code class="tool-name">get_active_page</code><span class="tool-desc">Read the active tab, selection, title, URL, and highlight count.</span></div>
-              <div class="tool-item"><code class="tool-name">get_pdf_document</code><span class="tool-desc">Read page-numbered text from a PDF open in Highlighter's reader.</span></div>
+              <div class="tool-item"><code class="tool-name">get_pdf_document</code><span class="tool-desc">Read page-numbered text from a PDF open in Highlight's reader.</span></div>
               <div class="tool-item"><code class="tool-name">get_highlighted_text</code><span class="tool-desc">Retrieve saved quotes, notes, and tags from an open page.</span></div>
               <div class="tool-item"><code class="tool-name">get_highlight_context</code><span class="tool-desc">Read the live text surrounding one saved highlight.</span></div>
               <div class="tool-item"><code class="tool-name">search_highlights</code><span class="tool-desc">Search quotes, notes, tags, titles, URLs, domains, and dates.</span></div>
@@ -2222,30 +2222,30 @@
       <div class="section-h">
         <div class="label">Set up in a few minutes</div>
         <h2>Connect the MCP server to ChatGPT</h2>
-        <p>Add the public Highlighter MCP endpoint once, pair it to your browser with a one-time code, and the agent can use all 24 browser tools without receiving your private browser token.</p>
+        <p>Add the public Highlight MCP endpoint once, pair it to your browser with a one-time code, and the agent can use all 24 browser tools without receiving your private browser token.</p>
       </div>
       <div class="setup-before">
         <div>
           <h3>Before you start</h3>
-          <p>No terminal, API key, or server configuration is required. Highlighter handles the browser connection and endpoint.</p>
+          <p>No terminal, API key, or server configuration is required. Highlight handles the browser connection and endpoint.</p>
         </div>
         <div class="setup-checks">
-          <div class="setup-check"><b>Install Highlighter</b>Chrome or Edge</div>
+          <div class="setup-check"><b>Install Highlight</b>Chrome or Edge</div>
           <div class="setup-check"><b>Open ChatGPT</b>Developer mode access</div>
           <div class="setup-check"><b>Keep Chrome open</b>While the agent works</div>
         </div>
       </div>
       <div class="steps">
         <div class="step">
-          <div class="num-wrap"><div class="num">1</div><div class="tag">Highlighter</div></div>
-          <h3>Add Highlighter</h3>
-          <p>Install the public Highlighter plugin, or add <b>https://highlighter-share.finnjclancy.workers.dev/mcp</b> as a Streamable HTTP MCP server.</p>
+          <div class="num-wrap"><div class="num">1</div><div class="tag">Highlight</div></div>
+          <h3>Add Highlight</h3>
+          <p>Install the public <b>Highlight</b> plugin, or add <b>https://highlighter-share.finnjclancy.workers.dev/mcp</b> as a Streamable HTTP MCP server.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
           <div class="num-wrap"><div class="num">2</div><div class="tag">ChatGPT settings</div></div>
           <h3>Start the connection</h3>
-          <p>Press <b>Connect</b>. ChatGPT opens Highlighter's secure authorization page and registers its callback automatically.</p>
+          <p>Press <b>Connect</b>. ChatGPT opens Highlight's secure authorization page and registers its callback automatically.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
@@ -2257,19 +2257,19 @@
         <div class="step">
           <div class="num-wrap"><div class="num">4</div><div class="tag">Connection</div></div>
           <h3>Approve this browser</h3>
-          <p>Paste the one-time code into Highlighter's authorization page and connect. It expires after 10 minutes and cannot be reused.</p>
+          <p>Paste the one-time code into Highlight's authorization page and connect. It expires after 10 minutes and cannot be reused.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
           <div class="num-wrap"><div class="num">5</div><div class="tag">New conversation</div></div>
-          <h3>Select Highlighter</h3>
-          <p>Start a new conversation, open the <b>tools</b> menu, and add the Highlighter connection so the agent can choose its MCP tools.</p>
+          <h3>Select Highlight</h3>
+          <p>Start a new conversation, open the <b>tools</b> menu, and add the Highlight connection so the agent can choose its MCP tools.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
           <div class="num-wrap"><div class="num">6</div><div class="tag">Browser ready</div></div>
           <h3>Open a page and test it</h3>
-          <p>Keep Chrome and Highlighter running, open a normal web page, then give the agent a browser task. Highlights appear directly on that page.</p>
+          <p>Keep Chrome and Highlight running, open a normal web page, then give the agent a browser task. Highlights appear directly on that page.</p>
           <div class="stripe"></div>
         </div>
       </div>
@@ -2287,7 +2287,7 @@
         <div class="setup-help">
           <span class="mini-label">If it does not connect</span>
           <h3>Check these three things</h3>
-          <p>Generate a fresh pairing code, keep the Highlighter agent row connected, and confirm the target is an ordinary web page or Highlighter PDF Reader. Browser extensions cannot run on internal pages such as <b>chrome://extensions</b>.</p>
+          <p>Generate a fresh pairing code, keep the Highlight agent row connected, and confirm the target is an ordinary web page or Highlight PDF Reader. Browser extensions cannot run on internal pages such as <b>chrome://extensions</b>.</p>
           <p style="margin-top:10px"><a href="https://developers.openai.com/plugins/deploy/connect-chatgpt" target="_blank" rel="noopener">Read the official OpenAI setup guide →</a></p>
         </div>
       </div>
@@ -2386,7 +2386,7 @@
         <div class="recipient-card r-without">
           <span class="r-eyebrow">Without the extension</span>
           <h3>A clean gallery page</h3>
-          <p>Your highlights, comments, and tags are pulled out of the original web page or PDF and presented as readable cards on a Highlighter-branded page.</p>
+          <p>Your highlights, comments, and tags are pulled out of the original web page or PDF and presented as readable cards on a Highlight-branded page.</p>
           <div class="mock mock-gallery">
             <div class="mg-head"></div>
             <div class="mg-body">
@@ -2518,7 +2518,7 @@
             <div class="tag">Step one</div>
           </div>
           <h3>Install &amp; pin</h3>
-          <p>Add Highlighter to Chrome or Edge, pin it to your toolbar. Ready instantly — no account, no sign-in.</p>
+          <p>Add Highlight to Chrome or Edge, pin it to your toolbar. Ready instantly — no account, no sign-in.</p>
           <div class="stripe"></div>
         </div>
         <div class="step">
@@ -2562,7 +2562,7 @@
 
     <section class="final-cta">
       <h2>Start highlighting in 10 seconds.</h2>
-      <a class="cta" href="https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo" target="_blank" rel="noopener">Install Highlighter →</a>
+      <a class="cta" href="https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo" target="_blank" rel="noopener">Install Highlight →</a>
     </section>
 
     <footer class="foot">

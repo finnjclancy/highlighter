@@ -148,7 +148,7 @@ function demoArticle() {
       <p>When highlights can be shared, the quote becomes a lightweight handoff. Teammates can scan the extracted passages first, then open the original page only when they need the surrounding detail.</p>
     </article>
     <div class="right-note">
-      Highlighter adds a small palette on text selection, a page overlay for saved quotes, and a library for every source you have marked.
+      Highlight adds a small palette on text selection, a page overlay for saved quotes, and a library for every source you have marked.
     </div>
   </div>
 </body>`);
@@ -240,7 +240,7 @@ function promoPage(kind) {
   <div class="wrap">
     <div class="icon" aria-hidden="true"></div>
     <main>
-      <h1>Highlighter</h1>
+      <h1>Highlight</h1>
       <p>Highlight any web page in custom colours. Organise quotes, add comments, and share live links.</p>
       <div class="features">
         <span class="chip">Custom colours</span>

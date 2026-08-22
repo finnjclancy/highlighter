@@ -1,6 +1,6 @@
-# Highlighter web (the "gallery" companion site)
+# Highlight web (the "gallery" companion site)
 
-This folder is the public-facing site for the Highlighter extension. Deployed via GitHub Pages straight from `main` → `/docs`.
+This folder is the public-facing site for the Highlight extension. Deployed via GitHub Pages straight from `main` → `/docs`.
 
 - `index.html` — landing page covering web/PDF highlighting, optional AI, sharing, and privacy disclosures
 - `privacy.html` — privacy policy for local storage, sharing, comments, and optional AI processing

@@ -653,7 +653,7 @@ async function restoreAgentOperation(command) {
   const operation = command.operationId
     ? history.find(item => item.id === command.operationId)
     : history.find(item => !item.restoredAt);
-  if (!operation) return { ok: false, error: "No matching reversible Highlighter operation was found." };
+  if (!operation) return { ok: false, error: "No matching reversible Highlight operation was found." };
   if (operation.restoredAt) return { ok: false, error: "That operation has already been restored." };
   const byPage = new Map();
   for (const change of operation.changes || []) {
@@ -718,7 +718,7 @@ function exportAgentText(items, format) {
     if (!groups.has(item.url)) groups.set(item.url, { title: item.title, items: [] });
     groups.get(item.url).items.push(item);
   });
-  let output = `# Highlighter export\n\n`;
+  let output = `# Highlight export\n\n`;
   for (const [url, group] of groups) {
     output += `## [${String(group.title || url).replace(/\]/g, "\\]")}](${url})\n\n`;
     for (const item of group.items) {
@@ -847,7 +847,7 @@ async function handleAgentCommand(command) {
       if (!result?.ok) {
         return {
           ok: false,
-          error: result?.error || "That page is not open in Highlighter's PDF Reader. Open the PDF in the reader, then try again."
+          error: result?.error || "That page is not open in Highlight's PDF Reader. Open the PDF in the reader, then try again."
         };
       }
       return {
@@ -1074,9 +1074,9 @@ async function handleAgentCommand(command) {
       return { ok: true, id: highlight.id, url: highlight.url, title: highlight.title };
     }
   } catch (error) {
-    return { ok: false, error: String(error?.message || "Highlighter could not reach the page").slice(0, 240) };
+    return { ok: false, error: String(error?.message || "Highlight could not reach the page").slice(0, 240) };
   }
-  return { ok: false, error: "Unknown Highlighter command." };
+  return { ok: false, error: "Unknown Highlight command." };
 }
 
 async function setAgentConnectionEnabled(enabled) {
@@ -1119,7 +1119,7 @@ async function createAgentPairingCode() {
       mcpUrl: result.mcpUrl || `${AGENT_WORKER_BASE}/mcp`
     };
   } catch {
-    return { ok: false, error: "Highlighter could not reach the pairing service." };
+    return { ok: false, error: "Highlight could not reach the pairing service." };
   }
 }
 
@@ -1149,7 +1149,7 @@ function hasSharedHighlightPayload(url) {
 }
 
 // A shared PDF first points at the public source URL so the link remains useful
-// for people without Highlighter. When the extension is installed, hand that
+// for people without Highlight. When the extension is installed, hand that
 // navigation directly to our reader before Chrome's protected PDF viewer takes
 // over. Ordinary PDFs are left alone until the user clicks the extension icon.
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -1174,7 +1174,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       contexts: ["selection"]
     }));
     chrome.contextMenus.create({ id: "hl-highlight-edit", title: "Highlight, then add tags or note…", contexts: ["selection"] });
-    chrome.contextMenus.create({ id: "hl-open-library", title: "Open Highlighter library", contexts: ["page", "selection"] });
+    chrome.contextMenus.create({ id: "hl-open-library", title: "Open Highlight library", contexts: ["page", "selection"] });
   }
 
   // Open the welcome page only on first install (not on updates or browser restart)
@@ -1188,7 +1188,7 @@ async function highlightCurrentSelection(tab, color = "yellow") {
   try { return await chrome.tabs.sendMessage(tab.id, { type: "agentHighlightSelection", color, tags: [] }); } catch { return null; }
 }
 
-async function openChatGptWithHighlighterPrompt(rawPrompt) {
+async function openChatGptWithHighlightPrompt(rawPrompt) {
   const prompt = String(rawPrompt || "").trim().slice(0, 8000);
   if (!prompt) return { ok: false, error: "The chat prompt is empty." };
   const tabs = await chrome.tabs.query({ url: ["https://chatgpt.com/*", "https://chat.openai.com/*"] });
@@ -1203,7 +1203,7 @@ async function openChatGptWithHighlighterPrompt(rawPrompt) {
   for (let attempt = 0; attempt < 20; attempt++) {
     try {
       const result = await chrome.tabs.sendMessage(target.id, {
-        type: "insertHighlighterChatPrompt",
+        type: "insertHighlightChatPrompt",
         prompt
       });
       if (result?.ok) return { ok: true, mode: "inserted" };
@@ -1262,8 +1262,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   } else if (msg.type === "createAgentPairingCode") {
     createAgentPairingCode().then(sendResponse);
     return true;
-  } else if (msg.type === "openChatGptWithHighlighterPrompt") {
-    openChatGptWithHighlighterPrompt(msg.prompt).then(sendResponse);
+  } else if (msg.type === "openChatGptWithHighlightPrompt") {
+    openChatGptWithHighlightPrompt(msg.prompt).then(sendResponse);
     return true;
   } else if (msg.type === "recordHighlightRemoval") {
     const pageUrl = canonicalAgentUrl(msg.pageUrl);

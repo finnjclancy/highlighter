@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Highlighter",
+  "name": "Highlight",
   "version": "1.9.0",
   "description": "Highlight web pages and PDFs manually, with AI, or securely paired agents. Organise quotes, add comments, and share live links.",
   "permissions": ["storage", "activeTab", "clipboardWrite", "alarms", "contextMenus"],
@@ -8,7 +8,7 @@
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Highlighter",
+    "default_title": "Highlight",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",

@@ -36,7 +36,7 @@ test("chat bridge appends the staged instruction to an open ChatGPT textarea", a
   };
   const { listener, events } = await loadChatBridge(composer);
   let response;
-  listener({ type: "insertHighlighterChatPrompt", prompt: "Organise my selected highlights." }, {}, value => { response = value; });
+  listener({ type: "insertHighlightChatPrompt", prompt: "Organise my selected highlights." }, {}, value => { response = value; });
 
   assert.equal(response.ok, true);
   assert.equal(composer.focusCalled, true);
@@ -47,7 +47,7 @@ test("chat bridge appends the staged instruction to an open ChatGPT textarea", a
 test("chat bridge reports when the ChatGPT composer is not available", async () => {
   const { listener } = await loadChatBridge(null);
   let response;
-  listener({ type: "insertHighlighterChatPrompt", prompt: "Use my selection." }, {}, value => { response = value; });
+  listener({ type: "insertHighlightChatPrompt", prompt: "Use my selection." }, {}, value => { response = value; });
   assert.equal(response.ok, false);
   assert.match(response.error, /Open a ChatGPT conversation/);
 });

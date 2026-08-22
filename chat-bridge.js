@@ -46,7 +46,7 @@
   }
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type !== "insertHighlighterChatPrompt") return;
+    if (message?.type !== "insertHighlightChatPrompt") return;
     if (!ALLOWED_HOSTS.has(location.hostname)) {
       sendResponse({ ok: false, error: "This is not a supported ChatGPT page." });
       return;

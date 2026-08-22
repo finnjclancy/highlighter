@@ -1,4 +1,4 @@
-# Highlighter
+# Highlight
 
 A clean browser extension for highlighting text on any web page with custom colours, organising quotes into folders, and sharing live links.
 
@@ -13,13 +13,13 @@ A clean browser extension for highlighting text on any web page with custom colo
 - **Custom palette** — each swatch has its own text and background colour. Hover a highlight to re-colour or remove it instantly.
 - **Folders, tags, comments** — organise quotes the way you think. Free-form notes per highlight, batch-select and export selections as plain text or Markdown.
 - **Floating overlay** — a tiny burger in the bottom-left lists every highlight on the current page; click any to flash + scroll to it.
-- **PDF reader** — open browser PDFs in Highlighter's own selectable reader, then highlight and organise them with the same palette and library as web pages. A connected agent can read the rendered document in page ranges, create exact highlights, add notes/tags, undo edits, and publish the finished selection.
+- **PDF reader** — open browser PDFs in Highlight's own selectable reader, then highlight and organise them with the same palette and library as web pages. A connected agent can read the rendered document in page ranges, create exact highlights, add notes/tags, undo edits, and publish the finished selection.
 - **Draw on the page** — pen, line, and rectangle tools for marking up diagrams, screenshots, or PDFs in-place.
 - **Library** — single dashboard for every highlight across every site. Filter by folder, site, or search.
 - **Design Studio** — drag-and-drop palette editor with presets, live preview, and per-swatch text/background pickers.
 - **Sharing** — generate a single link that works two ways: viewers without the extension see a clean reader-style gallery; viewers with the extension can jump straight to the source page with your highlights painted on it.
 - **Bulk management** — select several or all highlights directly in the page/PDF panel, or delete every highlight in the current filtered Library view, with confirmation before removal.
-- **Agent research workspace** — select highlights in the Library, open a prepared instruction in ChatGPT web or copy it for a browser agent, then let an MCP-compatible agent create, move, rename, merge, or remove folders; search and organize the full library; update or restore highlights; compare sources; export research; and manage collaborative live galleries. Highlighter never presses Send for you.
+- **Agent research workspace** — select highlights in the Library, open a prepared instruction in ChatGPT web or copy it for a browser agent, then let an MCP-compatible agent create, move, rename, merge, or remove folders; search and organize the full library; update or restore highlights; compare sources; export research; and manage collaborative live galleries. Highlight never presses Send for you.
 - **Fast actions** — highlight the current selection from the page context menu or with `Alt+Shift+H` (`⌃⇧H` on macOS).
 - **Privacy-first** — no accounts and no tracking. Highlights live in your own browser storage unless you explicitly copy them or create a share link.
 
@@ -59,26 +59,26 @@ Toolbar icon → **🔗 Share live link**. Copies a URL like:
 https://finnjclancy.github.io/highlighter/v.html?d=zH4sI…
 ```
 
-The payload is your highlights, gzipped + base64url-encoded. Highlighter tries to create a short link through the share worker; if that is unavailable, it falls back to a long URL with the payload embedded. Recipients without the extension get a clean gallery of the quotes. Recipients with the extension can click **Open on original page →** to see them painted onto the live article.
+The payload is your highlights, gzipped + base64url-encoded. Highlight tries to create a short link through the share worker; if that is unavailable, it falls back to a long URL with the payload embedded. Recipients without the extension get a clean gallery of the quotes. Recipients with the extension can click **Open on original page →** to see them painted onto the live article.
 
 ### Draw
 Toolbar icon → **✎ Draw on page**. Pen / line / rectangle tools with palette, three stroke widths, undo, and clear.
 
 ### PDFs
-Open a PDF in the browser → click the Highlighter toolbar icon. The document opens immediately in an extension-owned PDF.js reader so selections, saved highlights, comments, and the page overlay work normally. The original PDF URL remains the document identity in the library. Shared PDF links hand off to this reader automatically when Highlighter is installed.
+Open a PDF in the browser → click the Highlight toolbar icon. The document opens immediately in an extension-owned PDF.js reader so selections, saved highlights, comments, and the page overlay work normally. The original PDF URL remains the document identity in the library. Shared PDF links hand off to this reader automatically when Highlight is installed.
 
 ### AI highlights
-In the PDF reader, click **✦ Deep highlight** to run a high-thinking reading process with no highlight quota. Without a custom instruction, Gemini examines the paper section by section for materially important candidates and performs a second editorial pass to remove redundancy. With a custom instruction, Highlighter follows it directly: literal requests such as “highlight every sentence containing *world model*” are matched exhaustively, while broader semantic instructions are evaluated independently across chunks of the paper so matches are not lost in one global summary. The passages fade in, are saved as ordinary editable highlights, and are included in live share links. Turn on **Auto** to run this once whenever a new PDF opens using the saved instruction.
+In the PDF reader, click **✦ Deep highlight** to run a high-thinking reading process with no highlight quota. Without a custom instruction, Gemini examines the paper section by section for materially important candidates and performs a second editorial pass to remove redundancy. With a custom instruction, Highlight follows it directly: literal requests such as “highlight every sentence containing *world model*” are matched exhaustively, while broader semantic instructions are evaluated independently across chunks of the paper so matches are not lost in one global summary. The passages fade in, are saved as ordinary editable highlights, and are included in live share links. Turn on **Auto** to run this once whenever a new PDF opens using the saved instruction.
 
-The first use shows a disclosure and requires consent. Extracted PDF text and any reader instruction are sent over HTTPS to the Highlighter Worker. Exact keyword/phrase requests are matched in the Worker; semantic requests are forwarded to Google's Gemini API. The API key remains a Worker secret, and source PDF text is not stored by Highlighter. Repeated requests with the same document, instruction, model, and prompt version can reuse a 30-day cache of selected span IDs and reasons.
+The first use shows a disclosure and requires consent. Extracted PDF text and any reader instruction are sent over HTTPS to the Highlight Worker. Exact keyword/phrase requests are matched in the Worker; semantic requests are forwarded to Google's Gemini API. The API key remains a Worker secret, and source PDF text is not stored by Highlight. Repeated requests with the same document, instruction, model, and prompt version can reuse a 30-day cache of selected span IDs and reasons.
 
 ### Agent connection
 Toolbar icon → press the **?** beside the agent connection for the built-in setup guide. The short version:
 
-1. Add the public Highlighter plugin, or add `https://highlighter-share.finnjclancy.workers.dev/mcp` as a Streamable HTTP MCP server in ChatGPT.
-2. When ChatGPT opens the Highlighter connection page, open the extension, press **?**, then **Pair ChatGPT**.
+1. Add the public **Highlight** plugin, or add `https://highlighter-share.finnjclancy.workers.dev/mcp` as a Streamable HTTP MCP server in ChatGPT.
+2. When ChatGPT opens the Highlight connection page, open the extension, press **?**, then **Pair ChatGPT**.
 3. Paste the one-time code into the connection page and approve it.
-4. Keep Chrome open while the agent works, then select Highlighter from ChatGPT's tools menu or mention `@Highlighter` once the public plugin is installed.
+4. Keep Chrome open while the agent works, then select **Highlight** from ChatGPT's tools menu or say `@highlight the important things` once the public plugin is installed.
 
 The code expires after 10 minutes and works once; the browser's private token is never entered into ChatGPT. **Copy private MCP link** remains under the setup guide as a developer-only fallback and must be treated like a password. Use × to disconnect and discard the local token. See the [public MCP setup page](https://finnjclancy.github.io/highlighter/mcp.html) and the [official OpenAI setup guide](https://developers.openai.com/plugins/deploy/connect-chatgpt) for current details.
 
@@ -109,7 +109,7 @@ Toolbar icon → **📋 Copy text**. Drops every highlight on the current page o
 docs/              GitHub Pages site (gallery viewer + landing + privacy)
   index.html       landing page
   v.html / v.js    shared-highlights gallery viewer (decodes ?d=<payload>)
-  mcp.html         public Highlighter MCP setup guide
+  mcp.html         public Highlight MCP setup guide
   privacy.html     privacy policy
   terms.html       hosted service terms
   styles.css       shared site styles

@@ -101,7 +101,7 @@ function annotateAiSpans() {
     const pageNumber = Number(page.dataset.pageNumber);
     const candidates = [...page.querySelectorAll(".textLayer span")].filter(span => {
       if (span.classList.contains("hl-mark") || span.classList.contains("markedContent")) return false;
-      // Keep leaf PDF.js text spans. A restored Highlighter mark is allowed as
+      // Keep leaf PDF.js text spans. A restored Highlight mark is allowed as
       // a child, but structural marked-content wrappers are not.
       return ![...span.children].some(child => child.matches("span:not(.hl-mark)"));
     });
@@ -185,7 +185,7 @@ function renderAgentConnection() {
     ? "Connected — your PDF tools are ready"
     : enabled
       ? "Agent is reconnecting — keep Chrome open"
-      : "Connect an agent from the Highlighter extension menu first";
+      : "Connect an agent from the Highlight extension menu first";
   agentPdfCopy.disabled = !connected || !pdfDocument;
   agentPdfOpen.disabled = !connected || !pdfDocument;
 }
@@ -209,7 +209,7 @@ function buildAgentPdfPrompt() {
   const cleanSource = new URL(sourceUrl.href);
   cleanSource.searchParams.delete("hlshare");
   return [
-    `I am viewing “${titleEl.textContent}” in Highlighter's PDF Reader.`,
+    `I am viewing “${titleEl.textContent}” in Highlight's PDF Reader.`,
     `Use get_pdf_document with the source URL ${cleanSource.href} to read the PDF, continuing through later page ranges when needed.`,
     `Task: ${task}`,
     "When you create highlights, use highlight_passages with exact quotations from get_pdf_document and this same source URL. Keep notes concise, use useful tags, and tell me what you changed. Do not create a live link unless I ask for one."
@@ -225,7 +225,7 @@ async function copyAgentPdfPrompt() {
 async function openAgentPdfInChatGpt() {
   const prompt = buildAgentPdfPrompt();
   const result = await chrome.runtime.sendMessage({
-    type: "openChatGptWithHighlighterPrompt",
+    type: "openChatGptWithHighlightPrompt",
     prompt
   });
   if (!result?.ok) throw new Error(result?.error || "ChatGPT could not be opened.");
@@ -386,7 +386,7 @@ async function maybeRunAiAutomatically() {
 async function fetchPdf(url) {
   setProgress("Downloading PDF", 4);
   const publicArxivPdf = /(^|\.)arxiv\.org$/i.test(url.hostname);
-  // Shared-highlight data belongs to Highlighter, not the PDF host. Keep it in
+  // Shared-highlight data belongs to Highlight, not the PDF host. Keep it in
   // the reader's canonical source URL for restoration, but never send it to
   // arXiv/OpenReview (some hosts also redirect or reject unknown query data).
   const downloadUrl = new URL(url.href);
@@ -409,7 +409,7 @@ async function fetchPdf(url) {
 
 async function loadDocument() {
   if (!sourceUrl) {
-    showError("No PDF selected", "Open a PDF in your browser, then choose “Open in Highlighter PDF Reader” from the extension.");
+    showError("No PDF selected", "Open a PDF in your browser, then choose “Open in Highlight PDF Reader” from the extension.");
     return;
   }
 
@@ -433,7 +433,7 @@ async function loadDocument() {
       const { info } = await pdfDocument.getMetadata();
       if (info?.Title?.trim()) titleEl.textContent = info.Title.trim();
     } catch {}
-    document.title = `${titleEl.textContent} - Highlighter`;
+    document.title = `${titleEl.textContent} - Highlight`;
     await renderDocument();
   } catch (error) {
     showError("Unable to open this PDF", error?.message || "The document could not be loaded.");
@@ -542,7 +542,7 @@ agentPdfCopy.addEventListener("click", async () => {
   try {
     await copyAgentPdfPrompt();
     agentPdfCopy.textContent = "Copied";
-    showAiToast("Copied. Keep this PDF open, launch the ChatGPT extension, and paste the instruction into a chat with Highlighter enabled.");
+    showAiToast("Copied. Keep this PDF open, launch the ChatGPT extension, and paste the instruction into a chat with Highlight enabled.");
   } catch {
     agentPdfCopy.textContent = "Couldn’t copy";
   }

@@ -405,7 +405,7 @@ body {
 .textLayer ::selection { background: rgba(99, 102, 241, 0.36); }
 .textLayer br::selection { background: transparent; }
 
-/* The PDF canvas already paints the glyphs. Existing Highlighter marks should
+/* The PDF canvas already paints the glyphs. Existing Highlight marks should
    add only their translucent background, avoiding doubled/misaligned text. */
 .textLayer .hl-mark {
   color: transparent !important;

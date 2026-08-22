@@ -1266,7 +1266,7 @@
   function getAgentPdfDocument(options = {}) {
     const isPdfReader = location.protocol === "chrome-extension:" && location.pathname.endsWith("/pdf-reader.html");
     if (!isPdfReader) {
-      return { ok: false, error: "This tool reads PDFs that are open in Highlighter's PDF Reader." };
+      return { ok: false, error: "This tool reads PDFs that are open in Highlight's PDF Reader." };
     }
     const pages = [...document.querySelectorAll(".pdf-page")];
     if (!pages.length || document.body.classList.contains("pdf-rendering")) {
@@ -1304,7 +1304,7 @@
     const hasMorePages = lastPage < pages.length;
     return {
       ok: true,
-      title: document.title.replace(/\s+-\s+Highlighter$/, ""),
+      title: document.title.replace(/\s+-\s+Highlight$/, ""),
       pageCount: pages.length,
       startPage,
       endPage: lastPage,
@@ -1868,10 +1868,10 @@
   });
 
   // ---------- init ----------
-  // ---------- announce extension presence to Highlighter-owned pages ----------
+  // ---------- announce extension presence to Highlight-owned pages ----------
   // The shared-gallery and landing pages check for this marker to hide the
-  // "Install Highlighter" banner when the viewer already has the extension.
-  function announcePresenceIfHighlighterPage() {
+  // "Install Highlight" banner when the viewer already has the extension.
+  function announcePresenceIfHighlightPage() {
     const host = location.hostname;
     const isOurPage =
       host === "highlighter-share.finnjclancy.workers.dev" ||
@@ -1893,7 +1893,7 @@
 
   (async function init() {
     try {
-      announcePresenceIfHighlighterPage();
+      announcePresenceIfHighlightPage();
       await loadPalette();
       await loadHighlights();
       buildPanel();

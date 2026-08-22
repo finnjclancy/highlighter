@@ -19,7 +19,7 @@ const registration = await json("/oauth/register", {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({
-    client_name: "Highlighter live deployment smoke test",
+    client_name: "Highlight live deployment smoke test",
     redirect_uris: [redirectUri],
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],

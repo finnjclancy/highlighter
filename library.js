@@ -593,7 +593,7 @@ async function stageSelectionForAgent(items) {
   };
   await chrome.storage.local.set({ [AGENT_LIBRARY_SELECTION_KEY]: selection });
   const prompt = [
-    `I selected ${highlightIds.length} highlight${highlightIds.length === 1 ? "" : "s"} in my Highlighter Library.`,
+    `I selected ${highlightIds.length} highlight${highlightIds.length === 1 ? "" : "s"} in my Highlight Library.`,
     "Use get_library_selection to load that exact set, then help me work with or organise it.",
     "If I ask for folder changes, check list_folders first and use organize_folders only after confirming the intended structure."
   ].join(" ");
@@ -613,7 +613,7 @@ async function sendSelectionToChatGptWeb(items) {
     for (let attempt = 0; attempt < 20; attempt++) {
       try {
         const result = await chrome.tabs.sendMessage(target.id, {
-          type: "insertHighlighterChatPrompt",
+          type: "insertHighlightChatPrompt",
           prompt: staged.prompt
         });
         if (result?.ok) return { mode: "inserted" };

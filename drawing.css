@@ -386,7 +386,7 @@
   filter: drop-shadow(0 0 4px #ef4444) !important;
 }
 
-/* Hide all Highlighter UI components during screen capture */
+/* Hide all Highlight UI components during screen capture */
 body.hl-screenshot-hidden #hl-draw-toolbar,
 body.hl-screenshot-hidden #hl-panel,
 body.hl-screenshot-hidden #hl-popover,

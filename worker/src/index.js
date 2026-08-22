@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler } from "agents/mcp/server";
 import { z } from "zod";
 
-// Cloudflare Worker for Highlighter share URLs.
+// Cloudflare Worker for Highlight share URLs.
 //
 // Two URL shapes:
 //   • short:  /v/<id>           — looks up the payload in KV (preferred)
@@ -11,7 +11,7 @@ import { z } from "zod";
 //
 // Both render HTML with per-link Open Graph meta tags so messaging-app
 // preview cards show the share's custom name + description + image,
-// instead of the generic "Shared highlights — Highlighter".
+// instead of the generic "Shared highlights — Highlight".
 //
 // The body still loads v.js from GitHub Pages, which decodes the payload
 // (either from window.__hlPayload, injected inline, or from ?d=) and
@@ -69,7 +69,7 @@ export class AgentBridge extends DurableObject {
   async issueCommand(command) {
     const sockets = this.ctx.getWebSockets();
     if (!sockets.length) {
-      return { ok: false, error: "Highlighter is not connected. Open Chrome and enable Agent connection in the Highlighter popup." };
+      return { ok: false, error: "Highlight is not connected. Open Chrome and enable Agent connection in the Highlight popup." };
     }
 
     const id = crypto.randomUUID();
@@ -77,7 +77,7 @@ export class AgentBridge extends DurableObject {
     return new Promise(resolve => {
       const timeout = setTimeout(() => {
         this.pendingCommands.delete(id);
-        resolve({ ok: false, error: "Highlighter did not answer in time. Keep Chrome open and try again." });
+        resolve({ ok: false, error: "Highlight did not answer in time. Keep Chrome open and try again." });
       }, AGENT_COMMAND_TIMEOUT_MS);
 
       this.pendingCommands.set(id, result => {
@@ -95,7 +95,7 @@ export class AgentBridge extends DurableObject {
       if (!delivered) {
         clearTimeout(timeout);
         this.pendingCommands.delete(id);
-        resolve({ ok: false, error: "Highlighter is reconnecting. Try again in a moment." });
+        resolve({ ok: false, error: "Highlight is reconnecting. Try again in a moment." });
       }
     });
   }
@@ -117,7 +117,7 @@ export class AgentBridge extends DurableObject {
     this.pendingCommands.delete(data.id);
     resolve(data.result && typeof data.result === "object"
       ? data.result
-      : { ok: false, error: "Highlighter returned an invalid result." });
+      : { ok: false, error: "Highlight returned an invalid result." });
   }
 
   webSocketClose(socket, code, reason) {
@@ -168,7 +168,7 @@ function toolResult(result, successText, structuredResult = value => value) {
   if (!result?.ok) {
     return {
       isError: true,
-      content: [{ type: "text", text: result?.error || "Highlighter could not complete the request." }]
+      content: [{ type: "text", text: result?.error || "Highlight could not complete the request." }]
     };
   }
   return {
@@ -177,11 +177,11 @@ function toolResult(result, successText, structuredResult = value => value) {
   };
 }
 
-export function createHighlighterMcpServer(env, bridgeKey) {
+export function createHighlightMcpServer(env, bridgeKey) {
   const server = new McpServer(
-    { name: "highlighter", version: "2.3.0" },
+    { name: "highlight", version: "2.3.0" },
     {
-      instructions: "Use get_active_page when the target is uncertain. For a PDF open in Highlighter's reader, use get_pdf_document to read page-numbered source text before choosing exact quotations for highlight_passages. Then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged from the Library for ChatGPT web or a browser agent. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
+      instructions: "Use get_active_page when the target is uncertain. For a PDF open in Highlight's reader, use get_pdf_document to read page-numbered source text before choosing exact quotations for highlight_passages. Then use stable highlight IDs for edits, snapshots, opening, or removal. get_library_selection reads the exact evidence the user staged from the Library for ChatGPT web or a browser agent. Use list_folders before proposing a library structure, explain the intended organisation, then use organize_folders only after the user's direction is clear. Folder changes are reversible: mutations return operationId values that restore_highlights can undo. search_highlights and list_highlighted_pages work across the private local library. summarize_highlights and compare_pages return source material that the assistant must synthesize itself while preserving links. create_live_link publishes a gallery; always give its URL to the user. Never expose link management tokens or connection tokens."
     }
   );
 
@@ -200,8 +200,8 @@ export function createHighlighterMcpServer(env, bridgeKey) {
   server.registerTool(
     "get_active_page",
     {
-      title: "Get active Highlighter page",
-      description: "Return the active Chrome page from the paired Highlighter extension, including its URL, title, current text selection, and existing highlight count.",
+      title: "Get active Highlight page",
+      description: "Return the active Chrome page from the paired Highlight extension, including its URL, title, current text selection, and existing highlight count.",
       inputSchema: {},
       annotations: {
         readOnlyHint: true,
@@ -226,7 +226,7 @@ export function createHighlighterMcpServer(env, bridgeKey) {
     "get_pdf_document",
     {
       title: "Read an open PDF",
-      description: "Read page-numbered selectable text from a PDF currently open in Highlighter's PDF Reader. Use the returned source URL and copy quotations exactly into highlight_passages. Long PDFs can be read in consecutive page ranges with startPage and pageCount.",
+      description: "Read page-numbered selectable text from a PDF currently open in Highlight's PDF Reader. Use the returned source URL and copy quotations exactly into highlight_passages. Long PDFs can be read in consecutive page ranges with startPage and pageCount.",
       inputSchema: {
         url: z.string().url().refine(value => /^https?:\/\//i.test(value), "Use an HTTP(S) PDF source URL").optional(),
         startPage: z.number().int().min(1).optional().describe("First PDF page to read; defaults to 1"),
@@ -270,7 +270,7 @@ export function createHighlighterMcpServer(env, bridgeKey) {
     "highlight_passages",
     {
       title: "Highlight passages on an open page",
-      description: "Add persistent Highlighter highlights to an exact HTTP(S) page that is currently open in the paired Chrome browser. Quotations must be copied exactly from the page. Prefix and suffix context should be supplied when a quotation may occur more than once.",
+      description: "Add persistent Highlight highlights to an exact HTTP(S) page that is currently open in the paired Chrome browser. Quotations must be copied exactly from the page. Prefix and suffix context should be supplied when a quotation may occur more than once.",
       inputSchema: {
         url: z.string().url().refine(value => /^https?:\/\//i.test(value), "Use an HTTP(S) page URL"),
         passages: z.array(z.object({
@@ -306,7 +306,7 @@ export function createHighlighterMcpServer(env, bridgeKey) {
     "get_highlighted_text",
     {
       title: "Get highlighted text",
-      description: "Read the saved Highlighter quotes, notes, and tags from the active Chrome page, or from an exact URL currently open in the paired browser. Returns copy-ready plain text so it can be given directly to the user in chat.",
+      description: "Read the saved Highlight quotes, notes, and tags from the active Chrome page, or from an exact URL currently open in the paired browser. Returns copy-ready plain text so it can be given directly to the user in chat.",
       inputSchema: {
         url: z.string().url().refine(value => /^https?:\/\//i.test(value), "Use an HTTP(S) page URL").optional()
       },
@@ -321,7 +321,7 @@ export function createHighlighterMcpServer(env, bridgeKey) {
       const bridge = agentBridgeForKey(env, bridgeKey);
       const result = await bridge.issueCommand({ type: "get_highlighted_text", ...(url ? { url } : {}) });
       return toolResult(result, value => value.text + (value.truncated
-        ? "\n[Highlighter truncated this response because the saved text exceeded the tool limit.]"
+        ? "\n[Highlight truncated this response because the saved text exceeded the tool limit.]"
         : ""), value => ({
         url: value.url,
         title: value.title,
@@ -370,8 +370,8 @@ export function createHighlighterMcpServer(env, bridgeKey) {
   server.registerTool(
     "create_live_link",
     {
-      title: "Create a live Highlighter link",
-      description: "Create a public Highlighter gallery from the saved highlights on the active Chrome page, or an exact URL currently open in the paired browser. Returns the finished live URL for the assistant to give directly to the user in chat.",
+      title: "Create a live Highlight link",
+      description: "Create a public Highlight gallery from the saved highlights on the active Chrome page, or an exact URL currently open in the paired browser. Returns the finished live URL for the assistant to give directly to the user in chat.",
       inputSchema: {
         url: z.string().url().refine(value => /^https?:\/\//i.test(value), "Use an HTTP(S) page URL").optional(),
         name: z.string().trim().min(1).max(120).optional().describe("Optional gallery name; defaults to the page title"),
@@ -430,7 +430,7 @@ export function createHighlighterMcpServer(env, bridgeKey) {
   }}), value => `Updated ${value.updated} highlight${value.updated === 1 ? "" : "s"}. Operation: ${value.operationId}`);
 
   registerBridgeTool("search_highlights", {
-    title: "Search the Highlighter library",
+    title: "Search the Highlight library",
     description: "Search every locally saved page by quote, note, tag, title, URL, domain, or creation date.",
     inputSchema: {
       query: z.string().max(500).optional(), tags: tags().optional(), domain: z.string().max(255).optional(),
@@ -485,14 +485,14 @@ export function createHighlighterMcpServer(env, bridgeKey) {
 
   registerBridgeTool("get_library_selection", {
     title: "Get selected library highlights",
-    description: "Read the exact highlights the user staged from the Highlighter Library for ChatGPT web or a browser agent. Returns stable IDs, quotes, notes, folders, and source links in selection order.",
+    description: "Read the exact highlights the user staged from the Highlight Library for ChatGPT web or a browser agent. Returns stable IDs, quotes, notes, folders, and source links in selection order.",
     inputSchema: {}, annotations: readOnly
   }, () => ({ type: "get_library_selection" }), value =>
     `Loaded ${value.count} selected highlight${value.count === 1 ? "" : "s"}${value.unavailable ? `; ${value.unavailable} selected item${value.unavailable === 1 ? " is" : "s are"} no longer available` : ""}.`);
 
   registerBridgeTool("list_folders", {
     title: "List highlight folders",
-    description: "List the user's highlight folders with highlight counts, source counts, and optional samples. Highlighter folders are backed by tags.",
+    description: "List the user's highlight folders with highlight counts, source counts, and optional samples. Highlight folders are backed by tags.",
     inputSchema: { includeSamples: z.boolean().optional() }, annotations: readOnly
   }, input => ({ type: "list_folders", ...input }), value =>
     value.count ? JSON.stringify(value.folders) : "The library does not have any folders yet.");
@@ -530,7 +530,7 @@ export function createHighlighterMcpServer(env, bridgeKey) {
   }, input => ({ type: "compare_pages", ...input }), value => `${value.instruction}\n\n${value.text}`);
 
   registerBridgeTool("manage_live_links", {
-    title: "Manage live Highlighter links",
+    title: "Manage live Highlight links",
     description: "List, refresh, rename, revoke, password-protect, change visibility, or change expiry for live galleries created by this extension.",
     inputSchema: {
       action: z.enum(["list", "update", "revoke"]), id: z.string().max(40).optional(), url: httpUrl().optional(),
@@ -600,7 +600,7 @@ function bearerToken(request) {
   return request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] || "";
 }
 
-function unauthorizedAgentResponse(origin, description = "Connect your Highlighter browser extension to continue.") {
+function unauthorizedAgentResponse(origin, description = "Connect your Highlight browser extension to continue.") {
   const metadataUrl = `${origin}/.well-known/oauth-protected-resource`;
   return json({ error: "authentication_required", error_description: description }, 401, {
     "cache-control": "no-store",
@@ -650,7 +650,7 @@ async function handleOAuthRegistration(request, env) {
   try { body = await request.json(); } catch { return oauthError("invalid_client_metadata", "Registration metadata must be JSON."); }
   const redirectUris = Array.isArray(body?.redirect_uris) ? body.redirect_uris.map(String) : [];
   if (!redirectUris.length || redirectUris.length > 8 || !redirectUris.every(isAllowedOAuthRedirect)) {
-    return oauthError("invalid_redirect_uri", "Highlighter accepts only ChatGPT OAuth callback URLs.");
+    return oauthError("invalid_redirect_uri", "Highlight accepts only ChatGPT OAuth callback URLs.");
   }
   const grantTypes = Array.isArray(body?.grant_types) ? body.grant_types.map(String) : ["authorization_code"];
   const responseTypes = Array.isArray(body?.response_types) ? body.response_types.map(String) : ["code"];
@@ -661,7 +661,7 @@ async function handleOAuthRegistration(request, env) {
     return oauthError("invalid_client_metadata", "Only the code response type is supported.");
   }
   if (body?.token_endpoint_auth_method && body.token_endpoint_auth_method !== "none") {
-    return oauthError("invalid_client_metadata", "Highlighter uses public clients with PKCE.");
+    return oauthError("invalid_client_metadata", "Highlight uses public clients with PKCE.");
   }
   const clientId = randomToken(24);
   const client = {
@@ -679,7 +679,7 @@ async function handleOAuthRegistration(request, env) {
 
 async function handleAgentPairingCode(request, env, origin) {
   const token = bearerToken(request);
-  if (!validAgentToken(token)) return unauthorizedAgentResponse(origin, "Enable the Highlighter agent connection before creating a pairing code.");
+  if (!validAgentToken(token)) return unauthorizedAgentResponse(origin, "Enable the Highlight agent connection before creating a pairing code.");
   const code = randomPairingCode();
   const normalized = normalizePairingCode(code);
   const bridgeKey = await sha256Hex(token);
@@ -709,8 +709,8 @@ function oauthAuthorizationParams(source) {
 
 async function validateOAuthAuthorization(params, env, origin) {
   const client = params.clientId ? await env.HIGHLIGHTS.get(`oauth:client:${params.clientId}`, "json") : null;
-  if (!client) return { error: "invalid_client", description: "This ChatGPT connection is not registered with Highlighter." };
-  if (params.responseType !== "code") return { error: "unsupported_response_type", description: "Highlighter supports the OAuth code flow only.", client };
+  if (!client) return { error: "invalid_client", description: "This ChatGPT connection is not registered with Highlight." };
+  if (params.responseType !== "code") return { error: "unsupported_response_type", description: "Highlight supports the OAuth code flow only.", client };
   if (!client.redirect_uris?.includes(params.redirectUri) || !isAllowedOAuthRedirect(params.redirectUri)) {
     return { error: "invalid_request", description: "The OAuth callback URL does not match the registered client." };
   }
@@ -718,7 +718,7 @@ async function validateOAuthAuthorization(params, env, origin) {
     return { error: "invalid_request", description: "A valid S256 PKCE code challenge is required.", client };
   }
   if (params.resource !== oauthResource(origin)) {
-    return { error: "invalid_target", description: "The OAuth resource does not match the Highlighter MCP server.", client };
+    return { error: "invalid_target", description: "The OAuth resource does not match the Highlight MCP server.", client };
   }
   const scope = requestedOAuthScope(params.scope);
   if (!scope) return { error: "invalid_scope", description: "The requested permission is not supported.", client };
@@ -744,7 +744,7 @@ function renderOAuthPage(params, error = "") {
     resource: params.resource,
     scope: params.scope
   }).map(([name, value]) => `<input type="hidden" name="${name}" value="${escapeHtml(value)}">`).join("");
-  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect Highlighter to ChatGPT</title><style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f2ec;color:#211f1c;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{width:min(440px,calc(100% - 32px));padding:30px;background:#fffdf9;border:1px solid #d9d3ca;border-radius:14px;box-shadow:0 18px 55px rgba(43,36,25,.1)}.brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}.mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#7557dc,#e954a5);color:white;font-size:20px}.brand b{font-size:17px}h1{margin:0 0 8px;font-family:Georgia,serif;font-size:27px;font-weight:500;letter-spacing:-.02em}p{margin:0 0 18px;color:#625d55}.steps{margin:0 0 22px;padding-left:20px;color:#47423b}.steps li{margin:5px 0}label{display:block;margin-bottom:7px;font-weight:650}input[type=text]{width:100%;padding:12px 13px;border:1px solid #bdb5aa;border-radius:8px;background:#fff;color:#211f1c;font:600 18px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em}button{width:100%;margin-top:12px;padding:12px 15px;border:0;border-radius:8px;background:#5f52cc;color:#fff;font:650 15px/1.2 inherit;cursor:pointer}.error{margin-bottom:16px;padding:10px 12px;border-radius:8px;background:#fff0ef;color:#982d27}.fine{margin:16px 0 0;font-size:12px;color:#777067}.fine a{color:inherit}</style></head><body><main class="card"><div class="brand"><span class="mark">✦</span><b>Highlighter</b></div><h1>Connect your browser</h1><p>This lets ChatGPT read and change highlights only through the Highlighter extension connected to this browser.</p>${error ? `<div class="error">${escapeHtml(error)}</div>` : ""}<ol class="steps"><li>Open the Highlighter extension in Chrome.</li><li>Press <strong>?</strong>, then <strong>Pair ChatGPT</strong>.</li><li>Paste the one-time code below.</li></ol><form method="post" action="/oauth/authorize">${hidden}<label for="pairing_code">One-time pairing code</label><input id="pairing_code" name="pairing_code" type="text" inputmode="text" autocomplete="one-time-code" maxlength="14" placeholder="ABCD-EFGH-JKLM" required autofocus><button type="submit">Connect Highlighter</button></form><p class="fine">The code expires after 10 minutes and can be used once. By connecting, you agree to the <a href="${STATIC_BASE}/terms.html">terms</a> and <a href="${STATIC_BASE}/privacy.html">privacy policy</a>.</p></main></body></html>`, {
+  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect Highlight to ChatGPT</title><style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f2ec;color:#211f1c;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{width:min(440px,calc(100% - 32px));padding:30px;background:#fffdf9;border:1px solid #d9d3ca;border-radius:14px;box-shadow:0 18px 55px rgba(43,36,25,.1)}.brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}.mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#7557dc,#e954a5);color:white;font-size:20px}.brand b{font-size:17px}h1{margin:0 0 8px;font-family:Georgia,serif;font-size:27px;font-weight:500;letter-spacing:-.02em}p{margin:0 0 18px;color:#625d55}.steps{margin:0 0 22px;padding-left:20px;color:#47423b}.steps li{margin:5px 0}label{display:block;margin-bottom:7px;font-weight:650}input[type=text]{width:100%;padding:12px 13px;border:1px solid #bdb5aa;border-radius:8px;background:#fff;color:#211f1c;font:600 18px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em}button{width:100%;margin-top:12px;padding:12px 15px;border:0;border-radius:8px;background:#5f52cc;color:#fff;font:650 15px/1.2 inherit;cursor:pointer}.error{margin-bottom:16px;padding:10px 12px;border-radius:8px;background:#fff0ef;color:#982d27}.fine{margin:16px 0 0;font-size:12px;color:#777067}.fine a{color:inherit}</style></head><body><main class="card"><div class="brand"><span class="mark">✦</span><b>Highlight</b></div><h1>Connect your browser</h1><p>This lets ChatGPT read and change highlights only through the Highlight extension connected to this browser.</p>${error ? `<div class="error">${escapeHtml(error)}</div>` : ""}<ol class="steps"><li>Open the Highlight extension in Chrome.</li><li>Press <strong>?</strong>, then <strong>Pair ChatGPT</strong>.</li><li>Paste the one-time code below.</li></ol><form method="post" action="/oauth/authorize">${hidden}<label for="pairing_code">One-time pairing code</label><input id="pairing_code" name="pairing_code" type="text" inputmode="text" autocomplete="one-time-code" maxlength="14" placeholder="ABCD-EFGH-JKLM" required autofocus><button type="submit">Connect Highlight</button></form><p class="fine">The code expires after 10 minutes and can be used once. By connecting, you agree to the <a href="${STATIC_BASE}/terms.html">terms</a> and <a href="${STATIC_BASE}/privacy.html">privacy policy</a>.</p></main></body></html>`, {
     status: error ? 400 : 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
@@ -781,7 +781,7 @@ async function handleOAuthAuthorize(request, env, origin) {
   const pairingKey = pairingCode ? `pair:${await sha256Hex(pairingCode)}` : "";
   const pairing = pairingKey ? await oauthSession(env, pairingKey).consume() : null;
   if (!pairing?.bridgeKey || !/^[a-f0-9]{64}$/.test(pairing.bridgeKey)) {
-    return renderOAuthPage(params, "That pairing code is invalid or expired. Generate a new code in the Highlighter extension.");
+    return renderOAuthPage(params, "That pairing code is invalid or expired. Generate a new code in the Highlight extension.");
   }
   const code = randomToken(32);
   await oauthSession(env, `code:${await sha256Hex(code)}`).store({
@@ -893,7 +893,7 @@ async function handleOAuthToken(request, env, origin) {
   const client = clientId ? await env.HIGHLIGHTS.get(`oauth:client:${clientId}`, "json") : null;
   if (!client) return oauthError("invalid_client", "The OAuth client is not registered.", 401);
   const resource = String(form.get("resource") || "");
-  if (resource !== oauthResource(origin)) return oauthError("invalid_target", "The token resource does not match Highlighter.");
+  if (resource !== oauthResource(origin)) return oauthError("invalid_target", "The token resource does not match Highlight.");
 
   if (grantType === "authorization_code") {
     const code = String(form.get("code") || "");
@@ -920,7 +920,7 @@ async function handleOAuthToken(request, env, origin) {
     return json(await issueOAuthTokens(env, origin, session), 200, { "cache-control": "no-store" });
   }
 
-  return oauthError("unsupported_grant_type", "Highlighter supports authorization_code and refresh_token grants.");
+  return oauthError("unsupported_grant_type", "Highlight supports authorization_code and refresh_token grants.");
 }
 
 async function handleOAuthRevocation(request, env) {
@@ -1020,7 +1020,7 @@ export default {
     if (url.pathname === "/mcp") {
       const bridgeKey = await resolveMcpBridgeKey(request, env, origin);
       if (!bridgeKey) return unauthorizedAgentResponse(origin);
-      const handler = createMcpHandler(() => createHighlighterMcpServer(env, bridgeKey), {
+      const handler = createMcpHandler(() => createHighlightMcpServer(env, bridgeKey), {
         route: "/mcp"
       });
       return decorateMcpToolSecurity(await handler(request, env, ctx));
@@ -1030,7 +1030,7 @@ export default {
       const token = url.searchParams.get("token");
       const origin = request.headers.get("origin") || "";
       if (!validAgentToken(token) || !origin.startsWith("chrome-extension://")) {
-        return unauthorizedAgentResponse(url.origin, "A valid Highlighter browser connection is required.");
+        return unauthorizedAgentResponse(url.origin, "A valid Highlight browser connection is required.");
       }
       const bridge = await agentBridgeForToken(env, token);
       return bridge.fetch(request);
@@ -1045,7 +1045,7 @@ export default {
     //   → { highlights: [{ startId, endId, category, reason }], cached }
     // The Gemini key is a Worker secret, so it is never shipped in the
     // extension. Only model-selected span IDs/reasons are cached; source PDF
-    // text is not persisted by Highlighter.
+    // text is not persisted by Highlight.
     if (request.method === "POST" && url.pathname === "/api/ai/highlights") {
       return generateAiHighlights(request, env, ctx);
     }
@@ -2004,7 +2004,7 @@ async function manageShareCollaboration(env, id, meta, body) {
 }
 
 function renderPasswordPage(id, invalid = false) {
-  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Protected Highlighter link</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0c0c0e;color:#fafafa;font:16px/1.5 system-ui,sans-serif}.card{width:min(380px,calc(100% - 40px));padding:28px;border:1px solid #2a2a30;border-radius:18px;background:#151519;box-shadow:0 20px 60px #0008}h1{font-size:22px;margin:0 0 8px}p{color:#aaa;margin:0 0 20px}input,button{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;font:inherit}input{background:#0c0c0e;color:#fff;border:1px solid #34343b;margin-bottom:10px}button{border:0;background:#6366f1;color:#fff;font-weight:650;cursor:pointer}.error{color:#fca5a5;margin-bottom:12px}</style></head><body><form class="card" method="post" action="/v/${escapeHtml(id)}"><h1>Protected highlights</h1><p>Enter the password shared by the gallery owner.</p>${invalid ? '<div class="error">That password was not correct.</div>' : ""}<input type="password" name="password" autocomplete="current-password" required autofocus><button type="submit">Open gallery</button></form></body></html>`, {
+  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Protected Highlight link</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0c0c0e;color:#fafafa;font:16px/1.5 system-ui,sans-serif}.card{width:min(380px,calc(100% - 40px));padding:28px;border:1px solid #2a2a30;border-radius:18px;background:#151519;box-shadow:0 20px 60px #0008}h1{font-size:22px;margin:0 0 8px}p{color:#aaa;margin:0 0 20px}input,button{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;font:inherit}input{background:#0c0c0e;color:#fff;border:1px solid #34343b;margin-bottom:10px}button{border:0;background:#6366f1;color:#fff;font-weight:650;cursor:pointer}.error{color:#fca5a5;margin-bottom:12px}</style></head><body><form class="card" method="post" action="/v/${escapeHtml(id)}"><h1>Protected highlights</h1><p>Enter the password shared by the gallery owner.</p>${invalid ? '<div class="error">That password was not correct.</div>' : ""}<input type="password" name="password" autocomplete="current-password" required autofocus><button type="submit">Open gallery</button></form></body></html>`, {
     status: invalid ? 401 : 200,
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }
   });
@@ -2060,27 +2060,27 @@ function notFound() {
   const html = `<!doctype html>
 <html lang="en"><head>
   <meta charset="utf-8">
-  <title>Link not found — Highlighter</title>
+  <title>Link not found — Highlight</title>
   <link rel="stylesheet" href="${STATIC_BASE}/styles.css?v=6">
 </head><body>
   <div class="wrap">
-    <header class="brand"><span class="logo">✦</span><h1>Highlighter</h1></header>
+    <header class="brand"><span class="logo">✦</span><h1>Highlight</h1></header>
     <h2 class="page-title">Link not found</h2>
     <p style="color:rgba(250,250,250,0.6);">This share link is invalid or has expired.</p>
-    <p><a href="${STATIC_BASE}/">Back to Highlighter →</a></p>
+    <p><a href="${STATIC_BASE}/">Back to Highlight →</a></p>
   </div>
 </body></html>`;
   return new Response(html, { status: 404, headers: { "content-type": "text/html;charset=utf-8" } });
 }
 
 function renderHtml(meta, enc, shareId) {
-  const title = `${meta.name} — Highlighter`;
+  const title = `${meta.name} — Highlight`;
   const host = hostnameOf(meta.url);
   const descParts = [];
   if (meta.count) descParts.push(`${meta.count} highlight${meta.count === 1 ? "" : "s"}`);
   if (meta.title) descParts.push(`from ${meta.title}`);
   else if (host) descParts.push(`from ${host}`);
-  const description = descParts.join(" ") || "Shared highlights from Highlighter";
+  const description = descParts.join(" ") || "Shared highlights from Highlight";
 
   const html = `<!doctype html>
 <html lang="en">
@@ -2095,7 +2095,7 @@ function renderHtml(meta, enc, shareId) {
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(PROMO_IMAGE)}">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="Highlighter">
+  <meta property="og:site_name" content="Highlight">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
@@ -2120,9 +2120,9 @@ function renderHtml(meta, enc, shareId) {
       <span class="ib-mark">✦</span>
       <div class="ib-text">
         <strong>See these highlights painted onto the original page.</strong>
-        <span>Install the Highlighter extension to highlight, comment on, and share any page yourself.</span>
+        <span>Install the Highlight extension to highlight, comment on, and share any page yourself.</span>
       </div>
-      <a class="ib-cta" href="${INSTALL_URL}" target="_blank" rel="noopener">Install Highlighter</a>
+      <a class="ib-cta" href="${INSTALL_URL}" target="_blank" rel="noopener">Install Highlight</a>
       <button class="ib-close" aria-label="Dismiss">×</button>
     </div>
   </div>
@@ -2141,11 +2141,11 @@ function renderHtml(meta, enc, shareId) {
   <div class="wrap">
     <header class="brand">
       <span class="logo">✦</span>
-      <h1>Highlighter</h1>
+      <h1>Highlight</h1>
     </header>
     <div id="content"></div>
     <footer class="foot">
-      Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlighter extension →</a>
+      Want to highlight pages yourself? <a href="${STATIC_BASE}/">Get the Highlight extension →</a>
     </footer>
   </div>
   <script src="${STATIC_BASE}/v.js?v=13"></script>

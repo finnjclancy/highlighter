@@ -24,7 +24,7 @@ async function loadBackground() {
   const tab = { id: 7, url: "https://example.com/article", title: "Example article" };
   const pdfTab = {
     id: 8,
-    title: "Example paper - Highlighter"
+    title: "Example paper - Highlight"
   };
   const listeners = { socket: null };
   const tabMessages = [];
@@ -147,7 +147,7 @@ test("background returns highlighted text in a chat-ready format", async () => {
   assert.match(result.text, /Note: Useful/);
 });
 
-test("background reads an exact PDF source from the open Highlighter reader", async () => {
+test("background reads an exact PDF source from the open Highlight reader", async () => {
   const { handleAgentCommand, tabMessages } = await loadBackground();
   const result = await handleAgentCommand({
     type: "get_pdf_document",

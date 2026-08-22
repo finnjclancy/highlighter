@@ -98,7 +98,7 @@ async function init() {
   const count = payload.highlights.length;
   const live = buildLiveLink(payload);
 
-  document.title = displayName + " — Highlighter";
+  document.title = displayName + " — Highlight";
 
   // If the user named the share, show name big + page title as the source
   // link. Otherwise the page title is the big title and the host is the
@@ -149,7 +149,7 @@ async function init() {
   html += `
     <div class="install-hint">
       <strong>Want to see these on the real page?</strong>
-      Install the <a href="https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo" target="_blank" rel="noopener">Highlighter extension</a> and click "Open on original page" above — your highlights will appear in-context as you read.
+      Install the <a href="https://chromewebstore.google.com/detail/highlighter/hkldppfkemipnahfagbgbombdhcoogeo" target="_blank" rel="noopener">Highlight extension</a> and click "Open on original page" above — your highlights will appear in-context as you read.
     </div>`;
 
   root.innerHTML = html;
