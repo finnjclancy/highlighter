@@ -5,20 +5,20 @@
   <title>Highlighter Library</title>
   <style>
     :root {
-      --bg: #0c0c0e;
-      --bg-2: #131316;
-      --surface: #18181b;
-      --surface-2: #1f1f23;
-      --border: rgba(255,255,255,0.05);
-      --border-strong: rgba(255,255,255,0.1);
-      --text: #fafafa;
-      --text-2: rgba(250,250,250,0.62);
-      --text-3: rgba(250,250,250,0.4);
-      --text-4: rgba(250,250,250,0.28);
-      --accent: #6366f1;
-      --accent-soft: rgba(99,102,241,0.15);
-      --accent-hover: #5457e0;
-      --danger: #ef4444;
+      --bg: #fffaf2;
+      --bg-2: #f9f2e7;
+      --surface: #f4ecdf;
+      --surface-2: #eee3d3;
+      --border: rgba(36,50,83,0.10);
+      --border-strong: rgba(36,50,83,0.18);
+      --text: #243253;
+      --text-2: rgba(36,50,83,0.72);
+      --text-3: rgba(36,50,83,0.52);
+      --text-4: rgba(36,50,83,0.35);
+      --accent: #4d57c8;
+      --accent-soft: rgba(77,87,200,0.10);
+      --accent-hover: #3e47ae;
+      --danger: #b84a4a;
       --radius-sm: 6px;
       --radius-md: 8px;
       --radius-lg: 12px;
@@ -1136,6 +1136,186 @@
       .row { padding-right: 0; padding-left: 0; }
       .row:hover { padding-right: 3px; padding-left: 3px; }
     }
+
+    /* ---------- PAPER LIBRARY SYSTEM ---------- */
+    html, body { background: var(--bg); }
+    body {
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      line-height: 1.55;
+      letter-spacing: 0;
+    }
+    button, input, select, textarea,
+    .topnav, .library-kicker, .library-stats, .quotes-app aside,
+    .topbar, .rmeta, .group-head, .modal, .design-page,
+    .shares-page, .settings-page, .section-lbl, .footbar {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    ::selection { background: #f6dea0; color: var(--text); }
+    ::-webkit-scrollbar-thumb { background: rgba(36,50,83,0.14); }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(36,50,83,0.24); }
+
+    .topnav {
+      background: rgba(255,250,242,0.94);
+      border-bottom-color: rgba(36,50,83,0.16);
+      backdrop-filter: blur(12px);
+    }
+    .topnav-inner { min-height: 58px; }
+    .brand { color: var(--text); font-weight: 650; }
+    .tab { color: rgba(36,50,83,0.48); }
+    .tab:hover { color: rgba(36,50,83,0.76); }
+    .tab.active { color: var(--text); }
+    .tab.active::after { background: #ef7c6b; }
+
+    .page { padding-top: 34px; }
+    .library-hero {
+      align-items: end;
+      gap: 32px;
+      margin-bottom: 34px;
+      padding-bottom: 25px;
+      border-bottom-color: rgba(36,50,83,0.22);
+    }
+    .library-kicker { color: rgba(36,50,83,0.48); letter-spacing: 0.13em; }
+    .library-hero h1 {
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: clamp(36px, 3.8vw, 46px);
+      font-weight: 690;
+      letter-spacing: -0.052em;
+    }
+    .library-hero p {
+      margin-top: 7px;
+      color: rgba(36,50,83,0.66);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .library-stats { color: var(--text); }
+    .library-stat strong { color: var(--text); font-size: 16px; font-weight: 680; }
+    .library-stat span { color: rgba(36,50,83,0.40); font-weight: 700; }
+
+    .quotes-app { grid-template-columns: 190px minmax(0, 1fr); gap: 42px; }
+    .quotes-app aside h2 { color: rgba(36,50,83,0.38); }
+    .nav-item { color: rgba(36,50,83,0.58); font-size: 12px; }
+    .nav-item:hover { color: var(--text); }
+    .nav-item.active { color: var(--text); }
+    .nav-item.active::before { background: #ef7c6b; }
+    .nav-item .badge { color: rgba(36,50,83,0.38); }
+    .nav-item.active .badge { color: rgba(36,50,83,0.58); }
+    .nav-item .nav-export { color: rgba(36,50,83,0.38); }
+
+    .view-heading .view-label, .view-actions::before { color: rgba(36,50,83,0.38); }
+    .quotes-app .topbar h2 { color: var(--text); font-weight: 680; }
+    .topbar .count { color: rgba(36,50,83,0.42); }
+    .quotes-app .topbar input[type=search] {
+      color: var(--text);
+      border-bottom-color: rgba(36,50,83,0.23);
+      background: transparent;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .quotes-app .topbar input[type=search]::placeholder { color: rgba(36,50,83,0.34); }
+    .quotes-app .topbar input[type=search]:focus { border-bottom-color: #4d57c8; }
+    .search-wrap::before { color: rgba(36,50,83,0.34); }
+    .quotes-app .topbar select {
+      color: rgba(36,50,83,0.68);
+      border-bottom-color: rgba(36,50,83,0.23);
+      background-color: transparent;
+    }
+    .view-actions {
+      border-top-color: rgba(36,50,83,0.10);
+      border-bottom-color: rgba(36,50,83,0.20);
+    }
+    .view-actions .export-btn,
+    .view-actions #export-view { color: rgba(36,50,83,0.58); }
+    .view-actions .export-btn:hover,
+    .view-actions #export-view:hover { color: var(--text); }
+    .view-actions .export-btn.danger { color: rgba(160,54,54,0.62); }
+    .view-actions .export-btn.danger:hover { color: #a03636; }
+    .view-actions #export-view { color: #4d57c8; }
+
+    .list { border-top-color: rgba(36,50,83,0.22); }
+    .row {
+      padding-top: 16px;
+      padding-bottom: 16px;
+      border-bottom-color: rgba(36,50,83,0.14) !important;
+      color: var(--text);
+    }
+    .row:hover {
+      border-color: rgba(36,50,83,0.20) !important;
+      background: rgba(246,222,160,0.22);
+    }
+    .row.selected { border-color: rgba(77,87,200,0.25) !important; background: rgba(77,87,200,0.055); }
+    .row .rcheck { border-color: rgba(36,50,83,0.28); }
+    .row.selected .rcheck { background: #4d57c8; border-color: #4d57c8; }
+    .row .rtext {
+      color: rgba(36,50,83,0.91);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15.5px;
+      line-height: 1.45;
+    }
+    .row .rmeta { color: rgba(36,50,83,0.40); }
+    .row .rsite { color: rgba(36,50,83,0.57); }
+    .row .rsep { color: rgba(36,50,83,0.22); }
+    .row .rtag { color: #5a62ad; }
+    .row .ricons { color: rgba(36,50,83,0.48); }
+    .row .rarrow { color: rgba(36,50,83,0.30); }
+    .row:hover .rarrow { color: #4d57c8; }
+
+    .group-head { border-bottom-color: rgba(36,50,83,0.22); color: rgba(36,50,83,0.46); }
+    .group-head .gtitle { color: var(--text-2); }
+    .group-head .gopen { color: rgba(36,50,83,0.50); }
+    .empty, .shares-empty { color: rgba(36,50,83,0.48); }
+    .empty h3, .shares-empty h3 { color: rgba(36,50,83,0.72); }
+
+    .modal-bg { background: rgba(36,35,32,0.30); }
+    .modal {
+      background: #fffaf2;
+      border-color: rgba(36,50,83,0.20);
+      box-shadow: 0 24px 70px rgba(68,55,36,0.20);
+    }
+    .modal-head, .modal-foot { border-color: rgba(36,50,83,0.12); }
+    .modal-head .mclose { color: rgba(36,50,83,0.42); }
+    .modal-head .mclose:hover { background: rgba(36,50,83,0.05); color: var(--text); }
+    .m-section-lbl { color: rgba(36,50,83,0.38); }
+    .m-note { background: #f9f2e7; border-color: rgba(36,50,83,0.13); color: var(--text); }
+    .m-note:focus { background: #fffaf2; }
+    .chip { background: rgba(36,50,83,0.06); color: var(--text-2); }
+    .chip-input { color: var(--text); border-color: rgba(36,50,83,0.20); }
+    .m-meta { color: rgba(36,50,83,0.40); }
+    .mbtn, .btn, .icon-btn, .preset {
+      background: transparent;
+      border-color: rgba(36,50,83,0.18);
+      color: var(--text);
+    }
+    .mbtn:hover, .btn:hover, .icon-btn:hover, .preset:hover { background: rgba(36,50,83,0.045); }
+    .mbtn.primary, .btn.primary { background: #4d57c8; border-color: #4d57c8; color: #fff; }
+
+    .share-card, .card, .preview-strip {
+      background: transparent;
+      border-color: rgba(36,50,83,0.14);
+      box-shadow: none;
+    }
+    .share-card:hover, .card:hover { border-color: rgba(36,50,83,0.25); }
+    .share-name, .design-page h1 { color: var(--text); }
+    .share-source, .share-meta, .shares-lead, .design-page p.lead { color: var(--text-3); }
+    .share-actions button { background: transparent; border-color: rgba(36,50,83,0.16); color: var(--text); }
+    .share-actions .copy { background: #4d57c8; border-color: #4d57c8; color: #fff; }
+    .footbar { background: rgba(255,250,242,0.94); border-color: rgba(36,50,83,0.14); }
+    .name-input, .color-row input[type=text] { color: var(--text); border-color: rgba(36,50,83,0.14); }
+    .color-row input[type=text] { background: #f9f2e7; }
+
+    @media (max-width: 900px) {
+      .quotes-app { grid-template-columns: 1fr; }
+      .quotes-app aside {
+        border-top-color: rgba(36,50,83,0.15);
+        border-bottom-color: rgba(36,50,83,0.15);
+      }
+    }
+    @media (max-width: 680px) {
+      .topnav { background: rgba(255,250,242,0.97); }
+      .library-hero h1 { font-size: 37px; }
+      .view-actions { border-color: rgba(36,50,83,0.17); }
+    }
   </style>
 </head>
 <body>
@@ -1182,7 +1362,7 @@
               <div class="view-title-line"><h2 id="view-title">All quotes</h2><span class="count" id="view-count"></span></div>
             </div>
             <div class="view-tools">
-              <div class="search-wrap"><input type="search" id="search" placeholder="Search quotes, notes, tags…" aria-label="Search library"></div>
+              <div class="search-wrap"><input type="search" id="search" placeholder="Search library…" aria-label="Search library"></div>
               <select id="sort" aria-label="Sort highlights">
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
