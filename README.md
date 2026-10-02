@@ -21,6 +21,7 @@ A clean browser extension for highlighting text on any web page with custom colo
 - **Bulk management** — select several or all highlights directly in the page/PDF panel, or delete every highlight in the current filtered Library view, with confirmation before removal.
 - **Agent research workspace** — select highlights in the Library, open a prepared instruction in ChatGPT web or copy it for a browser agent, then let an MCP-compatible agent create, move, rename, merge, or remove folders; search and organize the full library; update or restore highlights; compare sources; export research; and manage collaborative live galleries. Highlight never presses Send for you.
 - **Fast actions** — highlight the current selection from the page context menu or with `Alt+Shift+H` (`⌃⇧H` on macOS).
+- **Read along** — double-click a word on a web page or in the PDF reader, then press **Read from here**. A temporary highlight advances word by word and scrolls with you while a Spritz-style box displays the same word with a fixed, highlighted focal letter. Expand or drag the corner to resize the box. Pause, resume, replay, or stop with Escape; adjust the remembered speed from 30–1,000 words per minute (70 by default).
 - **Privacy-first** — no accounts and no tracking. Highlights live in your own browser storage unless you explicitly copy them or create a share link.
 
 ---
@@ -48,6 +49,11 @@ Select text on any page → a mini toolbar appears with your colour palette → 
 
 ### Re-colour or remove
 Hover any highlight → palette + × buttons appear above it. Or click the highlight for the full popover.
+
+### Read along
+Double-click the word where you want to start → **▶ Read from here**. Reading continues through the containing article or main content (or the page when neither exists), with a moving word highlight and automatic scrolling. The bottom reading box streams the same word in sync, with a yellow focal letter anchored at the center. Use **⤢** to expand/shrink the box, or drag its bottom-right corner to resize it; the text scales to fit. Use **− / +** or enter a WPM value (30–1,000) to change the speed. The floating controls also pause/resume, replay, or stop; Escape stops too. Switching tabs pauses reading. The reading highlight is temporary and is never saved or shared. Drag-select text to use the usual colour palette.
+
+When the active word reaches roughly three-quarters down the viewport, reading scrolls it back near the top (about 20% down), leaving room to read ahead. Manual scrolling keeps your place in the text; the next word restores visibility when needed. Temporary space after the document keeps the final lines clear of the controls and is removed when reading stops.
 
 ### Library
 Toolbar icon → **Open library / design**. Folders (tags), sites, search, sort, multi-select, export, bulk delete.

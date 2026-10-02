@@ -30,6 +30,7 @@ INCLUDE=(
   background.js
   chat-bridge.js
   content.js
+  read-along.js
   content.css
   drawing.js
   drawing.css

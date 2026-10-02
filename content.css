@@ -67,6 +67,104 @@
 }
 #hl-toolbar .hl-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
 
+/* Temporary read-along highlighting leaves saved marks and page text intact. */
+::highlight(hl-read-word) { background-color: #fde047; color: #171717; }
+.textLayer ::highlight(hl-read-word) { background-color: rgba(250,204,21,0.5); color: transparent; }
+#hl-toolbar .hl-read-start {
+  all: unset;
+  padding: 7px 11px;
+  font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #fef08a;
+  cursor: pointer;
+  border-radius: 5px;
+}
+#hl-toolbar .hl-read-start:hover { background: rgba(250,204,21,0.12); }
+#hl-toolbar .hl-read-start:focus-visible { outline: 2px solid #fde047; }
+#hl-read-along {
+  all: initial;
+  position: fixed;
+  z-index: 2147483647;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 600px;
+  height: 230px;
+  min-width: min(320px, calc(100vw - 24px));
+  min-height: 210px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 48px);
+  resize: both;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  background: #18181b;
+  color: #fafafa;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+#hl-read-along * { box-sizing: border-box; }
+#hl-read-along.hl-read-expanded { width: 800px; height: 360px; }
+#hl-read-along .hl-read-stage { position: relative; display: flex; align-items: center; flex: 1; min-height: 100px; width: 100%; overflow: hidden; }
+#hl-read-along .hl-read-stage::before, #hl-read-along .hl-read-stage::after { content: ""; position: absolute; left: 50%; width: 1px; height: 18px; background: #fde047; opacity: 0.6; }
+#hl-read-along .hl-read-stage::before { top: 12px; }
+#hl-read-along .hl-read-stage::after { bottom: 12px; }
+#hl-read-along .hl-read-word { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); width: 100%; padding: 0 20px; font: 500 48px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 0; white-space: pre; color: #fafafa; }
+#hl-read-along .hl-read-before { text-align: right; }
+#hl-read-along .hl-read-after { text-align: left; }
+#hl-read-along .hl-read-anchor { color: #fde047; font-weight: 700; }
+#hl-read-along .hl-read-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+#hl-read-along .hl-read-info { display: flex; flex-direction: column; white-space: nowrap; }
+#hl-read-along .hl-read-info strong { font: 600 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #fafafa; }
+#hl-read-along .hl-read-status { font-size: 11px; color: #a1a1aa; }
+#hl-read-along .hl-read-indicator { width: 8px; height: 8px; border-radius: 50%; background: #fde047; flex-shrink: 0; }
+#hl-read-along[data-playing="true"] .hl-read-indicator { animation: hl-reading-pulse 1.4s ease-in-out infinite; }
+#hl-read-along button {
+  all: unset;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font: 600 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#hl-read-along .hl-read-play { background: #fde047; color: #18181b; min-width: 68px; text-align: center; }
+#hl-read-along .hl-read-stop { font-size: 22px; padding: 2px 6px; color: #a1a1aa; }
+#hl-read-along .hl-read-expand { font-size: 22px; padding: 2px 6px; color: #a1a1aa; }
+#hl-read-along button:hover { filter: brightness(1.12); }
+#hl-read-along button:disabled { opacity: 0.35; cursor: default; }
+#hl-read-along button:focus-visible, #hl-read-along input:focus-visible { outline: 2px solid #fde047; outline-offset: 3px; }
+#hl-read-along .hl-read-speed { display: flex; gap: 6px; align-items: center; white-space: nowrap; color: #a1a1aa; font-size: 11px; }
+#hl-read-along .hl-read-speed label { display: flex; gap: 6px; align-items: center; }
+#hl-read-along .hl-read-speed button { padding: 5px 9px; background: #27272a; font-size: 20px; }
+#hl-read-along input {
+  all: unset;
+  width: 54px;
+  padding: 6px;
+  border: 1px solid #52525b;
+  border-radius: 6px;
+  color: #fafafa;
+  background: #27272a;
+  font: 600 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+#hl-read-along .hl-read-progress { font-size: 11px; color: #a1a1aa; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#hl-read-along-focus { position: fixed; inset: 0; pointer-events: none; z-index: 2147483645; }
+#hl-read-along-focus span { position: absolute; border: 1px solid #eab308; border-radius: 4px; box-sizing: border-box; box-shadow: 0 0 0 2px rgba(250,204,21,0.15); animation: hl-reading-word 180ms ease-out; }
+@keyframes hl-reading-pulse { 50% { opacity: 0.35; } }
+@keyframes hl-reading-word { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 520px) {
+  #hl-read-along { bottom: 12px; }
+  #hl-read-along .hl-read-toolbar { gap: 6px; padding: 10px; }
+  #hl-read-along .hl-read-indicator { display: none; }
+  #hl-read-along .hl-read-progress { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hl-read-along .hl-read-indicator, #hl-read-along-focus span { animation: none !important; }
+}
+
 /* Hover quick-toolbar (appears when hovering an existing highlight) */
 #hl-hover-toolbar {
   position: absolute;

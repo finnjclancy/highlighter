@@ -68,6 +68,7 @@
   let palette = [];
   let highlights = [];
   let toolbar = null;
+  let selectionToolbarTimer = null;
   let panel = null;
   let popover = null;
   let hoverToolbar = null;
@@ -87,7 +88,7 @@
   // Anchoring to that first copy saves a valid quotation but paints nothing
   // the user can see, so form controls must never participate in page-text
   // matching or range restoration.
-  const SKIP_SELECTOR = "script,style,textarea,input,select,option,#hl-toolbar,#hl-panel,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-share-banner,#hl-hover-toolbar,#pdf-appbar,#pdf-sidebar,#pdf-status";
+  const SKIP_SELECTOR = "script,style,textarea,input,select,option,#hl-toolbar,#hl-panel,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-share-banner,#hl-hover-toolbar,#hl-read-along,#hl-read-along-focus,#pdf-appbar,#pdf-sidebar,#pdf-status";
   const CONTEXT_LEN = 40;
 
   // ---------- storage ----------
@@ -348,41 +349,58 @@
 
   // ---------- selection toolbar ----------
   function hideToolbar() {
+    clearTimeout(selectionToolbarTimer);
     if (toolbar) { toolbar.remove(); toolbar = null; }
   }
 
-  function showToolbar(rect) {
+  function showToolbar(rect, readRange = null) {
     hideToolbar();
     toolbar = document.createElement("div");
     toolbar.id = "hl-toolbar";
-    palette.forEach((c, i) => {
-      const sw = document.createElement("button");
-      sw.className = "hl-swatch";
-      sw.style.backgroundColor = c.bg;
-      sw.style.color = c.fg;
-      sw.title = c.name + " — text " + c.fg + ", bg " + c.bg;
-      sw.textContent = "A";
-      sw.addEventListener("mousedown", e => {
-        e.preventDefault();
+    if (readRange) {
+      const play = document.createElement("button");
+      play.className = "hl-read-start";
+      play.type = "button";
+      play.textContent = "▶ Read from here";
+      play.addEventListener("mousedown", e => e.preventDefault());
+      play.addEventListener("click", e => {
         e.stopPropagation();
-        highlightSelection(c.bg, c.fg);
+        hideToolbar();
+        hidePopover();
+        hideHoverToolbar();
+        window.dispatchEvent(new CustomEvent("hl-start-read-along", { detail: { range: readRange } }));
       });
-      toolbar.appendChild(sw);
-    });
+      toolbar.appendChild(play);
+    } else {
+      palette.forEach((c, i) => {
+        const sw = document.createElement("button");
+        sw.className = "hl-swatch";
+        sw.style.backgroundColor = c.bg;
+        sw.style.color = c.fg;
+        sw.title = c.name + " — text " + c.fg + ", bg " + c.bg;
+        sw.textContent = "A";
+        sw.addEventListener("mousedown", e => {
+          e.preventDefault();
+          e.stopPropagation();
+          highlightSelection(c.bg, c.fg);
+        });
+        toolbar.appendChild(sw);
+      });
 
-    const div = document.createElement("div");
-    div.className = "hl-divider";
-    toolbar.appendChild(div);
+      const div = document.createElement("div");
+      div.className = "hl-divider";
+      toolbar.appendChild(div);
 
-    const opts = document.createElement("button");
-    opts.className = "hl-btn";
-    opts.textContent = "⚙";
-    opts.title = "Edit colors";
-    opts.addEventListener("mousedown", e => {
-      e.preventDefault();
-      chrome.runtime.sendMessage({ type: "openUrl", url: chrome.runtime.getURL("library.html#design") });
-    });
-    toolbar.appendChild(opts);
+      const opts = document.createElement("button");
+      opts.className = "hl-btn";
+      opts.textContent = "⚙";
+      opts.title = "Edit colors";
+      opts.addEventListener("mousedown", e => {
+        e.preventDefault();
+        chrome.runtime.sendMessage({ type: "openUrl", url: chrome.runtime.getURL("library.html#design") });
+      });
+      toolbar.appendChild(opts);
+    }
 
     document.body.appendChild(toolbar);
     const tw = toolbar.offsetWidth;
@@ -562,6 +580,9 @@
   });
 
   function handleMouseUp(e) {
+    clearTimeout(selectionToolbarTimer);
+    if (e.target.closest?.("#hl-read-along,#hl-read-along-focus")) return;
+    if (e.detail >= 2) return; // dblclick offers read-along instead of the palette.
     if (toolbar && toolbar.contains(e.target)) return;
     if (popover && popover.contains(e.target)) return;
     // Run twice — once immediately, and again after a microtask, to handle
@@ -592,11 +613,26 @@
       return true;
     };
     if (!tryShow()) {
-      setTimeout(() => { if (!tryShow()) hideToolbar(); }, 30);
+      selectionToolbarTimer = setTimeout(() => { if (!tryShow()) hideToolbar(); }, 30);
     }
   }
   document.addEventListener("mouseup", handleMouseUp, true);
   document.addEventListener("pointerup", handleMouseUp, true);
+  document.addEventListener("dblclick", e => {
+    clearTimeout(selectionToolbarTimer);
+    if (e.target.closest?.(SKIP_SELECTOR)) return;
+    const sel = window.getSelection();
+    if (!sel?.rangeCount || sel.isCollapsed || !sel.toString().trim()) return;
+    const range = sel.getRangeAt(0).cloneRange();
+    if (rangeUsesSkippedContent(range) || e.target.closest?.('[contenteditable]:not([contenteditable="false"])')) return;
+    if (e.target.closest?.('nav,button,[hidden],[aria-hidden="true"]')) {
+      showToolbar(range.getBoundingClientRect());
+      return;
+    }
+    hidePopover();
+    hideHoverToolbar();
+    showToolbar(range.getBoundingClientRect(), range);
+  }, true);
   document.addEventListener("mousedown", e => {
     if (toolbar && !toolbar.contains(e.target)) {
       pendingTextControlSelection = null;
@@ -1768,6 +1804,7 @@
     const newKey = currentPageKey();
     if (newKey === currentKey) return;
     currentKey = newKey;
+    window.dispatchEvent(new Event("hl-stop-read-along"));
     PAGE_KEY = newKey;
     sharedUrlProcessed = false;
     panelSelecting = false;
@@ -1850,7 +1887,7 @@
     for (const m of muts) {
       const t = m.target;
       if (!t) continue;
-      if (t.id === "hl-panel" || t.closest?.("#hl-panel,#hl-toolbar,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas")) continue;
+      if (t.id === "hl-panel" || t.closest?.("#hl-panel,#hl-toolbar,#hl-popover,#hl-draw-toolbar,#hl-draw-canvas,#hl-read-along,#hl-read-along-focus")) continue;
       interesting = true; break;
     }
     if (interesting) scheduleReapply();
